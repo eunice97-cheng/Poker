@@ -80,21 +80,19 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
 
           <div className="flex items-center gap-4">
             {profile && (
-              <>
-                <div className="text-right">
-                  <div className="text-white font-semibold">{profile.username}</div>
-                  <div className="text-yellow-400 text-sm font-bold">
-                    {profile.chip_balance.toLocaleString()} chips
-                  </div>
+              <div className="text-right">
+                <div className="text-white font-semibold">{profile.username}</div>
+                <div className="text-yellow-400 text-sm font-bold">
+                  {profile.chip_balance.toLocaleString()} chips
                 </div>
-                <button
-                  onClick={() => router.push('/profile')}
-                  className="text-gray-400 hover:text-white text-sm transition-colors"
-                >
-                  Profile
-                </button>
-              </>
+              </div>
             )}
+            <button
+              onClick={() => router.push('/profile')}
+              className="text-gray-400 hover:text-white text-sm transition-colors"
+            >
+              My Profile
+            </button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
           </div>
         </div>

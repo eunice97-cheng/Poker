@@ -47,7 +47,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-gray-400 text-sm mb-1">Username</label>
+        <label className="block text-gray-400 text-sm mb-1">Player Name <span className="text-gray-600">(shown at the table)</span></label>
         <input
           type="text"
           required
