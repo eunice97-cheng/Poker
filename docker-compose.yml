@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://gameserver:4000}
+    depends_on:
+      - gameserver
+    restart: unless-stopped
+
+  gameserver:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+      ACTION_TIMEOUT_SECONDS: ${ACTION_TIMEOUT_SECONDS:-30}
+      BETWEEN_HAND_DELAY_SECONDS: ${BETWEEN_HAND_DELAY_SECONDS:-5}
+    restart: unless-stopped
+
+networks:
+  default:
+    name: poker-network
