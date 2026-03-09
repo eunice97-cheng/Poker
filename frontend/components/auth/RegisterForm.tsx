@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export function RegisterForm() {
   const [email, setEmail] = useState('')
@@ -12,7 +11,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [success, setSuccess] = useState(false)
   const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,10 +19,10 @@ export function RegisterForm() {
     setError('')
 
     if (username.length < 3) {
-      return setError('Username must be at least 3 characters')
+      return setError('Player name must be at least 3 characters')
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return setError('Username can only contain letters, numbers, and underscores')
+      return setError('Player name can only contain letters, numbers, and underscores')
     }
 
     setLoading(true)
@@ -33,15 +32,30 @@ export function RegisterForm() {
         password,
         options: {
           data: { username },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error
-      router.push('/lobby')
+      setSuccess(true)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="text-center space-y-4">
+        <div className="text-5xl">📧</div>
+        <h2 className="text-xl font-bold text-white">Check your email!</h2>
+        <p className="text-gray-400 text-sm">
+          We sent a verification link to <span className="text-yellow-400">{email}</span>.
+          Click the link in the email to activate your account.
+        </p>
+        <p className="text-gray-600 text-xs">After verifying, you will be redirected to the login page.</p>
+      </div>
+    )
   }
 
   return (
