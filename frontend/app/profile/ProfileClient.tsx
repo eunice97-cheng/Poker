@@ -36,7 +36,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
   const router = useRouter()
   const supabase = createClient()
 
-  const [username, setUsername] = useState(initialProfile?.username ?? '')
+  const username = initialProfile?.username ?? ''
   const [selectedAvatar, setSelectedAvatar] = useState(initialProfile?.avatar ?? 'avatar_1')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
@@ -48,33 +48,18 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     ? Math.round((profile.games_won / profile.games_played) * 100)
     : 0
 
-  const isDirty = !profile || username !== profile.username || selectedAvatar !== profile.avatar
+  const isDirty = !profile || selectedAvatar !== profile.avatar
 
   const handleSave = async () => {
     if (!isDirty) return
-    if (username.trim().length < 3) {
-      setError('Username must be at least 3 characters')
-      return
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) {
-      setError('Username can only contain letters, numbers, and underscores')
-      return
-    }
-
     setSaving(true)
     setError('')
     setSaveMsg('')
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .upsert({
-        id: userId,
-        username: username.trim(),
-        avatar: selectedAvatar,
-        chip_balance: profile?.chip_balance ?? 10000,
-        games_played: profile?.games_played ?? 0,
-        games_won: profile?.games_won ?? 0,
-      })
+      .update({ avatar: selectedAvatar })
+      .eq('id', userId)
 
     setSaving(false)
 
@@ -122,14 +107,10 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
             </button>
 
             <div className="flex-1">
-              <label className="block text-gray-400 text-sm mb-1">Username</label>
-              <input
-                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2.5 text-white outline-none focus:border-yellow-500 transition-colors"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                maxLength={20}
-                placeholder="Username"
-              />
+              <label className="block text-gray-400 text-sm mb-1">Player Name</label>
+              <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2.5 text-white">
+                {username || <span className="text-gray-500">Not set</span>}
+              </div>
               <p className="text-gray-600 text-xs mt-1">{email}</p>
             </div>
           </div>
