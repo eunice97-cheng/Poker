@@ -48,7 +48,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     ? Math.round((profile.games_won / profile.games_played) * 100)
     : 0
 
-  const isDirty = username !== (profile?.username ?? '') || selectedAvatar !== (profile?.avatar ?? 'avatar_1')
+  const isDirty = !profile || username !== profile.username || selectedAvatar !== profile.avatar
 
   const handleSave = async () => {
     if (!isDirty) return
@@ -67,8 +67,14 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ username: username.trim(), avatar: selectedAvatar })
-      .eq('id', userId)
+      .upsert({
+        id: userId,
+        username: username.trim(),
+        avatar: selectedAvatar,
+        chip_balance: profile?.chip_balance ?? 10000,
+        games_played: profile?.games_played ?? 0,
+        games_won: profile?.games_won ?? 0,
+      })
 
     setSaving(false)
 
