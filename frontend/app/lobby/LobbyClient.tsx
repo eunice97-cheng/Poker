@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TableList } from '@/components/lobby/TableList'
 import { CreateTableModal } from '@/components/lobby/CreateTableModal'
@@ -25,8 +25,21 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
   const [buyIn, setBuyIn] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
 
   const socket = getSocket(token)
+
+  useEffect(() => {
+    if (socket.connected) setSocketStatus('connected')
+    socket.on('connect', () => setSocketStatus('connected'))
+    socket.on('connect_error', () => setSocketStatus('error'))
+    socket.on('disconnect', () => setSocketStatus('connecting'))
+    return () => {
+      socket.off('connect')
+      socket.off('connect_error')
+      socket.off('disconnect')
+    }
+  }, [socket])
 
   const handleCreateTable = (params: {
     name: string; maxPlayers: number; smallBlind: number
@@ -93,6 +106,18 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
           <div className="flex items-center gap-3">
             <span className="text-3xl">♠</span>
             <h1 className="text-xl font-bold text-white">Poker Room</h1>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className={`w-2 h-2 rounded-full ${
+                socketStatus === 'connected' ? 'bg-green-400' :
+                socketStatus === 'error' ? 'bg-red-400' :
+                'bg-yellow-400 animate-pulse'
+              }`} />
+              <span className="text-gray-500">
+                {socketStatus === 'connected' ? 'Server online' :
+                 socketStatus === 'error' ? 'Server offline' :
+                 'Connecting...'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
