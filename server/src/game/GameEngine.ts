@@ -216,6 +216,16 @@ export class GameEngine {
     // Reset betting round
     this.resetBettingRound()
 
+    // If all remaining non-folded players are all-in, no one can act —
+    // broadcast the new community cards then auto-advance to the next street.
+    const canAct = this.getActivePlayers().filter((p) => !p.folded && !p.allIn)
+    if (canAct.length === 0) {
+      this.broadcastGameState()
+      await new Promise((r) => setTimeout(r, 1500)) // brief pause so players see the cards
+      await this.moveToNextStreet()
+      return
+    }
+
     // Post-flop: first active player left of dealer
     const firstSeat = this.nextActiveSeat(this.state.dealerSeat)
     this.state.currentSeat = firstSeat
