@@ -3,13 +3,19 @@ import { createClient as createUserClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
-const serviceSupabase = createServiceClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
-
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function getServiceSupabase() {
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY
+
+  if (!supabaseUrl || !serviceKey) {
+    return null
+  }
+
+  return createServiceClient(supabaseUrl, serviceKey)
 }
 
 export async function POST(request: Request) {
@@ -32,6 +38,14 @@ export async function POST(request: Request) {
   }
   if (!Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: 'Amount must be greater than 0' }, { status: 400 })
+  }
+
+  const serviceSupabase = getServiceSupabase()
+  if (!serviceSupabase) {
+    return NextResponse.json(
+      { error: 'GM chip grants are not configured. Set SUPABASE_SERVICE_KEY in Vercel.' },
+      { status: 500 }
+    )
   }
 
   let profileQuery = serviceSupabase.from('profiles').select('id, username').limit(1)
