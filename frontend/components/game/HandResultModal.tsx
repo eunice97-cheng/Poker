@@ -7,9 +7,10 @@ import { CardComponent } from './CardComponent'
 interface HandResultModalProps {
   result: HandResult
   onClose: () => void
+  backImage?: string
 }
 
-export function HandResultModal({ result, onClose }: HandResultModalProps) {
+export function HandResultModal({ result, onClose, backImage }: HandResultModalProps) {
   const [countdown, setCountdown] = useState(8)
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
         {result.community.length > 0 && (
           <div className="flex justify-center gap-2 mb-5">
             {result.community.map((card, i) => (
-              <CardComponent key={i} card={card} size="md" />
+              <CardComponent key={i} card={card} size="md" backImage={backImage} />
             ))}
           </div>
         )}
@@ -52,7 +53,7 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
               <div className="flex items-center gap-3">
                 <div className="flex gap-1">
                   {winner.holeCards.map((card, j) => (
-                    <CardComponent key={j} card={card} size="sm" />
+                    <CardComponent key={j} card={card} size="sm" backImage={backImage} />
                   ))}
                 </div>
                 <span className="text-yellow-300 text-sm font-semibold">{winner.handRank}</span>
@@ -73,7 +74,7 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
                     <span className="text-gray-400 text-sm w-24 truncate">{p.username}</span>
                     <div className="flex gap-1">
                       {p.holeCards.map((card, j) => (
-                        <CardComponent key={j} card={card} size="sm" />
+                        <CardComponent key={j} card={card} size="sm" backImage={backImage} />
                       ))}
                     </div>
                   </div>

@@ -8,9 +8,10 @@ interface PlayerSeatProps {
   player: ClientPlayer
   timeLeft?: number
   actionTimeLimit?: number
+  backImage?: string
 }
 
-export function PlayerSeat({ player, timeLeft, actionTimeLimit }: PlayerSeatProps) {
+export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: PlayerSeatProps) {
   const timerPct = actionTimeLimit && timeLeft !== undefined ? (timeLeft / actionTimeLimit) * 100 : 100
   const timerColor = timerPct > 50 ? 'bg-green-500' : timerPct > 20 ? 'bg-yellow-500' : 'bg-red-500'
 
@@ -51,7 +52,7 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit }: PlayerSeatProp
       {player.holeCards.length > 0 && !player.folded && (
         <div className="flex gap-0.5">
           {player.holeCards.map((card, i) => (
-            <CardComponent key={i} card={card} size="sm" />
+            <CardComponent key={i} card={card} size="sm" backImage={backImage} />
           ))}
         </div>
       )}

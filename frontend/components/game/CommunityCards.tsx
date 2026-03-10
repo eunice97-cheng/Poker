@@ -7,6 +7,7 @@ interface CommunityCardsProps {
   cards: string[]
   phase: GamePhase
   pot: number
+  backImage?: string
 }
 
 const phaseLabel: Record<GamePhase, string> = {
@@ -18,7 +19,7 @@ const phaseLabel: Record<GamePhase, string> = {
   showdown: 'Showdown',
 }
 
-export function CommunityCards({ cards, phase, pot }: CommunityCardsProps) {
+export function CommunityCards({ cards, phase, pot, backImage }: CommunityCardsProps) {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="text-gray-400 text-sm font-medium tracking-widest uppercase">
@@ -31,6 +32,7 @@ export function CommunityCards({ cards, phase, pot }: CommunityCardsProps) {
             key={i}
             card={cards[i] ?? ''}
             size="lg"
+            backImage={backImage}
             className={!cards[i] ? 'opacity-20 bg-gray-700 border-gray-600' : ''}
           />
         ))}

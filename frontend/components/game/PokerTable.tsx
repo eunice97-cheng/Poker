@@ -11,6 +11,7 @@ import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { getTableTheme } from '@/lib/table-theme'
+import { getDealerImage, getDeckBackImage } from '@/lib/table-assets'
 
 // ─── Scene geometry (all px) ─────────────────────────────────────────────────
 // Scene: 800 × 520 px
@@ -28,14 +29,6 @@ const OCY = 295   // oval centre y
 
 const PAD_X = 16
 const PAD_Y = 16
-
-function getDealerImage(bigBlind: number) {
-  if (bigBlind === 10 || bigBlind === 20) return '/Eunice1.png'
-  if (bigBlind === 50 || bigBlind === 100) return '/Eunice2.png'
-  if (bigBlind === 200) return '/Eunice3.png'
-  if (bigBlind === 500) return '/Eunice4.png'
-  return '/Eunice1.png'
-}
 
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
@@ -106,6 +99,7 @@ export function PokerTable({
   const isObserver = !me && observers.some(o => o.playerId === gameState.myPlayerId)
   const isMyTurn = me?.isCurrentTurn ?? false
   const dealerImage = getDealerImage(gameState.bigBlind)
+  const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const theme = getTableTheme(gameState.bigBlind)
 
   // Dealer speech bubble — latest action log, fades after 3.5 s
@@ -218,9 +212,9 @@ export function PokerTable({
               height: OH + 'px',
             }}
           >
-            <div className="absolute inset-[4px] rounded-[50%] bg-gradient-to-b from-amber-700/40 to-transparent" />
+            <div className={`absolute inset-[4px] rounded-[50%] ${theme.feltRailInsetClass}`} />
             <div className={`absolute inset-[12px] rounded-[50%] ${theme.feltSurfaceClass}`}>
-              <div className="absolute inset-4 rounded-[50%] border border-felt-light/20" />
+              <div className={`absolute inset-4 rounded-[50%] border ${theme.feltInnerRingClass}`} />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                 {countdown !== null && gameState.phase === 'waiting' && (
                   <div className="text-white text-base font-bold animate-pulse">
@@ -231,7 +225,7 @@ export function PokerTable({
                   <div className="text-gray-300 text-sm">Waiting for players…</div>
                 )}
                 {gameState.phase !== 'waiting' && (
-                  <CommunityCards cards={gameState.community} phase={gameState.phase} pot={gameState.pot} />
+                  <CommunityCards cards={gameState.community} phase={gameState.phase} pot={gameState.pot} backImage={deckBackImage} />
                 )}
               </div>
             </div>
@@ -247,6 +241,7 @@ export function PokerTable({
                   player={player}
                   timeLeft={isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
                   actionTimeLimit={30}
+                  backImage={deckBackImage}
                 />
               </div>
             )
@@ -318,7 +313,7 @@ export function PokerTable({
 
       {/* ── Hand result overlay ── */}
       {handResult && (
-        <HandResultModal result={handResult} onClose={clearHandResult} />
+        <HandResultModal result={handResult} onClose={clearHandResult} backImage={deckBackImage} />
       )}
     </div>
   )

@@ -1,9 +1,12 @@
 'use client'
 
+import Image from 'next/image'
+
 interface CardProps {
   card: string   // e.g. 'Ah', 'Kd', '??' for hidden
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  backImage?: string
 }
 
 const suitSymbols: Record<string, string> = { h: '♥', d: '♦', c: '♣', s: '♠' }
@@ -15,11 +18,23 @@ const sizeClasses = {
   lg: 'w-16 h-24 text-lg',
 }
 
-export function CardComponent({ card, size = 'md', className = '' }: CardProps) {
+export function CardComponent({ card, size = 'md', className = '', backImage }: CardProps) {
   if (card === '??') {
     return (
-      <div className={`${sizeClasses[size]} ${className} bg-blue-800 border-2 border-blue-600 rounded-lg flex items-center justify-center shadow-lg`}>
-        <span className="text-blue-400 text-xl font-bold">?</span>
+      <div className={`${sizeClasses[size]} ${className} relative overflow-hidden bg-blue-800 border-2 border-blue-600 rounded-lg flex items-center justify-center shadow-lg`}>
+        {backImage ? (
+          <Image
+            src={backImage}
+            alt="Card back"
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
+        ) : null}
+        <div className={`absolute inset-0 ${backImage ? 'bg-black/10' : 'bg-blue-900/30'}`} />
+        {!backImage ? (
+          <span className="relative z-10 text-blue-100 text-xl font-bold">?</span>
+        ) : null}
       </div>
     )
   }
