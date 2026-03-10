@@ -146,6 +146,10 @@ export class GameRoom {
     }, 60_000)
   }
 
+  tryStart() {
+    this.maybeScheduleStart()
+  }
+
   private maybeScheduleStart() {
     if (this.state.phase !== 'waiting') return
     if (this.state.players.size < MIN_PLAYERS_TO_START) return

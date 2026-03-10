@@ -28,17 +28,22 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
     clearHandResult,
   } = useGameState(socket, tableId)
 
-  useEffect(() => {
-    if (!socket || !connected) return
-    // Socket connected — reconnect_to_table is handled inside useGameState
-  }, [socket, connected])
-
   const handleLeave = () => {
     if (!socket || leaving) return
     setLeaving(true)
     socket.emit('leave_table', {}, () => {
       router.push('/lobby')
     })
+  }
+
+  const handleSitOut = () => {
+    if (!socket) return
+    socket.emit('sit_out', {})
+  }
+
+  const handleSitIn = () => {
+    if (!socket) return
+    socket.emit('sit_in', {})
   }
 
   // Busted: server removed us from the table
@@ -85,6 +90,8 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
       onAction={sendAction}
       onChat={sendChat}
       onLeave={handleLeave}
+      onSitOut={handleSitOut}
+      onSitIn={handleSitIn}
       clearHandResult={clearHandResult}
     />
   )

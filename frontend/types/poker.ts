@@ -41,6 +41,7 @@ export interface GameState {
   minRaise: number
   callAmount: number
   handNumber: number
+  myHandRank: string
   myPlayerId: string
   validActions: PlayerAction[]
 }
@@ -88,6 +89,7 @@ export interface ChatMessage {
   username: string
   text: string
   timestamp: string
+  isSystem?: boolean
 }
 
 export interface ActionRequired {

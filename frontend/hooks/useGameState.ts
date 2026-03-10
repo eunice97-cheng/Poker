@@ -34,6 +34,16 @@ export function useGameState(socket: Socket | null, tableId: string) {
       setMessages((prev) => [...prev.slice(-99), msg])
     }
 
+    const onActionLog = (data: { message: string }) => {
+      setMessages((prev) => [...prev.slice(-99), {
+        playerId: 'system',
+        username: '',
+        text: data.message,
+        timestamp: new Date().toISOString(),
+        isSystem: true,
+      }])
+    }
+
     const onGameStarting = (data: { countdown: number }) => {
       setCountdown(data.countdown)
     }
@@ -42,6 +52,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
     socket.on('hand_result', onHandResult)
     socket.on('action_required', onActionRequired)
     socket.on('chat_message', onChatMessage)
+    socket.on('action_log', onActionLog)
     socket.on('game_starting', onGameStarting)
 
     // Try to reconnect to table if already in it
@@ -52,6 +63,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
       socket.off('hand_result', onHandResult)
       socket.off('action_required', onActionRequired)
       socket.off('chat_message', onChatMessage)
+      socket.off('action_log', onActionLog)
       socket.off('game_starting', onGameStarting)
     }
   }, [socket, tableId])

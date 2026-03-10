@@ -1,8 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { HandResult } from '@/types/poker'
 import { CardComponent } from './CardComponent'
-import { Button } from '@/components/ui/Button'
 
 interface HandResultModalProps {
   result: HandResult
@@ -10,12 +10,27 @@ interface HandResultModalProps {
 }
 
 export function HandResultModal({ result, onClose }: HandResultModalProps) {
+  const [countdown, setCountdown] = useState(8)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { onClose(); return 0 }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [onClose])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="bg-gray-900 border border-yellow-500/40 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
-        <h2 className="text-2xl font-bold text-yellow-400 text-center mb-4">
-          {result.winners.length === 1 ? 'Winner!' : 'Split Pot!'}
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-yellow-400">
+            {result.winners.length === 1 ? 'Winner!' : 'Split Pot!'}
+          </h2>
+          <span className="text-gray-500 text-sm">Closing in {countdown}s</span>
+        </div>
 
         {/* Community Cards */}
         {result.community.length > 0 && (
@@ -32,7 +47,7 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
             <div key={i} className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white font-bold text-lg">{winner.username}</span>
-                <span className="text-yellow-400 font-bold">+{winner.amount.toLocaleString()}</span>
+                <span className="text-yellow-400 font-bold text-lg">+{winner.amount.toLocaleString()}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex gap-1">
@@ -40,13 +55,13 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
                     <CardComponent key={j} card={card} size="sm" />
                   ))}
                 </div>
-                <span className="text-gray-400 text-sm">{winner.handRank}</span>
+                <span className="text-yellow-300 text-sm font-semibold">{winner.handRank}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* All hole cards (non-winners) */}
+        {/* Other hands shown at showdown */}
         {result.allHoleCards.filter(p => !result.winners.find(w => w.playerId === p.playerId)).length > 0 && (
           <div className="border-t border-gray-700 pt-4 mb-5">
             <p className="text-gray-500 text-xs mb-3 uppercase tracking-wider">Other Hands</p>
@@ -67,9 +82,12 @@ export function HandResultModal({ result, onClose }: HandResultModalProps) {
           </div>
         )}
 
-        <Button variant="primary" className="w-full" onClick={onClose}>
+        <button
+          onClick={onClose}
+          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-xl transition-colors"
+        >
           Continue
-        </Button>
+        </button>
       </div>
     </div>
   )

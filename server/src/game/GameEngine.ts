@@ -92,24 +92,29 @@ export class GameEngine {
 
     this.clearActionTimer()
 
+    let actionMsg = ''
+
     switch (action) {
       case 'fold':
         player.folded = true
         player.hasActed = true
+        actionMsg = `${player.username} folds`
         break
 
       case 'check':
         player.hasActed = true
+        actionMsg = `${player.username} checks`
         break
 
       case 'call': {
         const callAmount = getCallAmount(player, this.state)
         if (callAmount >= player.stack) {
-          // calling puts them all in
           this.applyBet(player, player.stack)
           player.allIn = true
+          actionMsg = `${player.username} calls ${player.stack.toLocaleString()} (all in)`
         } else {
           this.applyBet(player, callAmount)
+          actionMsg = `${player.username} calls ${callAmount.toLocaleString()}`
         }
         player.hasActed = true
         break
@@ -121,12 +126,13 @@ export class GameEngine {
         if (raiseBy >= player.stack) {
           this.applyBet(player, player.stack)
           player.allIn = true
+          actionMsg = `${player.username} raises all in (${(player.currentBet).toLocaleString()})`
         } else {
           this.state.lastRaiseAmount = raiseTotal - this.state.currentBetLevel
           this.state.currentBetLevel = raiseTotal
           this.applyBet(player, raiseBy)
-          // Re-open action: other players who already acted can re-raise
           this.reopenBetting(seat)
+          actionMsg = `${player.username} raises to ${raiseTotal.toLocaleString()}`
         }
         player.hasActed = true
         break
@@ -143,8 +149,13 @@ export class GameEngine {
         this.applyBet(player, allInAmount)
         player.allIn = true
         player.hasActed = true
+        actionMsg = `${player.username} goes ALL IN — ${newTotal.toLocaleString()}`
         break
       }
+    }
+
+    if (actionMsg) {
+      this.io.to(this.state.tableId).emit('action_log', { message: actionMsg })
     }
 
     this.broadcastGameState()
@@ -465,6 +476,20 @@ export class GameEngine {
       const sbSeat = this.getSBSeat()
       const bbSeat = this.getBBSeat()
 
+      // Evaluate current hand strength for this player
+      let myHandRank = ''
+      if (player.holeCards.length === 2 && this.state.community.length >= 3) {
+        try {
+          const evaluated = evaluateHands(
+            [{ playerId: player.playerId, username: player.username, holeCards: player.holeCards }],
+            this.state.community
+          )
+          if (evaluated.length > 0) myHandRank = evaluated[0].rank
+        } catch {
+          // pokersolver can throw on incomplete hands
+        }
+      }
+
       const clientPlayers = Array.from(this.state.players.entries()).map(([s, p]) => ({
         playerId: p.playerId,
         username: p.username,
@@ -505,6 +530,7 @@ export class GameEngine {
         handNumber: this.state.handNumber,
         myPlayerId: player.playerId,
         validActions,
+        myHandRank,
       }
 
       this.io.to(player.socketId).emit('game_state', gameState)

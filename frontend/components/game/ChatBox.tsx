@@ -38,10 +38,16 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
         <>
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 text-sm">
             {messages.map((msg, i) => (
-              <div key={i} className={msg.playerId === myPlayerId ? 'text-yellow-300' : 'text-gray-300'}>
-                <span className="font-semibold">{msg.username}: </span>
-                <span>{msg.text}</span>
-              </div>
+              msg.isSystem ? (
+                <div key={i} className="text-gray-500 italic text-xs py-0.5">
+                  {msg.text}
+                </div>
+              ) : (
+                <div key={i} className={msg.playerId === myPlayerId ? 'text-yellow-300' : 'text-gray-300'}>
+                  <span className="font-semibold">{msg.username}: </span>
+                  <span>{msg.text}</span>
+                </div>
+              )
             ))}
             <div ref={bottomRef} />
           </div>

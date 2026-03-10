@@ -63,6 +63,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
       room.addPlayer(player)
       room.engine.broadcastGameState()
+      io.to(tableInfo.id).emit('action_log', { message: `${socket.username} joined the game` })
 
       io.emit('table_created', { tableId: tableInfo.id })
       callback?.({ tableId: tableInfo.id, seat: 0, stack: buyIn, balance: balanceAfter })
@@ -114,6 +115,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       }
 
       room.addPlayer(player)
+      io.to(tableId).emit('action_log', { message: `${socket.username} joined the game` })
 
       io.to(tableId).emit('player_joined', {
         playerId: socket.userId,
@@ -142,6 +144,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const cashout = player.stack + player.currentBet
       room.removePlayer(socket.id)
 
+      io.to(room.tableId).emit('action_log', { message: `${player.username} left the room` })
       io.to(room.tableId).emit('player_left', {
         playerId: player.playerId,
         username: player.username,
