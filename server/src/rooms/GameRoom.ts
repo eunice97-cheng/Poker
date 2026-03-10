@@ -129,20 +129,21 @@ export class GameRoom {
     this.engine.broadcastGameState()
   }
 
-  handleDisconnect(socketId: string) {
+  handleDisconnect(socketId: string, onTimeout?: (player: ServerPlayer) => Promise<void>) {
     const player = this.getPlayerBySocketId(socketId)
     if (!player) return
 
     player.isConnected = false
 
-    // Give 60 seconds to reconnect before auto-folding and cashing out
-    player.reconnectTimer = setTimeout(() => {
+    // Give 60 seconds to reconnect before cashing out and removing
+    player.reconnectTimer = setTimeout(async () => {
       this.io.to(this.tableId).emit('player_left', {
         playerId: player.playerId,
         username: player.username,
         reason: 'disconnected',
       })
       this.removePlayer(socketId)
+      await onTimeout?.(player)
     }, 60_000)
   }
 

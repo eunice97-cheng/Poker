@@ -58,12 +58,26 @@ export function registerConnectionHandler(io: Server) {
         }
       } else {
         // Mid-hand: mark as disconnected, give 60s to reconnect
-        room.handleDisconnect(socket.id)
         io.to(room.tableId).emit('player_disconnected', {
           playerId: player.playerId,
           username: player.username,
         })
         room.engine.broadcastGameState()
+
+        room.handleDisconnect(socket.id, async (removedPlayer) => {
+          // Cashout remaining chips to their profile
+          if (removedPlayer.stack > 0) {
+            await supabaseService.addChips(removedPlayer.playerId, room.tableId, removedPlayer.stack, 'cashout').catch(console.error)
+          }
+          await supabaseService.removeTablePlayer(room.tableId, removedPlayer.playerId).catch(console.error)
+
+          // Clean up room if no real players remain
+          const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
+          if (realPlayers.length === 0) {
+            await supabaseService.deleteTable(room.tableId).catch(console.error)
+            roomManager.deleteRoom(room.tableId)
+          }
+        })
       }
     })
   })

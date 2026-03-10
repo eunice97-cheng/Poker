@@ -340,6 +340,13 @@ export class GameEngine {
       }
     }
 
+    // If no real players remain after busts, delete the table — no next hand needed
+    const realPlayersLeft = Array.from(this.state.players.values()).filter(p => !p.isBot)
+    if (realPlayersLeft.length === 0) {
+      await supabaseService.deleteTable(this.state.tableId).catch(console.error)
+      return
+    }
+
     // Schedule next hand
     setTimeout(() => {
       this.startHand().catch(console.error)
