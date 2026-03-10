@@ -13,6 +13,7 @@ import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import Link from 'next/link'
+import { buildLobbyInvite, shareInvite } from '@/lib/invite'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -29,6 +30,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   const [buyIn, setBuyIn] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
   const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
   const [socketError, setSocketError] = useState('')
 
@@ -93,6 +95,16 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
     router.push('/auth/login')
   }
 
+  const handleInvite = async () => {
+    try {
+      await shareInvite(buildLobbyInvite(), process.env.NEXT_PUBLIC_DISCORD_URL)
+      setInviteLabel('done')
+      setTimeout(() => setInviteLabel('idle'), 2000)
+    } catch {
+      alert('Could not copy the invite. Please try again.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
@@ -138,18 +150,14 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
               )}
             </button>
             <AudioControls />
-            {process.env.NEXT_PUBLIC_DISCORD_URL && (
-              <a
-                href={process.env.NEXT_PUBLIC_DISCORD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                title="Join our Discord"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                Discord
-              </a>
-            )}
+            <button
+              onClick={handleInvite}
+              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+              title="Copy invite and open Discord"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+              {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+            </button>
             {isAdmin && (
               <Link
                 href="/gm"

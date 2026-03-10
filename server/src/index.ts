@@ -67,11 +67,32 @@ app.get('/tables', (_, res) => {
   res.json(tables)
 })
 
+async function reconcileLobbyTables() {
+  const rooms = roomManager.getAllRooms()
+  const activeRoomIds = new Set(rooms.map((room) => room.tableId))
+
+  const dbTables = await supabaseService.listTables()
+
+  for (const table of dbTables) {
+    if (!activeRoomIds.has(table.id)) {
+      await supabaseService.deleteTable(table.id).catch(console.error)
+    }
+  }
+
+  for (const room of rooms) {
+    const status = room.state.phase === 'waiting' ? 'waiting' : 'playing'
+    await supabaseService
+      .updateTableStatus(room.tableId, status, room.getPlayerCount())
+      .catch(console.error)
+  }
+}
+
 httpServer.listen(PORT, () => {
   console.log(`[Server] Poker game server running on port ${PORT}`)
   // Clean up any dev tables left over from a previous server session
   supabaseService.cleanupDevTables().catch(console.error)
   supabaseService.cleanupOrphanedTables().catch(console.error)
+  reconcileLobbyTables().catch(console.error)
   // Award daily chips on startup (catch any players who qualified while server was down)
   supabaseService.awardDailyChips().catch(console.error)
 })
@@ -80,3 +101,8 @@ httpServer.listen(PORT, () => {
 setInterval(() => {
   supabaseService.awardDailyChips().catch(console.error)
 }, 10 * 60 * 1000)
+
+// Keep Supabase lobby rows aligned with live in-memory rooms.
+setInterval(() => {
+  reconcileLobbyTables().catch(console.error)
+}, 30 * 1000)

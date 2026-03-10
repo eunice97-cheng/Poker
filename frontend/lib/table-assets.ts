@@ -13,3 +13,11 @@ export function getDeckBackImage(bigBlind: number) {
   if (bigBlind === 500) return '/decks/Deck4.png'
   return '/decks/Deck1.png'
 }
+
+export function getTableImage(bigBlind: number) {
+  if (bigBlind === 10 || bigBlind === 20) return '/tables/Table1.png'
+  if (bigBlind === 50 || bigBlind === 100) return '/tables/Table2.png'
+  if (bigBlind === 200) return '/tables/Table3.png'
+  if (bigBlind === 500) return '/tables/Table4.png'
+  return '/tables/Table1.png'
+}

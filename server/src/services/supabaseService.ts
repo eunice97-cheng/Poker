@@ -55,6 +55,15 @@ export const supabaseService = {
       .eq('id', tableId)
   },
 
+  async listTables() {
+    const { data, error } = await supabase
+      .from('tables')
+      .select('id, status, player_count')
+
+    if (error) throw new Error(`Failed to list tables: ${error.message}`)
+    return data ?? []
+  },
+
   async deleteTable(tableId: string) {
     await supabase.from('tables').delete().eq('id', tableId)
   },
@@ -175,7 +184,7 @@ export const supabaseService = {
   },
 
   async cleanupOrphanedTables() {
-    // Delete tables with 0 players that are older than 5 minutes (orphaned from crashes)
+    // Delete empty tables that have been abandoned for a while after crashes/disconnects.
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     await supabase
       .from('tables')

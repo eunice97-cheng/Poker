@@ -1,30 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient as createUserClient } from '@/lib/supabase/server'
-import { isAdminEmail } from '@/lib/admin'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { getAdminUser, getServiceSupabase } from '@/lib/admin-server'
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
-function getServiceSupabase() {
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY
-
-  if (!supabaseUrl || !serviceKey) {
-    return null
-  }
-
-  return createServiceClient(supabaseUrl, serviceKey)
-}
-
 export async function POST(request: Request) {
-  const supabase = createUserClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAdminUser()
 
-  if (!user || !isAdminEmail(user.email)) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
