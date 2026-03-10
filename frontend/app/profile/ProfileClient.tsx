@@ -117,18 +117,18 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
           {/* Avatar Picker */}
           {showAvatarPicker && (
             <div className="mb-6 p-4 bg-gray-800/60 rounded-xl border border-gray-700">
-              <p className="text-gray-400 text-sm mb-3">Choose your avatar</p>
-              <div className="grid grid-cols-6 gap-3">
+              <p className="text-gray-400 text-sm mb-4">Choose your avatar</p>
+              <div className="grid grid-cols-4 gap-4">
                 {AVATARS.map((avatar) => (
                   <button
                     key={avatar.id}
                     onClick={() => { setSelectedAvatar(avatar.id); setShowAvatarPicker(false) }}
                     title={avatar.label}
-                    className={`relative rounded-full transition-all hover:scale-110 ${
-                      selectedAvatar === avatar.id ? 'ring-2 ring-yellow-400 scale-110' : ''
+                    className={`rounded-lg transition-all hover:scale-105 ${
+                      selectedAvatar === avatar.id ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-gray-800 scale-105' : ''
                     }`}
                   >
-                    <AvatarDisplay avatarId={avatar.id} size="md" />
+                    <AvatarDisplay avatarId={avatar.id} size="lg" />
                   </button>
                 ))}
               </div>
