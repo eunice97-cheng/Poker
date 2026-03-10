@@ -30,7 +30,7 @@ export function AvatarDisplay({ avatarId, size = 'md', className = '' }: AvatarD
     <div
       className={`
         ${sizeClasses[size]}
-        rounded-full overflow-hidden border-2 border-gray-600
+        rounded-lg overflow-hidden border-2 border-gray-600
         flex-shrink-0 bg-gray-800
         select-none transition-all
         ${className}
