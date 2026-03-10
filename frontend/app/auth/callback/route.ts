@@ -8,8 +8,27 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && data.session) {
+      const user = data.session.user
+      const username =
+        user.user_metadata?.username ??
+        user.email?.split('@')[0] ??
+        'Player'
+
+      // Create profile if the trigger didn't (ignoreDuplicates so we don't overwrite existing)
+      await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          username,
+          chip_balance: 10000,
+          games_played: 0,
+          games_won: 0,
+          avatar: 'avatar_1',
+        },
+        { onConflict: 'id', ignoreDuplicates: true }
+      )
+
       return NextResponse.redirect(`${origin}/auth/login?verified=true`)
     }
   }
