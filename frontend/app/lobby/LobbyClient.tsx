@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { getTableTheme } from '@/lib/table-theme'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -30,6 +31,7 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
   const [socketError, setSocketError] = useState('')
 
   const socket = getSocket(token)
+  const joinTheme = getTableTheme(joinModal?.big_blind ?? 10)
 
   useEffect(() => {
     if (socket.connected) setSocketStatus('connected')
@@ -197,13 +199,13 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
         title={`Join ${joinModal?.name ?? 'Table'}`}
       >
         {joinModal && (
-          <div className="space-y-4">
+          <div className={`space-y-4 rounded-xl border p-1 ${joinTheme.lobbyCardClass}`}>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-gray-800 rounded-lg p-3">
+              <div className={`${joinTheme.lobbyPanelClass} rounded-lg p-3`}>
                 <div className="text-gray-500">Blinds</div>
-                <div className="text-white font-bold">{joinModal.small_blind}/{joinModal.big_blind}</div>
+                <div className={`font-bold ${joinTheme.lobbyAccentClass}`}>{joinModal.small_blind}/{joinModal.big_blind}</div>
               </div>
-              <div className="bg-gray-800 rounded-lg p-3">
+              <div className={`${joinTheme.lobbyPanelClass} rounded-lg p-3`}>
                 <div className="text-gray-500">Buy-in Range</div>
                 <div className="text-white font-bold">{joinModal.min_buyin.toLocaleString()}–{joinModal.max_buyin.toLocaleString()}</div>
               </div>

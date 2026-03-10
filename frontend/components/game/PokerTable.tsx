@@ -10,6 +10,7 @@ import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
+import { getTableTheme } from '@/lib/table-theme'
 
 // ─── Scene geometry (all px) ─────────────────────────────────────────────────
 // Scene: 800 × 520 px
@@ -27,6 +28,14 @@ const OCY = 295   // oval centre y
 
 const PAD_X = 16
 const PAD_Y = 16
+
+function getDealerImage(bigBlind: number) {
+  if (bigBlind === 10 || bigBlind === 20) return '/Eunice1.png'
+  if (bigBlind === 50 || bigBlind === 100) return '/Eunice2.png'
+  if (bigBlind === 200) return '/Eunice3.png'
+  if (bigBlind === 500) return '/Eunice4.png'
+  return '/Eunice1.png'
+}
 
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
@@ -96,6 +105,8 @@ export function PokerTable({
   const observers: ClientObserver[] = gameState.observers ?? []
   const isObserver = !me && observers.some(o => o.playerId === gameState.myPlayerId)
   const isMyTurn = me?.isCurrentTurn ?? false
+  const dealerImage = getDealerImage(gameState.bigBlind)
+  const theme = getTableTheme(gameState.bigBlind)
 
   // Dealer speech bubble — latest action log, fades after 3.5 s
   const [dealerSpeech, setDealerSpeech] = useState('')
@@ -108,14 +119,17 @@ export function PokerTable({
   }, [actionLogs])
 
   return (
-    <div className="relative w-full h-screen bg-gray-950 overflow-hidden flex flex-col">
+    <div className={`relative w-full h-screen overflow-hidden flex flex-col ${theme.sceneClass}`}>
 
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 z-10 flex-shrink-0">
+      <div className={`flex items-center justify-between px-4 py-3 z-10 flex-shrink-0 ${theme.topBarClass}`}>
         <div className="text-white font-bold">{gameState.tableName}</div>
         <div className="flex items-center gap-4 text-sm text-gray-400">
           <span>Hand #{gameState.handNumber}</span>
-          <span>{gameState.smallBlind}/{gameState.bigBlind}</span>
+          <span className="text-white/90">{gameState.smallBlind}/{gameState.bigBlind}</span>
+          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+            {theme.tier}
+          </span>
           {me && <span className="text-yellow-400 font-bold">{me.stack.toLocaleString()} chips</span>}
           {isObserver && <span className="text-gray-500 text-xs">Watching</span>}
         </div>
@@ -160,8 +174,9 @@ export function PokerTable({
             className="absolute z-30 flex flex-col items-center"
             style={{ top: 0, left: '50%', transform: 'translateX(-50%)' }}
           >
+            <div className={`absolute top-5 h-20 w-20 rounded-full blur-2xl ${theme.dealerGlowClass}`} />
             <Image
-              src="/Eunice1.png"
+              src={dealerImage}
               alt="Dealer"
               width={108}
               height={144}
@@ -195,7 +210,7 @@ export function PokerTable({
 
           {/* ── Felt oval ── */}
           <div
-            className="absolute rounded-[50%] bg-amber-950 shadow-[0_0_80px_rgba(0,0,0,0.9)]"
+            className={`absolute rounded-[50%] ${theme.feltRailClass}`}
             style={{
               left:   (OCX - OW / 2) + 'px',
               top:    (OCY - OH / 2) + 'px',
@@ -204,7 +219,7 @@ export function PokerTable({
             }}
           >
             <div className="absolute inset-[4px] rounded-[50%] bg-gradient-to-b from-amber-700/40 to-transparent" />
-            <div className="absolute inset-[12px] rounded-[50%] bg-felt">
+            <div className={`absolute inset-[12px] rounded-[50%] ${theme.feltSurfaceClass}`}>
               <div className="absolute inset-4 rounded-[50%] border border-felt-light/20" />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                 {countdown !== null && gameState.phase === 'waiting' && (
@@ -244,7 +259,7 @@ export function PokerTable({
               {observers.map((obs) => (
                 <div
                   key={obs.playerId}
-                  className="flex items-center gap-1.5 bg-gray-900/80 border border-gray-700 rounded-lg px-2 py-1"
+                  className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 ${theme.sidePanelClass}`}
                 >
                   <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
                   <div>
@@ -260,7 +275,7 @@ export function PokerTable({
       </div>
 
       {/* ── Action bar ── */}
-      <div className="flex-shrink-0 flex items-center justify-center py-3 px-4 bg-gray-900/80 border-t border-gray-800 min-h-[76px] z-20 gap-4">
+      <div className={`flex-shrink-0 flex items-center justify-center py-3 px-4 min-h-[76px] z-20 gap-4 ${theme.actionBarClass}`}>
         {gameState.myHandRank && gameState.phase !== 'waiting' && (
           <div className="text-center hidden sm:block">
             <div className="text-yellow-400 text-xs font-bold uppercase tracking-wide">{gameState.myHandRank}</div>

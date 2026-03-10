@@ -134,7 +134,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
             <div>
               <p className="text-gray-400 text-sm mb-3">Choose your avatar</p>
               <div className="grid grid-cols-4 gap-4 justify-items-center">
-                {[1, 2, 3, 4, 5, 6].map((n) => {
+                {Array.from({ length: 12 }, (_, index) => index + 1).map((n) => {
                   const male = AVATARS.find((a) => a.id === `avatar_m${n}`)!
                   const female = AVATARS.find((a) => a.id === `avatar_f${n}`)!
                   return [male, female].map((avatar) => (

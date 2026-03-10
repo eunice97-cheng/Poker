@@ -4,7 +4,7 @@
 
 export function FloatingButtons() {
   return (
-    <div className="fixed bottom-5 right-5 flex flex-col items-end gap-3 z-[9999] select-none">
+    <div className="fixed top-20 right-4 md:top-24 md:right-5 flex flex-col items-end gap-3 z-[9999] select-none">
 
       {/* Discord DM */}
       <a
