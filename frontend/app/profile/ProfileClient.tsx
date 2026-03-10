@@ -133,11 +133,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
             {/* Avatar Picker */}
             <div>
               <p className="text-gray-400 text-sm mb-3">Choose your avatar</p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <p className="text-gray-500 text-xs text-center">Male</p>
-                <p className="text-gray-500 text-xs text-center">Female</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-4 gap-4 justify-items-center">
                 {[1, 2, 3, 4, 5, 6].map((n) => {
                   const male = AVATARS.find((a) => a.id === `avatar_m${n}`)!
                   const female = AVATARS.find((a) => a.id === `avatar_f${n}`)!
@@ -152,7 +148,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
                           : 'opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <AvatarDisplay avatarId={avatar.id} size="2xl" className="w-full" />
+                      <AvatarDisplay avatarId={avatar.id} size="2xl" />
                     </button>
                   ))
                 })}
