@@ -78,7 +78,7 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
             >
-              {[2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              {[2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>{n} players</option>
               ))}
             </select>

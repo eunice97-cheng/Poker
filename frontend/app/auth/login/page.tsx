@@ -7,7 +7,7 @@ export default function LoginPage({ searchParams }: { searchParams: { verified?:
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="text-6xl mb-3">♠</div>
-          <h1 className="text-3xl font-bold text-white">Poker Room</h1>
+          <h1 className="text-3xl font-bold text-white">ASL Basement Poker</h1>
           <p className="text-gray-500 mt-2">Sign in to play Texas Hold&apos;em</p>
         </div>
 

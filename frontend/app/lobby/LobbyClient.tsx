@@ -10,6 +10,7 @@ import { getSocket } from '@/lib/socket'
 import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
+import { AudioControls } from '@/components/ui/AudioControls'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -106,7 +107,7 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl">♠</span>
-            <h1 className="text-xl font-bold text-white">Poker Room</h1>
+            <h1 className="text-xl font-bold text-white">ASL Basement Poker</h1>
             <div className="flex items-center gap-1.5 text-xs">
               <span className={`w-2 h-2 rounded-full ${
                 socketStatus === 'connected' ? 'bg-green-400' :
@@ -143,6 +144,7 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
                 </div>
               )}
             </button>
+            <AudioControls />
             <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
           </div>
         </div>

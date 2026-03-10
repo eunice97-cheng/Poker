@@ -39,6 +39,7 @@ class RoomManager {
   getRoomBySocketId(socketId: string): GameRoom | null {
     for (const room of this.rooms.values()) {
       if (room.getPlayerBySocketId(socketId)) return room
+      if (room.getObserverBySocketId(socketId)) return room
     }
     return null
   }

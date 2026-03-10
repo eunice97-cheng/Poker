@@ -138,6 +138,31 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const room = roomManager.getRoomBySocketId(socket.id)
       if (!room) return callback?.({ error: 'Not at a table' })
 
+      // Handle observer leaving
+      const observer = room.getObserverBySocketId(socket.id)
+      if (observer) {
+        room.removeObserver(observer.playerId)
+        const cashout = observer.stack
+        io.to(room.tableId).emit('action_log', { message: `${observer.username} left the room` })
+        room.engine.broadcastGameState()
+        if (cashout > 0) {
+          const balanceAfter = await supabaseService.addChips(socket.userId, room.tableId, cashout, 'cashout')
+          await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          callback?.({ cashout, balance: balanceAfter })
+        } else {
+          await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          callback?.({ cashout: 0 })
+        }
+        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
+        const hasObservers = room.state.observers.size > 0
+        if (realPlayers.length === 0 && !hasObservers) {
+          await supabaseService.deleteTable(room.tableId)
+          roomManager.deleteRoom(room.tableId)
+        }
+        return
+      }
+
+      // Handle seated player leaving
       const player = room.getPlayerBySocketId(socket.id)
       if (!player) return callback?.({ error: 'Player not found' })
 
@@ -162,9 +187,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         callback?.({ cashout: 0 })
       }
 
-      // Clean up when no real players remain (bots-only or empty)
       const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-      if (realPlayers.length === 0) {
+      const hasObservers = room.state.observers.size > 0
+      if (realPlayers.length === 0 && !hasObservers) {
         await supabaseService.deleteTable(room.tableId)
         roomManager.deleteRoom(room.tableId)
       }

@@ -1,5 +1,5 @@
 import { Server } from 'socket.io'
-import { ServerGameState, ServerPlayer, TableInfo } from '../types/game'
+import { ServerGameState, ServerPlayer, ServerObserver, TableInfo } from '../types/game'
 import { GameEngine } from '../game/GameEngine'
 
 const MIN_PLAYERS_TO_START = 2
@@ -32,6 +32,7 @@ export class GameRoom {
       sidePots: [],
       players: new Map(),
       socketToSeat: new Map(),
+      observers: new Map(),
       dealerSeat: -1,
       currentSeat: -1,
       currentBetLevel: 0,
@@ -63,7 +64,7 @@ export class GameRoom {
     for (const p of this.state.players.values()) {
       if (p.playerId === playerId) return true
     }
-    return false
+    return this.state.observers.has(playerId)
   }
 
   addPlayer(player: ServerPlayer) {
@@ -108,6 +109,29 @@ export class GameRoom {
       if (p.playerId === playerId) return p
     }
     return null
+  }
+
+  hasObserver(playerId: string): boolean {
+    return this.state.observers.has(playerId)
+  }
+
+  getObserverBySocketId(socketId: string): ServerObserver | null {
+    for (const obs of this.state.observers.values()) {
+      if (obs.socketId === socketId) return obs
+    }
+    return null
+  }
+
+  addObserver(observer: ServerObserver) {
+    this.state.observers.set(observer.playerId, observer)
+    // Observer stays in the socket room to receive game state
+  }
+
+  removeObserver(playerId: string): ServerObserver | null {
+    const obs = this.state.observers.get(playerId)
+    if (!obs) return null
+    this.state.observers.delete(playerId)
+    return obs
   }
 
   reconnectPlayer(oldSocketId: string, newSocketId: string) {

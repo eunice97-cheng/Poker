@@ -71,4 +71,12 @@ httpServer.listen(PORT, () => {
   console.log(`[Server] Poker game server running on port ${PORT}`)
   // Clean up any dev tables left over from a previous server session
   supabaseService.cleanupDevTables().catch(console.error)
+  supabaseService.cleanupOrphanedTables().catch(console.error)
+  // Award daily chips on startup (catch any players who qualified while server was down)
+  supabaseService.awardDailyChips().catch(console.error)
 })
+
+// Check for daily chip awards every 10 minutes
+setInterval(() => {
+  supabaseService.awardDailyChips().catch(console.error)
+}, 10 * 60 * 1000)

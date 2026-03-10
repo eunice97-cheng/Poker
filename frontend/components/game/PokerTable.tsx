@@ -2,43 +2,32 @@
 
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { GameState, HandResult, ChatMessage } from '@/types/poker'
+import { GameState, HandResult, ChatMessage, ClientObserver } from '@/types/poker'
 import { PlayerSeat } from './PlayerSeat'
 import { CommunityCards } from './CommunityCards'
 import { ActionPanel } from './ActionPanel'
 import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
+import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 
 // ─── Scene geometry (all px) ─────────────────────────────────────────────────
-// Scene: 728 × 500 px
-// Oval (rail outer edge): cx=364, cy=310, rx=325, ry=117  → 2.78:1 ratio
-// Dealer + speech sit in the top ~190 px above the oval
-// Seats are placed on the ellipse perimeter and anchored AWAY from the oval
-// so they never overlap the felt surface.
+// Scene: 800 × 520 px
+// Oval: cx=400, cy=295, rx=290, ry=105
+// Dealer (144px tall) sits just above the oval at top-centre
+// Seats avoid the 60°–120° top arc (dealer zone)
 
-const SCENE_W = 728
-const SCENE_H = 500
+const SCENE_W = 800
+const SCENE_H = 520
 
-const OW  = 650   // oval width  (rx = 325)
-const OH  = 234   // oval height (ry = 117)
-const OCX = 364   // oval centre x
-const OCY = 310   // oval centre y
+const OW  = 580   // oval width  (rx = 290)
+const OH  = 210   // oval height (ry = 105)
+const OCX = 400   // oval centre x
+const OCY = 295   // oval centre y
 
-// Gap between oval edge and the nearest edge of the seat element
-const PAD_X = 18
-const PAD_Y = 18
+const PAD_X = 16
+const PAD_Y = 16
 
-/**
- * Returns absolute-position CSS for a seat at `angleDeg` on the ellipse.
- * The seat is anchored so it grows *away* from the oval centre,
- * preventing any overlap with the felt surface.
- *
- *  angleDeg=0   → right
- *  angleDeg=90  → top  (dealer lives here — don't place seats here)
- *  angleDeg=180 → left
- *  angleDeg=270 → bottom
- */
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
   const x = Math.round(OCX + (OW / 2 + PAD_X) * Math.cos(rad))
@@ -46,38 +35,32 @@ function ellipsePt(angleDeg: number): React.CSSProperties {
 
   const sinA = Math.sin(rad)
 
-  // Anchor the seat element so it grows away from oval centre
-  // |sinA| > 0.5  → primarily above or below → vertical anchoring
-  // |sinA| ≤ 0.5  → primarily left or right → horizontal anchoring
   let tx: string, ty: string
   if (Math.abs(sinA) > 0.5) {
     tx = '-50%'
-    ty = sinA > 0 ? '-100%' : '0%'   // top half → hang up; bottom half → grow down
+    ty = sinA > 0 ? '-100%' : '0%'
   } else {
     const cosA = Math.cos(rad)
-    tx = cosA > 0 ? '0%' : '-100%'   // right half → grow right; left half → hang left
+    tx = cosA > 0 ? '0%' : '-100%'
     ty = '-50%'
   }
 
   return {
     position: 'absolute',
-    left: `${x}px`,
-    top: `${y}px`,
-    transform: `translate(${tx}, ${ty})`,
+    left: x + 'px',
+    top:  y + 'px',
+    transform: 'translate(' + tx + ', ' + ty + ')',
   }
 }
 
-// Seat angles — 90° is dealer (top-centre), kept clear
+// 6 seat positions — avoids 60°–120° top arc (dealer zone)
 const SEAT_POSITIONS: Record<number, React.CSSProperties> = {
-  0: ellipsePt(270),   // bottom-centre  (human player)
-  1: ellipsePt(220),   // bottom-left
-  2: ellipsePt(155),   // left-ish
-  3: ellipsePt(112),   // top-left
-  4: ellipsePt(68),    // top-right
-  5: ellipsePt(25),    // right-ish
-  6: ellipsePt(320),   // bottom-right
-  7: ellipsePt(200),   // left
-  8: ellipsePt(340),   // right
+  0: ellipsePt(270),   // bottom-centre
+  1: ellipsePt(220),   // lower-left
+  2: ellipsePt(152),   // upper-left  (|sin|~0.47 → horizontal anchor)
+  3: ellipsePt(28),    // upper-right (|sin|~0.47 → horizontal anchor)
+  4: ellipsePt(320),   // lower-right
+  5: ellipsePt(195),   // left side
 }
 
 interface PokerTableProps {
@@ -110,8 +93,9 @@ export function PokerTable({
   countdown,
 }: PokerTableProps) {
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
+  const observers: ClientObserver[] = gameState.observers ?? []
+  const isObserver = !me && observers.some(o => o.playerId === gameState.myPlayerId)
   const isMyTurn = me?.isCurrentTurn ?? false
-  const isSittingOut = me?.sittingOut ?? false
 
   // Dealer speech bubble — latest action log, fades after 3.5 s
   const [dealerSpeech, setDealerSpeech] = useState('')
@@ -133,14 +117,15 @@ export function PokerTable({
           <span>Hand #{gameState.handNumber}</span>
           <span>{gameState.smallBlind}/{gameState.bigBlind}</span>
           {me && <span className="text-yellow-400 font-bold">{me.stack.toLocaleString()} chips</span>}
+          {isObserver && <span className="text-gray-500 text-xs">Watching</span>}
         </div>
         <div className="flex items-center gap-2">
-          {me && !isSittingOut && gameState.phase === 'waiting' && (
+          {me && gameState.phase === 'waiting' && (
             <button onClick={onSitOut} className="text-gray-400 hover:text-yellow-400 text-sm border border-gray-700 px-3 py-1 rounded-lg transition-colors">
               Stand Up
             </button>
           )}
-          {me && isSittingOut && (
+          {isObserver && (
             <button onClick={onSitIn} className="text-yellow-400 hover:text-white text-sm border border-yellow-600 px-3 py-1 rounded-lg transition-colors">
               Sit Down
             </button>
@@ -151,14 +136,14 @@ export function PokerTable({
         </div>
       </div>
 
-      {/* ── Main area: single fixed-px scene, centred ── */}
-      <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+      {/* ── Main area: aligned to top ── */}
+      <div className="flex-1 flex items-start justify-center min-h-0 overflow-hidden pt-2">
         <div
           className="relative flex-shrink-0"
-          style={{ width: `${SCENE_W}px`, height: `${SCENE_H}px` }}
+          style={{ width: SCENE_W + 'px', height: SCENE_H + 'px' }}
         >
 
-          {/* ── Dealer (Eunice) — top-centre of scene ── */}
+          {/* ── Dealer (Eunice) — top-centre ── */}
           <div
             className="absolute z-30 flex flex-col items-center"
             style={{ top: 0, left: '50%', transform: 'translateX(-50%)' }}
@@ -166,24 +151,23 @@ export function PokerTable({
             <Image
               src="/Eunice1.png"
               alt="Dealer"
-              width={90}
-              height={120}
+              width={108}
+              height={144}
               className="object-contain object-top select-none"
               style={{
-                height: '120px',
+                height: '144px',
                 width: 'auto',
-                filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.9))',
+                filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.9))',
               }}
               priority
             />
 
-            {/* Speech bubble below dealer — arrow points UP toward dealer */}
+            {/* Speech bubble — arrow points UP toward dealer */}
             {dealerSpeech && (
               <div
                 className="relative bg-white text-gray-900 text-[11px] font-semibold
                             px-3 py-1.5 rounded-2xl shadow-xl max-w-[220px] text-center leading-snug mt-1"
               >
-                {/* Triangle pointing UP toward dealer */}
                 <span
                   className="absolute -top-[7px] left-1/2 -translate-x-1/2 w-0 h-0 block"
                   style={{
@@ -201,18 +185,15 @@ export function PokerTable({
           <div
             className="absolute rounded-[50%] bg-amber-950 shadow-[0_0_80px_rgba(0,0,0,0.9)]"
             style={{
-              left:   `${OCX - OW / 2}px`,   // 39 px
-              top:    `${OCY - OH / 2}px`,   // 193 px
-              width:  `${OW}px`,             // 650 px
-              height: `${OH}px`,             // 234 px
+              left:   (OCX - OW / 2) + 'px',
+              top:    (OCY - OH / 2) + 'px',
+              width:  OW + 'px',
+              height: OH + 'px',
             }}
           >
-            {/* Rail sheen */}
             <div className="absolute inset-[4px] rounded-[50%] bg-gradient-to-b from-amber-700/40 to-transparent" />
-            {/* Felt surface */}
             <div className="absolute inset-[12px] rounded-[50%] bg-felt">
               <div className="absolute inset-4 rounded-[50%] border border-felt-light/20" />
-              {/* Centre content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                 {countdown !== null && gameState.phase === 'waiting' && (
                   <div className="text-white text-base font-bold animate-pulse">
@@ -229,7 +210,7 @@ export function PokerTable({
             </div>
           </div>
 
-          {/* ── Player seats — anchored away from oval ── */}
+          {/* ── Player seats ── */}
           {gameState.players.map((player) => {
             const pos = SEAT_POSITIONS[player.seat]
             if (!pos) return null
@@ -243,6 +224,25 @@ export function PokerTable({
               </div>
             )
           })}
+
+          {/* ── Observer panel — right side ── */}
+          {observers.length > 0 && (
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1 min-w-[110px]">
+              <div className="text-gray-600 text-[10px] uppercase tracking-wide text-center mb-0.5">Watching</div>
+              {observers.map((obs) => (
+                <div
+                  key={obs.playerId}
+                  className="flex items-center gap-1.5 bg-gray-900/80 border border-gray-700 rounded-lg px-2 py-1"
+                >
+                  <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
+                  <div>
+                    <div className="text-white text-[11px] font-semibold truncate max-w-[72px]">{obs.username}</div>
+                    <div className="text-yellow-500 text-[10px]">{obs.stack.toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
         </div>
       </div>
@@ -265,12 +265,14 @@ export function PokerTable({
             onAction={(action, amount) => onAction(action, amount)}
             timeLeft={timeLeft}
           />
-        ) : isSittingOut ? (
+        ) : isObserver ? (
           <div className="flex items-center gap-3">
-            <span className="text-yellow-500 text-sm">You are sitting out</span>
-            <button onClick={onSitIn} className="bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors">
-              Sit Down
-            </button>
+            <span className="text-gray-500 text-sm">Watching the game</span>
+            {gameState.phase === 'waiting' && (
+              <button onClick={onSitIn} className="bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors">
+                Sit Down
+              </button>
+            )}
           </div>
         ) : gameState.phase !== 'waiting' ? (
           <p className="text-gray-500 text-sm">

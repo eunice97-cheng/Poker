@@ -333,6 +333,8 @@ export class GameEngine {
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
         await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
+        // Mark as broke so they receive 2,000 free chips after 24 hours
+        await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
       } else if (player.stack <= 0 && player.isBot) {
         // Remove busted bots silently
         this.state.players.delete(seat)
@@ -498,6 +500,13 @@ export class GameEngine {
   // ─── State Broadcasting ───────────────────────────────────────────────────
 
   broadcastGameState() {
+    const clientObservers = Array.from(this.state.observers.values()).map(obs => ({
+      playerId: obs.playerId,
+      username: obs.username,
+      avatar: obs.avatar,
+      stack: obs.stack,
+    }))
+
     for (const [seat, player] of this.state.players.entries()) {
       const sbSeat = this.getSBSeat()
       const bbSeat = this.getBBSeat()
@@ -557,9 +566,52 @@ export class GameEngine {
         myPlayerId: player.playerId,
         validActions,
         myHandRank,
+        observers: clientObservers,
       }
 
       this.io.to(player.socketId).emit('game_state', gameState)
+    }
+
+    // Broadcast to observers (same state but no valid actions, no hole cards revealed)
+    for (const obs of this.state.observers.values()) {
+      const observerState = {
+        tableId: this.state.tableId,
+        tableName: this.state.tableName,
+        phase: this.state.phase,
+        pot: this.state.pot + Array.from(this.state.players.values()).reduce((s, p) => s + p.currentBet, 0),
+        sidePots: this.state.sidePots,
+        community: this.state.community,
+        players: Array.from(this.state.players.entries()).map(([s, p]) => ({
+          playerId: p.playerId,
+          username: p.username,
+          avatar: p.avatar,
+          seat: s,
+          stack: p.stack,
+          currentBet: p.currentBet,
+          totalBetThisHand: p.totalBetThisHand,
+          folded: p.folded,
+          allIn: p.allIn,
+          sittingOut: p.sittingOut,
+          isConnected: p.isConnected,
+          holeCards: p.holeCards.map(() => '??'),
+          isDealer: s === this.state.dealerSeat,
+          isSB: s === this.getSBSeat(),
+          isBB: s === this.getBBSeat(),
+          isCurrentTurn: s === this.state.currentSeat,
+        })),
+        dealerSeat: this.state.dealerSeat,
+        currentSeat: this.state.currentSeat,
+        smallBlind: this.state.smallBlind,
+        bigBlind: this.state.bigBlind,
+        minRaise: 0,
+        callAmount: 0,
+        handNumber: this.state.handNumber,
+        myPlayerId: obs.playerId,
+        validActions: [],
+        myHandRank: '',
+        observers: clientObservers,
+      }
+      this.io.to(obs.socketId).emit('game_state', observerState)
     }
 
     // Also emit to spectators (no player state) — lobby observers

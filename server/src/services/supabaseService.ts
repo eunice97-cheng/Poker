@@ -125,6 +125,14 @@ export const supabaseService = {
     await supabase.from('tables').update({ player_count: count ?? 0 }).eq('id', tableId)
   },
 
+  async updateTablePlayerSeat(tableId: string, playerId: string, seat: number) {
+    await supabase
+      .from('table_players')
+      .update({ seat })
+      .eq('table_id', tableId)
+      .eq('player_id', playerId)
+  },
+
   // ─── Hand History ──────────────────────────────────────────────────────
 
   async recordHand(
@@ -164,6 +172,34 @@ export const supabaseService = {
   async cleanupDevTables() {
     // On server start, purge any dev tables left over from previous sessions
     await supabase.from('tables').delete().ilike('name', '%Dev Table%')
+  },
+
+  async cleanupOrphanedTables() {
+    // Delete tables with 0 players that are older than 5 minutes (orphaned from crashes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    await supabase
+      .from('tables')
+      .delete()
+      .eq('player_count', 0)
+      .lt('created_at', fiveMinutesAgo)
+  },
+
+  // ─── Daily Chip Recovery ───────────────────────────────────────────────
+
+  async markPlayerBroke(playerId: string) {
+    // Sets broke_at = now() if the player has 0 chips and isn't already marked
+    await supabase.rpc('mark_player_broke', { p_player_id: playerId })
+  },
+
+  async awardDailyChips() {
+    // Awards 2,000 chips to players who have been broke for 24+ hours
+    const { data, error } = await supabase.rpc('award_daily_chips')
+    if (error) { console.error('[DailyChips] Error:', error.message); return }
+    if (data && data.length > 0) {
+      for (const row of data) {
+        console.log(`[DailyChips] Awarded 2000 chips to ${row.player_id} (balance: ${row.new_balance})`)
+      }
+    }
   },
 
   // ─── Profile ───────────────────────────────────────────────────────────

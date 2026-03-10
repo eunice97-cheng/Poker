@@ -26,6 +26,13 @@ export interface SidePot {
   eligiblePlayerIds: string[]
 }
 
+export interface ClientObserver {
+  playerId: string
+  username: string
+  avatar: string
+  stack: number
+}
+
 export interface GameState {
   tableId: string
   tableName: string
@@ -34,6 +41,7 @@ export interface GameState {
   sidePots: SidePot[]
   community: string[]
   players: ClientPlayer[]
+  observers: ClientObserver[]
   dealerSeat: number
   currentSeat: number
   smallBlind: number

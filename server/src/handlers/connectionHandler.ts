@@ -35,6 +35,23 @@ export function registerConnectionHandler(io: Server) {
       const room = roomManager.getRoomBySocketId(socket.id)
       if (!room) return
 
+      // Handle observer disconnect — just remove them (no reconnect timer needed)
+      const observer = room.getObserverBySocketId(socket.id)
+      if (observer) {
+        room.removeObserver(observer.playerId)
+        if (observer.stack > 0) {
+          await supabaseService.addChips(observer.playerId, room.tableId, observer.stack, 'cashout').catch(console.error)
+        }
+        await supabaseService.removeTablePlayer(room.tableId, observer.playerId).catch(console.error)
+        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
+        const hasObservers = room.state.observers.size > 0
+        if (realPlayers.length === 0 && !hasObservers) {
+          await supabaseService.deleteTable(room.tableId).catch(console.error)
+          roomManager.deleteRoom(room.tableId)
+        }
+        return
+      }
+
       const player = room.getPlayerBySocketId(socket.id)
       if (!player) return
 

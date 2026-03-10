@@ -2,6 +2,14 @@ export type GamePhase = 'waiting' | 'preflop' | 'flop' | 'turn' | 'river' | 'sho
 export type PlayerAction = 'fold' | 'check' | 'call' | 'raise' | 'allin'
 export type TableStatus = 'waiting' | 'playing' | 'finished'
 
+export interface ServerObserver {
+  socketId: string
+  playerId: string
+  username: string
+  avatar: string
+  stack: number
+}
+
 export interface ServerPlayer {
   socketId: string
   playerId: string      // Supabase UUID
@@ -44,6 +52,7 @@ export interface ServerGameState {
   players: Map<number, ServerPlayer>
   // socketId -> seat (for quick lookup)
   socketToSeat: Map<string, number>
+  observers: Map<string, ServerObserver>   // playerId -> observer
   dealerSeat: number
   currentSeat: number       // whose turn it is
   currentBetLevel: number   // highest bet this round
@@ -51,6 +60,13 @@ export interface ServerGameState {
   handNumber: number
   handStartedAt: Date | null
   actionTimer: NodeJS.Timeout | null
+}
+
+export interface ClientObserver {
+  playerId: string
+  username: string
+  avatar: string
+  stack: number
 }
 
 // What each client receives (personalized - no opponent hole cards)
@@ -89,6 +105,7 @@ export interface ClientGameState {
   handNumber: number
   myPlayerId: string
   validActions: PlayerAction[]
+  observers: ClientObserver[]
 }
 
 export interface HandResult {
