@@ -1,24 +1,22 @@
 export interface AvatarOption {
   id: string
-  symbol: string
-  bg: string
-  border: string
+  image: string
   label: string
 }
 
 export const AVATARS: AvatarOption[] = [
-  { id: 'avatar_1',  symbol: '♠', bg: 'bg-gray-800',   border: 'border-gray-500',  label: 'Spade' },
-  { id: 'avatar_2',  symbol: '♥', bg: 'bg-red-900',    border: 'border-red-500',   label: 'Heart' },
-  { id: 'avatar_3',  symbol: '♦', bg: 'bg-orange-900', border: 'border-orange-500',label: 'Diamond' },
-  { id: 'avatar_4',  symbol: '♣', bg: 'bg-green-900',  border: 'border-green-500', label: 'Club' },
-  { id: 'avatar_5',  symbol: '🂱', bg: 'bg-yellow-900', border: 'border-yellow-500',label: 'Ace' },
-  { id: 'avatar_6',  symbol: '👑', bg: 'bg-purple-900', border: 'border-purple-500',label: 'King' },
-  { id: 'avatar_7',  symbol: '🎰', bg: 'bg-pink-900',   border: 'border-pink-500',  label: 'Slots' },
-  { id: 'avatar_8',  symbol: '🃏', bg: 'bg-blue-900',   border: 'border-blue-500',  label: 'Joker' },
-  { id: 'avatar_9',  symbol: '🦁', bg: 'bg-amber-900',  border: 'border-amber-500', label: 'Lion' },
-  { id: 'avatar_10', symbol: '🐺', bg: 'bg-slate-800',  border: 'border-slate-500', label: 'Wolf' },
-  { id: 'avatar_11', symbol: '🦊', bg: 'bg-red-800',    border: 'border-red-400',   label: 'Fox' },
-  { id: 'avatar_12', symbol: '🐉', bg: 'bg-emerald-900',border: 'border-emerald-500',label: 'Dragon' },
+  { id: 'avatar_m1', image: '/avatars/M1.png', label: 'Male 1' },
+  { id: 'avatar_m2', image: '/avatars/M2.png', label: 'Male 2' },
+  { id: 'avatar_m3', image: '/avatars/M3.png', label: 'Male 3' },
+  { id: 'avatar_m4', image: '/avatars/M4.png', label: 'Male 4' },
+  { id: 'avatar_m5', image: '/avatars/M5.png', label: 'Male 5' },
+  { id: 'avatar_m6', image: '/avatars/M6.png', label: 'Male 6' },
+  { id: 'avatar_f1', image: '/avatars/F1.png', label: 'Female 1' },
+  { id: 'avatar_f2', image: '/avatars/F2.png', label: 'Female 2' },
+  { id: 'avatar_f3', image: '/avatars/F3.png', label: 'Female 3' },
+  { id: 'avatar_f4', image: '/avatars/F4.png', label: 'Female 4' },
+  { id: 'avatar_f5', image: '/avatars/F5.png', label: 'Female 5' },
+  { id: 'avatar_f6', image: '/avatars/F6.png', label: 'Female 6' },
 ]
 
 export function getAvatar(id: string): AvatarOption {

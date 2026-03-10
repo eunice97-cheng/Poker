@@ -38,7 +38,7 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit }: PlayerSeatProp
 
       {/* Avatar */}
       <div className={`rounded-full transition-all ${player.isCurrentTurn ? 'ring-2 ring-yellow-400' : ''}`}>
-        <AvatarDisplay avatarId={player.avatar ?? 'avatar_1'} size="md" />
+        <AvatarDisplay avatarId={player.avatar ?? 'avatar_m1'} size="md" />
       </div>
 
       {/* Name + Stack */}

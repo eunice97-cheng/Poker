@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           chip_balance: 10000,
           games_played: 0,
           games_won: 0,
-          avatar: 'avatar_1',
+          avatar: 'avatar_m1',
         },
         { onConflict: 'id', ignoreDuplicates: true }
       )

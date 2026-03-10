@@ -37,7 +37,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
   const supabase = createClient()
 
   const username = initialProfile?.username ?? ''
-  const [selectedAvatar, setSelectedAvatar] = useState(initialProfile?.avatar ?? 'avatar_1')
+  const [selectedAvatar, setSelectedAvatar] = useState(initialProfile?.avatar ?? 'avatar_m1')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
