@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { getSocket } from '@/lib/socket'
 import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
+import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -89,9 +90,16 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
             )}
             <button
               onClick={() => router.push('/profile')}
-              className="text-gray-400 hover:text-white text-sm transition-colors"
+              className="flex-shrink-0 transition-all hover:scale-105"
+              title="My Profile"
             >
-              My Profile
+              {profile?.avatar ? (
+                <AvatarDisplay avatarId={profile.avatar} size="md" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg border-2 border-gray-600 bg-gray-800 flex items-center justify-center text-gray-400 text-xs font-medium hover:border-yellow-500 hover:text-white transition-colors">
+                  Profile
+                </div>
+              )}
             </button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
           </div>
