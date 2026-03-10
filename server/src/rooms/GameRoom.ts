@@ -73,6 +73,12 @@ export class GameRoom {
     this.maybeScheduleStart()
   }
 
+  addBotPlayer(player: ServerPlayer) {
+    this.state.players.set(player.seat, player)
+    this.state.socketToSeat.set(player.socketId, player.seat)
+    // Bots have no real socket — no join, no countdown trigger
+  }
+
   removePlayer(socketId: string): ServerPlayer | null {
     const seat = this.state.socketToSeat.get(socketId)
     if (seat === undefined) return null

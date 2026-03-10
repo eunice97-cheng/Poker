@@ -17,6 +17,7 @@ export interface ServerPlayer {
   sittingOut: boolean
   hasActed: boolean     // has acted in the current betting round
   isConnected: boolean
+  isBot: boolean
   reconnectTimer?: NodeJS.Timeout
 }
 

@@ -426,6 +426,18 @@ export class GameEngine {
     if (!player) return
 
     this.clearActionTimer()
+
+    // Bot: always call if there's a bet, otherwise check
+    if (player.isBot) {
+      this.state.actionTimer = setTimeout(() => {
+        if (this.state.currentSeat !== seat) return
+        const callAmt = getCallAmount(player, this.state)
+        const action = callAmt > 0 ? 'call' : 'check'
+        this.handleAction(player.socketId, action).catch(console.error)
+      }, 1500)
+      return
+    }
+
     this.state.actionTimer = setTimeout(() => {
       // Auto-fold on timeout
       this.handleAction(player.socketId, 'fold').catch(console.error)
