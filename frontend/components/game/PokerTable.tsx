@@ -1,27 +1,28 @@
 'use client'
 
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { GameState, HandResult, ChatMessage } from '@/types/poker'
 import { PlayerSeat } from './PlayerSeat'
 import { CommunityCards } from './CommunityCards'
 import { ActionPanel } from './ActionPanel'
 import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
-import { ActionLog } from './ActionLog'
 
-// Seat positions for a horizontal table with dealer at bottom-center.
-// Coordinates are % of the full outer container (felt + dealer area combined).
-// Felt occupies top ~78% of container; dealer image fills the bottom ~22%.
+// Dealer is at the TOP center. Seats are arranged around the felt oval.
+// All % values are relative to the outer container (which includes space
+// above the felt for the dealer image).
+// Felt occupies roughly top:18% → bottom:8% of the container.
 const SEAT_POSITIONS: Record<number, React.CSSProperties> = {
-  0: { bottom: '24%', left:  '20%' },                              // bottom-left (flanks dealer)
-  1: { top:    '36%', left:  '1%',  transform: 'translateY(-50%)' }, // left side
-  2: { top:    '4%',  left:  '12%' },                              // top-left
-  3: { top:    '0%',  left:  '31%' },                              // top, left of center
-  4: { top:    '0%',  left:  '50%', transform: 'translateX(-50%)' }, // top-center
-  5: { top:    '0%',  right: '31%' },                              // top, right of center
-  6: { top:    '4%',  right: '12%' },                              // top-right
-  7: { top:    '36%', right: '1%',  transform: 'translateY(-50%)' }, // right side
-  8: { bottom: '24%', right: '20%' },                              // bottom-right (flanks dealer)
+  0: { bottom: '4%',  left: '50%', transform: 'translateX(-50%)' }, // bottom-center  (player)
+  1: { top:    '52%', left: '1%',  transform: 'translateY(-50%)' }, // left side
+  2: { top:    '22%', left: '10%' },                                 // top-left
+  3: { top:    '17%', left: '30%' },                                 // top, left of center
+  4: { top:    '17%', right:'30%' },                                 // top, right of center
+  5: { top:    '22%', right:'10%' },                                 // top-right
+  6: { top:    '52%', right:'1%',  transform: 'translateY(-50%)' }, // right side
+  7: { bottom: '4%',  left: '22%' },                                 // bottom-left
+  8: { bottom: '4%',  right:'22%' },                                 // bottom-right
 }
 
 interface PokerTableProps {
@@ -57,10 +58,20 @@ export function PokerTable({
   const isMyTurn = me?.isCurrentTurn ?? false
   const isSittingOut = me?.sittingOut ?? false
 
+  // Dealer speech bubble — shows latest action log, auto-fades after 3 s
+  const [dealerSpeech, setDealerSpeech] = useState('')
+  useEffect(() => {
+    if (actionLogs.length === 0) return
+    const latest = actionLogs[actionLogs.length - 1]
+    setDealerSpeech(latest)
+    const t = setTimeout(() => setDealerSpeech(''), 3500)
+    return () => clearTimeout(t)
+  }, [actionLogs])
+
   return (
     <div className="relative w-full h-screen bg-gray-950 overflow-hidden flex flex-col">
 
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 z-10 flex-shrink-0">
         <div className="text-white font-bold">{gameState.tableName}</div>
         <div className="flex items-center gap-4 text-sm text-gray-400">
@@ -70,69 +81,84 @@ export function PokerTable({
         </div>
         <div className="flex items-center gap-2">
           {me && !isSittingOut && gameState.phase === 'waiting' && (
-            <button
-              onClick={onSitOut}
-              className="text-gray-400 hover:text-yellow-400 text-sm transition-colors border border-gray-700 px-3 py-1 rounded-lg"
-            >
+            <button onClick={onSitOut} className="text-gray-400 hover:text-yellow-400 text-sm border border-gray-700 px-3 py-1 rounded-lg transition-colors">
               Stand Up
             </button>
           )}
           {me && isSittingOut && (
-            <button
-              onClick={onSitIn}
-              className="text-yellow-400 hover:text-white text-sm transition-colors border border-yellow-600 px-3 py-1 rounded-lg"
-            >
+            <button onClick={onSitIn} className="text-yellow-400 hover:text-white text-sm border border-yellow-600 px-3 py-1 rounded-lg transition-colors">
               Sit Down
             </button>
           )}
-          <button
-            onClick={onLeave}
-            className="text-gray-400 hover:text-red-400 text-sm transition-colors border border-gray-700 px-3 py-1 rounded-lg"
-          >
+          <button onClick={onLeave} className="text-gray-400 hover:text-red-400 text-sm border border-gray-700 px-3 py-1 rounded-lg transition-colors">
             Leave Room
           </button>
         </div>
       </div>
 
-      {/* Table area */}
-      <div className="flex-1 relative flex items-center justify-center px-4 pt-2 pb-1 min-h-0">
+      {/* ── Table area ── */}
+      <div className="flex-1 relative flex items-center justify-center p-4 min-h-0">
         {/*
-          Outer wrapper sets the aspect ratio for the whole scene
-          (felt + dealer standing area below).
-          paddingBottom: 55% → container is ~1.82:1 wide
+          Container aspect ratio: paddingBottom 66% ≈ 1.5:1
+          max-w-3xl keeps the table noticeably smaller than the viewport.
+          Structure (top → bottom of container):
+            0–17%  : dealer image + speech bubble
+            17–92% : felt oval
+            92–100%: bottom seat overflow
         */}
-        <div className="relative w-full max-w-5xl" style={{ paddingBottom: '55%' }}>
+        <div className="relative w-full max-w-3xl" style={{ paddingBottom: '66%' }}>
           <div className="absolute inset-0">
 
-            {/* ── Felt table oval ── occupies top ~78% of the container */}
-            <div
-              className="absolute left-0 right-0"
-              style={{ top: 0, bottom: '22%' }}
-            >
-              {/* Outer rail (wood/leather look) */}
-              <div className="absolute inset-0 rounded-[50%] bg-amber-950 shadow-[0_0_80px_rgba(0,0,0,0.9)]" />
-              {/* Rail highlight */}
-              <div className="absolute inset-1 rounded-[50%] bg-gradient-to-b from-amber-800/60 to-amber-950/60" />
+            {/* ── Dealer (Eunice) — top center ── */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+              {/* Speech bubble (above the felt edge, below dealer face) */}
+              <div className="relative h-10 flex items-end justify-center mb-0.5">
+                {dealerSpeech && (
+                  <div className="relative bg-white text-gray-900 text-[11px] font-medium px-3 py-1.5 rounded-2xl shadow-xl max-w-[220px] text-center leading-tight">
+                    {dealerSpeech}
+                    {/* Triangle pointer — points UP toward dealer's mouth */}
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 block"
+                      style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderBottom: '8px solid white' }} />
+                  </div>
+                )}
+              </div>
+
+              <Image
+                src="/Eunice1.png"
+                alt="Dealer"
+                width={108}
+                height={144}
+                className="object-contain object-top select-none"
+                style={{
+                  height: '15vw',
+                  maxHeight: '150px',
+                  minHeight: '80px',
+                  width: 'auto',
+                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))',
+                }}
+                priority
+              />
+            </div>
+
+            {/* ── Felt table oval — sits below the dealer ── */}
+            <div className="absolute left-0 right-0" style={{ top: '18%', bottom: '8%' }}>
+              {/* Outer rail */}
+              <div className="absolute inset-0 rounded-[50%] bg-amber-950 shadow-[0_0_60px_rgba(0,0,0,0.9)]" />
+              {/* Rail sheen */}
+              <div className="absolute inset-[3px] rounded-[50%] bg-gradient-to-b from-amber-800/50 to-transparent" />
               {/* Felt surface */}
-              <div className="absolute inset-[10px] rounded-[50%] bg-felt shadow-inner">
-                {/* Inner stripe ring */}
-                <div className="absolute inset-3 rounded-[50%] border border-felt-light/30" />
-
-                {/* Dealer tray at bottom of felt */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60">
-                  <div className="w-24 h-1.5 bg-amber-800 rounded-full" />
-                  <span className="text-amber-700 text-[9px] uppercase tracking-[0.2em] font-bold">Dealer</span>
-                </div>
-
-                {/* Center content: community cards / waiting / countdown */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <div className="absolute inset-[10px] rounded-[50%] bg-felt">
+                {/* Inner stripe */}
+                <div className="absolute inset-3 rounded-[50%] border border-felt-light/25" />
+                {/* Community cards / status */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                   {countdown !== null && gameState.phase === 'waiting' && (
-                    <div className="text-white text-xl font-bold animate-pulse">
+                    <div className="text-white text-lg font-bold animate-pulse">
                       Game starting in {countdown}s...
                     </div>
                   )}
                   {gameState.phase === 'waiting' && countdown === null && (
-                    <div className="text-gray-300 text-base">Waiting for players...</div>
+                    <div className="text-gray-300 text-sm">Waiting for players...</div>
                   )}
                   {gameState.phase !== 'waiting' && (
                     <CommunityCards
@@ -145,26 +171,7 @@ export function PokerTable({
               </div>
             </div>
 
-            {/* ── Dealer (Eunice) — stands at bottom, overlapping felt edge ── */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-end">
-              <Image
-                src="/Eunice1.png"
-                alt="Dealer Eunice"
-                width={144}
-                height={192}
-                className="object-contain object-top select-none"
-                style={{
-                  filter: 'drop-shadow(0 -6px 16px rgba(0,0,0,0.7))',
-                  height: '20vw',
-                  maxHeight: '200px',
-                  minHeight: '100px',
-                  width: 'auto',
-                }}
-                priority
-              />
-            </div>
-
-            {/* ── Player seats ── positioned relative to full container */}
+            {/* ── Player seats ── */}
             {gameState.players.map((player) => {
               const pos = SEAT_POSITIONS[player.seat]
               if (!pos) return null
@@ -183,7 +190,7 @@ export function PokerTable({
         </div>
       </div>
 
-      {/* Action bar — always visible at bottom */}
+      {/* ── Action bar ── */}
       <div className="flex-shrink-0 flex items-center justify-center py-3 px-4 bg-gray-900/80 border-t border-gray-800 min-h-[76px] z-20 gap-4">
         {gameState.myHandRank && gameState.phase !== 'waiting' && (
           <div className="text-center hidden sm:block">
@@ -204,10 +211,7 @@ export function PokerTable({
         ) : isSittingOut ? (
           <div className="flex items-center gap-3">
             <span className="text-yellow-500 text-sm">You are sitting out</span>
-            <button
-              onClick={onSitIn}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors"
-            >
+            <button onClick={onSitIn} className="bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors">
               Sit Down
             </button>
           </div>
@@ -220,13 +224,12 @@ export function PokerTable({
         )}
       </div>
 
-      {/* Action log + Chat */}
-      <div className="absolute bottom-24 right-4 w-64 z-10 flex flex-col gap-2">
-        <ActionLog logs={actionLogs} />
+      {/* ── Chat only (action log is now dealer speech bubble) ── */}
+      <div className="absolute bottom-24 right-4 w-64 z-10">
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
       </div>
 
-      {/* Hand result overlay */}
+      {/* ── Hand result overlay ── */}
       {handResult && (
         <HandResultModal result={handResult} onClose={clearHandResult} />
       )}
