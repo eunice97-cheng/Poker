@@ -5,7 +5,7 @@ import { getAvatar } from '@/lib/avatars'
 
 interface AvatarDisplayProps {
   avatarId: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
 }
 
@@ -14,6 +14,7 @@ const sizePx = {
   md: 48,
   lg: 64,
   xl: 80,
+  '2xl': 128,
 }
 
 const sizeClasses = {
@@ -21,6 +22,7 @@ const sizeClasses = {
   md: 'w-12 h-12',
   lg: 'w-16 h-16',
   xl: 'w-20 h-20',
+  '2xl': 'w-32 h-32',
 }
 
 export function AvatarDisplay({ avatarId, size = 'md', className = '' }: AvatarDisplayProps) {

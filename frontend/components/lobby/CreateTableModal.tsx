@@ -25,6 +25,7 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
   const [bigBlind, setBigBlind] = useState(20)
   const [buyIn, setBuyIn] = useState(1000)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const smallBlind = bigBlind / 2
   const minBuyin = bigBlind * 20
@@ -36,6 +37,7 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
     e.preventDefault()
     if (!canAfford) return
     setLoading(true)
+    setError('')
     try {
       await onCreate({
         name: name || 'My Table',
@@ -47,6 +49,8 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
         buyIn: actualBuyIn,
       })
       onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create table')
     } finally {
       setLoading(false)
     }
@@ -121,6 +125,8 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
             <span className="text-white">{minBuyin.toLocaleString()}–{maxBuyin.toLocaleString()}</span>
           </div>
         </div>
+
+        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>

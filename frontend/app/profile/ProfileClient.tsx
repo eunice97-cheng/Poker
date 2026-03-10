@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { AVATARS, getAvatar } from '@/lib/avatars'
+import { AVATARS } from '@/lib/avatars'
 import { Button } from '@/components/ui/Button'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 
@@ -32,6 +32,8 @@ interface ProfileClientProps {
   email: string
 }
 
+type Tab = 'profile' | 'stats' | 'hands'
+
 export function ProfileClient({ initialProfile, handHistory, userId, email }: ProfileClientProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -41,7 +43,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+  const [activeTab, setActiveTab] = useState<Tab>('profile')
 
   const profile = initialProfile
   const winRate = profile && profile.games_played > 0
@@ -72,6 +74,12 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     }
   }
 
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'profile', label: 'Profile Settings' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'hands', label: 'Recent Hands' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
@@ -85,128 +93,153 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 py-8">
 
-        {/* Profile Card */}
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
-          <h2 className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-5">Profile Settings</h2>
-
-          {/* Avatar + Name row */}
-          <div className="flex items-center gap-5 mb-6">
-            {/* Avatar button */}
+        {/* Tab Bar */}
+        <div className="flex gap-1 bg-gray-900 border border-gray-700 rounded-xl p-1 mb-6">
+          {tabs.map((tab) => (
             <button
-              onClick={() => setShowAvatarPicker((v) => !v)}
-              className="relative group flex-shrink-0"
-              title="Change avatar"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? 'bg-yellow-500 text-gray-900'
+                  : 'text-gray-400 hover:text-white'
+              }`}
             >
-              <AvatarDisplay avatarId={selectedAvatar} size="xl" />
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-xs font-bold">Change</span>
-              </div>
+              {tab.label}
             </button>
-
-            <div className="flex-1">
-              <label className="block text-gray-400 text-sm mb-1">Player Name</label>
-              <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2.5 text-white">
-                {username || <span className="text-gray-500">Not set</span>}
-              </div>
-              <p className="text-gray-600 text-xs mt-1">{email}</p>
-            </div>
-          </div>
-
-          {/* Avatar Picker */}
-          {showAvatarPicker && (
-            <div className="mb-6 p-4 bg-gray-800/60 rounded-xl border border-gray-700">
-              <p className="text-gray-400 text-sm mb-4">Choose your avatar</p>
-              <div className="grid grid-cols-4 gap-5 justify-items-center">
-                {AVATARS.map((avatar) => (
-                  <button
-                    key={avatar.id}
-                    onClick={() => { setSelectedAvatar(avatar.id); setShowAvatarPicker(false) }}
-                    title={avatar.label}
-                    className={`block rounded-xl transition-all hover:scale-105 ${
-                      selectedAvatar === avatar.id ? 'ring-[3px] ring-yellow-400 ring-offset-2 ring-offset-gray-800 scale-105' : ''
-                    }`}
-                  >
-                    <AvatarDisplay avatarId={avatar.id} size="xl" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Save */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              loading={saving}
-              disabled={!isDirty}
-            >
-              Save Changes
-            </Button>
-            {saveMsg && <span className="text-green-400 text-sm">{saveMsg}</span>}
-            {error && <span className="text-red-400 text-sm">{error}</span>}
-          </div>
+          ))}
         </div>
 
-        {/* Stats */}
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
-          <h2 className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-5">Stats</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Chip Balance', value: profile?.chip_balance.toLocaleString() ?? '0', color: 'text-yellow-400' },
-              { label: 'Games Played', value: profile?.games_played ?? 0, color: 'text-white' },
-              { label: 'Wins',         value: profile?.games_won ?? 0,    color: 'text-green-400' },
-              { label: 'Win Rate',     value: `${winRate}%`,              color: 'text-blue-400' },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="bg-gray-800/60 rounded-xl p-4 text-center">
-                <div className={`text-2xl font-bold ${color}`}>{value}</div>
-                <div className="text-gray-500 text-sm mt-1">{label}</div>
+        {/* Tab: Profile Settings */}
+        {activeTab === 'profile' && (
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 space-y-6">
+
+            {/* Avatar + Name row */}
+            <div className="flex items-center gap-5">
+              <div className="flex-shrink-0">
+                <AvatarDisplay avatarId={selectedAvatar} size="xl" />
               </div>
-            ))}
+              <div className="flex-1">
+                <label className="block text-gray-400 text-sm mb-1">Player Name</label>
+                <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg px-4 py-2.5 text-white">
+                  {username || <span className="text-gray-500">Not set</span>}
+                </div>
+                <p className="text-gray-600 text-xs mt-1">{email}</p>
+              </div>
+            </div>
+
+            {/* Avatar Picker */}
+            <div>
+              <p className="text-gray-400 text-sm mb-3">Choose your avatar</p>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <p className="text-gray-500 text-xs text-center">Male</p>
+                <p className="text-gray-500 text-xs text-center">Female</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[1, 2, 3, 4, 5, 6].map((n) => {
+                  const male = AVATARS.find((a) => a.id === `avatar_m${n}`)!
+                  const female = AVATARS.find((a) => a.id === `avatar_f${n}`)!
+                  return [male, female].map((avatar) => (
+                    <button
+                      key={avatar.id}
+                      onClick={() => setSelectedAvatar(avatar.id)}
+                      title={avatar.label}
+                      className={`block rounded-xl transition-all hover:scale-105 ${
+                        selectedAvatar === avatar.id
+                          ? 'ring-[3px] ring-yellow-400 ring-offset-2 ring-offset-gray-900 scale-105'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <AvatarDisplay avatarId={avatar.id} size="2xl" className="w-full" />
+                    </button>
+                  ))
+                })}
+              </div>
+            </div>
+
+            {/* Save */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                loading={saving}
+                disabled={!isDirty}
+              >
+                Save Changes
+              </Button>
+              {saveMsg && <span className="text-green-400 text-sm">{saveMsg}</span>}
+              {error && <span className="text-red-400 text-sm">{error}</span>}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Hand History */}
-        <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
-          <h2 className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-5">Recent Hands</h2>
+        {/* Tab: Stats */}
+        {activeTab === 'stats' && (
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
+            <div className="flex items-center gap-4 mb-8">
+              <AvatarDisplay avatarId={selectedAvatar} size="xl" />
+              <div>
+                <div className="text-white text-xl font-bold">{username}</div>
+                <div className="text-yellow-400 font-bold">{profile?.chip_balance.toLocaleString() ?? '0'} chips</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Games Played', value: profile?.games_played ?? 0, color: 'text-white' },
+                { label: 'Wins', value: profile?.games_won ?? 0, color: 'text-green-400' },
+                { label: 'Win Rate', value: `${winRate}%`, color: 'text-blue-400' },
+                { label: 'Member Since', value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '—', color: 'text-gray-400' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="bg-gray-800/60 rounded-xl p-5 text-center">
+                  <div className={`text-3xl font-bold ${color}`}>{value}</div>
+                  <div className="text-gray-500 text-sm mt-1">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          {handHistory.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No hands played yet — go join a table!</p>
-          ) : (
-            <div className="space-y-2">
-              {handHistory.map((hand) => {
-                const isWinner = hand.winners?.some((w) => w.playerId === userId)
-                const myWin = hand.winners?.find((w) => w.playerId === userId)
-                return (
-                  <div key={hand.id} className="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-3 text-sm">
-                    <div className="flex items-center gap-4">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isWinner ? 'bg-green-400' : 'bg-gray-600'}`} />
-                      <div>
-                        <span className="text-gray-400">Hand #{hand.hand_number}</span>
-                        <span className="text-gray-600 mx-2">·</span>
-                        <span className="text-gray-500 text-xs">{new Date(hand.ended_at).toLocaleDateString()}</span>
+        {/* Tab: Recent Hands */}
+        {activeTab === 'hands' && (
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
+            {handHistory.length === 0 ? (
+              <p className="text-gray-600 text-center py-12">No hands played yet — go join a table!</p>
+            ) : (
+              <div className="space-y-2">
+                {handHistory.map((hand) => {
+                  const isWinner = hand.winners?.some((w) => w.playerId === userId)
+                  const myWin = hand.winners?.find((w) => w.playerId === userId)
+                  return (
+                    <div key={hand.id} className="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-3 text-sm">
+                      <div className="flex items-center gap-4">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isWinner ? 'bg-green-400' : 'bg-gray-600'}`} />
+                        <div>
+                          <span className="text-gray-400">Hand #{hand.hand_number}</span>
+                          <span className="text-gray-600 mx-2">·</span>
+                          <span className="text-gray-500 text-xs">{new Date(hand.ended_at).toLocaleDateString()}</span>
+                        </div>
+                        {hand.community?.length > 0 && (
+                          <span className="text-gray-600 text-xs hidden md:block">{hand.community.join(' ')}</span>
+                        )}
                       </div>
-                      {hand.community?.length > 0 && (
-                        <span className="text-gray-600 text-xs hidden md:block">{hand.community.join(' ')}</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-500 text-xs">Pot: {hand.pot_total?.toLocaleString()}</span>
+                        <span className={`font-bold ${isWinner ? 'text-green-400' : 'text-gray-600'}`}>
+                          {isWinner ? `+${myWin?.amount?.toLocaleString()}` : 'Lost'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-500 text-xs">Pot: {hand.pot_total?.toLocaleString()}</span>
-                      <span className={`font-bold ${isWinner ? 'text-green-400' : 'text-gray-600'}`}>
-                        {isWinner ? `+${myWin?.amount?.toLocaleString()}` : 'Lost'}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Sign out */}
-        <div className="text-center pb-4">
+        <div className="text-center pt-6">
           <button
             onClick={async () => {
               await supabase.auth.signOut()

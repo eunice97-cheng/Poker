@@ -33,7 +33,12 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
     bigBlind: number; minBuyin: number; maxBuyin: number; buyIn: number
   }) => {
     return new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Server not responding. Check your connection and try again.'))
+      }, 15000)
+
       socket.emit('create_table', params, (res: { tableId?: string; error?: string }) => {
+        clearTimeout(timeout)
         if (res.error) {
           reject(new Error(res.error))
         } else {
