@@ -34,8 +34,8 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
   }) => {
     return new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Server not responding. Check your connection and try again.'))
-      }, 15000)
+        reject(new Error('Server not responding. It may be waking up — wait 30s and try again.'))
+      }, 60000)
 
       socket.emit('create_table', params, (res: { tableId?: string; error?: string }) => {
         clearTimeout(timeout)
