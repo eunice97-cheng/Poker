@@ -7,6 +7,8 @@ import { authenticateSocket } from './middleware/authMiddleware'
 import { registerConnectionHandler } from './handlers/connectionHandler'
 import { roomManager } from './rooms/RoomManager'
 import { supabaseService } from './services/supabaseService'
+import kofiWebhookRouter from './routes/kofiWebhook'
+import redeemCodeRouter from './routes/redeemCode'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
 
@@ -34,6 +36,13 @@ io.use(authenticateSocket)
 
 // Register all socket event handlers
 registerConnectionHandler(io)
+
+// Ko-fi webhook — receives payment notifications, issues chip codes
+// Uses urlencoded body (Ko-fi sends form data)
+app.use('/webhook/kofi', express.urlencoded({ extended: true }), kofiWebhookRouter)
+
+// Chip code redemption
+app.use('/api/redeem-code', redeemCodeRouter)
 
 // Health check endpoint
 app.get('/health', (_, res) => {
