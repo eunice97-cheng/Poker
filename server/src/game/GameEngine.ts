@@ -435,13 +435,18 @@ export class GameEngine {
 
   private nextActiveSeat(fromSeat: number): number {
     const seats = Array.from(this.state.players.keys()).sort((a, b) => a - b)
-    const idx = seats.findIndex((s) => s > fromSeat)
-    const next = idx === -1 ? seats[0] : seats[idx]
-    const player = this.state.players.get(next)!
-    if (player.sittingOut || !player.isConnected) {
-      return this.nextActiveSeat(next)
+    if (seats.length === 0) return fromSeat
+    // Linear scan — visits each seat at most once, no risk of infinite recursion
+    let current = fromSeat
+    for (let i = 0; i < seats.length; i++) {
+      const idx = seats.findIndex((s) => s > current)
+      const next = idx === -1 ? seats[0] : seats[idx]
+      const player = this.state.players.get(next)!
+      if (!player.sittingOut && player.isConnected) return next
+      current = next
     }
-    return next
+    // Fallback: no active player found — return first seat to avoid crash
+    return seats[0]
   }
 
   private nextActingSeat(fromSeat: number): number {
