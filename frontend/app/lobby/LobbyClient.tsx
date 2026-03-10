@@ -26,13 +26,14 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
+  const [socketError, setSocketError] = useState('')
 
   const socket = getSocket(token)
 
   useEffect(() => {
     if (socket.connected) setSocketStatus('connected')
-    socket.on('connect', () => setSocketStatus('connected'))
-    socket.on('connect_error', () => setSocketStatus('error'))
+    socket.on('connect', () => { setSocketStatus('connected'); setSocketError('') })
+    socket.on('connect_error', (err) => { setSocketStatus('error'); setSocketError(err.message) })
     socket.on('disconnect', () => setSocketStatus('connecting'))
     return () => {
       socket.off('connect')
@@ -114,7 +115,7 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
               }`} />
               <span className="text-gray-500">
                 {socketStatus === 'connected' ? 'Server online' :
-                 socketStatus === 'error' ? 'Server offline' :
+                 socketStatus === 'error' ? `Error: ${socketError || 'Server offline'}` :
                  'Connecting...'}
               </span>
             </div>
