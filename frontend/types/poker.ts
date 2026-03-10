@@ -79,6 +79,7 @@ export interface Profile {
   chip_balance: number
   games_played: number
   games_won: number
+  avatar: string
   created_at: string
 }
 
