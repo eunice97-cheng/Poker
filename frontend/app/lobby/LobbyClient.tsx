@@ -86,17 +86,6 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
     })
   }
 
-  const handleDevMode = () => {
-    const buyIn = profile?.chip_balance ? Math.min(1000, profile.chip_balance) : 1000
-    socket.emit('create_dev_table', { buyIn }, (res: { tableId?: string; error?: string }) => {
-      if (res.error) {
-        alert(res.error)
-      } else {
-        router.push(`/table/${res.tableId}`)
-      }
-    })
-  }
-
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/auth/login')
@@ -171,14 +160,9 @@ export function LobbyClient({ initialTables, profile, token }: LobbyClientProps)
             <h2 className="text-2xl font-bold text-white">Available Tables</h2>
             <p className="text-gray-500 text-sm">Join a table or create your own</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="md" onClick={handleDevMode}>
-              🤖 Dev Mode
-            </Button>
-            <Button variant="primary" size="md" onClick={() => setShowCreate(true)}>
-              + Create Table
-            </Button>
-          </div>
+          <Button variant="primary" size="md" onClick={() => setShowCreate(true)}>
+            + Create Table
+          </Button>
         </div>
 
         <TableList initialTables={initialTables} onJoin={handleJoinTable} />
