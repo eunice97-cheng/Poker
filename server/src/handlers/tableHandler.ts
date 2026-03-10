@@ -162,8 +162,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         callback?.({ cashout: 0 })
       }
 
-      // Clean up empty tables
-      if (room.getPlayerCount() === 0) {
+      // Clean up when no real players remain (bots-only or empty)
+      const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
+      if (realPlayers.length === 0) {
         await supabaseService.deleteTable(room.tableId)
         roomManager.deleteRoom(room.tableId)
       }

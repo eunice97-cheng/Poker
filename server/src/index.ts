@@ -6,6 +6,7 @@ import { Server } from 'socket.io'
 import { authenticateSocket } from './middleware/authMiddleware'
 import { registerConnectionHandler } from './handlers/connectionHandler'
 import { roomManager } from './rooms/RoomManager'
+import { supabaseService } from './services/supabaseService'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
 
@@ -59,4 +60,6 @@ app.get('/tables', (_, res) => {
 
 httpServer.listen(PORT, () => {
   console.log(`[Server] Poker game server running on port ${PORT}`)
+  // Clean up any dev tables left over from a previous server session
+  supabaseService.cleanupDevTables().catch(console.error)
 })

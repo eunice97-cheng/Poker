@@ -8,6 +8,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [handResult, setHandResult] = useState<HandResult | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [actionLogs, setActionLogs] = useState<string[]>([])
   const [actionRequired, setActionRequired] = useState<ActionRequired | null>(null)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
@@ -17,7 +18,8 @@ export function useGameState(socket: Socket | null, tableId: string) {
 
     const onGameState = (state: GameState) => {
       setGameState(state)
-      setHandResult(null)
+      // Only clear hand result when a new hand is in progress (not showdown)
+      if (state.phase !== 'showdown') setHandResult(null)
     }
 
     const onHandResult = (result: HandResult) => {
@@ -35,13 +37,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
     }
 
     const onActionLog = (data: { message: string }) => {
-      setMessages((prev) => [...prev.slice(-99), {
-        playerId: 'system',
-        username: '',
-        text: data.message,
-        timestamp: new Date().toISOString(),
-        isSystem: true,
-      }])
+      setActionLogs((prev) => [...prev.slice(-49), data.message])
     }
 
     const onGameStarting = (data: { countdown: number }) => {
@@ -98,6 +94,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
     gameState,
     handResult,
     messages,
+    actionLogs,
     actionRequired,
     countdown,
     timeLeft,

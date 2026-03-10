@@ -51,7 +51,8 @@ export function registerConnectionHandler(io: Server) {
           await supabaseService.addChips(player.playerId, room.tableId, cashout, 'cashout').catch(console.error)
         }
         await supabaseService.removeTablePlayer(room.tableId, player.playerId).catch(console.error)
-        if (room.getPlayerCount() === 0) {
+        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
+        if (realPlayers.length === 0) {
           await supabaseService.deleteTable(room.tableId).catch(console.error)
           roomManager.deleteRoom(room.tableId)
         }

@@ -23,7 +23,9 @@ export function TableList({ onJoin, initialTables }: TableListProps) {
         { event: '*', schema: 'public', table: 'tables' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTables((prev) => [payload.new as TableInfo, ...prev])
+            const newTable = payload.new as TableInfo
+            if (newTable.name?.toLowerCase().includes('dev table')) return
+            setTables((prev) => [newTable, ...prev])
           } else if (payload.eventType === 'UPDATE') {
             setTables((prev) =>
               prev.map((t) => (t.id === (payload.new as TableInfo).id ? (payload.new as TableInfo) : t))

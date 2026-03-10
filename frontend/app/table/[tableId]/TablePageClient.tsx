@@ -21,6 +21,7 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
     gameState,
     handResult,
     messages,
+    actionLogs,
     timeLeft,
     countdown,
     sendAction,
@@ -85,6 +86,7 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
       gameState={gameState}
       handResult={handResult}
       messages={messages}
+      actionLogs={actionLogs}
       timeLeft={timeLeft}
       countdown={countdown}
       onAction={sendAction}

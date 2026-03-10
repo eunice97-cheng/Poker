@@ -8,7 +8,7 @@ export default async function LobbyPage() {
 
   const [{ data: { session } }, { data: tables }, { data: profile }] = await Promise.all([
     supabase.auth.getSession(),
-    supabase.from('tables').select('*').neq('status', 'finished').order('created_at', { ascending: false }),
+    supabase.from('tables').select('*').neq('status', 'finished').not('name', 'ilike', '%Dev Table%').order('created_at', { ascending: false }),
     supabase.from('profiles').select('*').eq('id', (await supabase.auth.getUser()).data.user?.id ?? '').single(),
   ])
 

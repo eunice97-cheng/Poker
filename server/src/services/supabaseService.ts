@@ -159,6 +159,13 @@ export const supabaseService = {
     }
   },
 
+  // ─── Cleanup ────────────────────────────────────────────────────────────
+
+  async cleanupDevTables() {
+    // On server start, purge any dev tables left over from previous sessions
+    await supabase.from('tables').delete().ilike('name', '%Dev Table%')
+  },
+
   // ─── Profile ───────────────────────────────────────────────────────────
 
   async getProfile(playerId: string) {
