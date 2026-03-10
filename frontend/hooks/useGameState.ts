@@ -4,6 +4,13 @@ import { useEffect, useState, useCallback } from 'react'
 import type { Socket } from 'socket.io-client'
 import { GameState, HandResult, ChatMessage, ActionRequired } from '@/types/poker'
 
+export interface BustedInfo {
+  message: string
+  minBuyin: number
+  maxBuyin: number
+  tableId: string
+}
+
 export function useGameState(socket: Socket | null, tableId: string) {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [handResult, setHandResult] = useState<HandResult | null>(null)
@@ -12,6 +19,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
   const [actionRequired, setActionRequired] = useState<ActionRequired | null>(null)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
+  const [bustedInfo, setBustedInfo] = useState<BustedInfo | null>(null)
 
   useEffect(() => {
     if (!socket) return
@@ -44,12 +52,17 @@ export function useGameState(socket: Socket | null, tableId: string) {
       setCountdown(data.countdown)
     }
 
+    const onBusted = (data: BustedInfo) => {
+      setBustedInfo(data)
+    }
+
     socket.on('game_state', onGameState)
     socket.on('hand_result', onHandResult)
     socket.on('action_required', onActionRequired)
     socket.on('chat_message', onChatMessage)
     socket.on('action_log', onActionLog)
     socket.on('game_starting', onGameStarting)
+    socket.on('busted', onBusted)
 
     // Try to reconnect to table if already in it
     socket.emit('reconnect_to_table', { tableId })
@@ -61,6 +74,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
       socket.off('chat_message', onChatMessage)
       socket.off('action_log', onActionLog)
       socket.off('game_starting', onGameStarting)
+      socket.off('busted', onBusted)
     }
   }, [socket, tableId])
 
@@ -98,6 +112,8 @@ export function useGameState(socket: Socket | null, tableId: string) {
     actionRequired,
     countdown,
     timeLeft,
+    bustedInfo,
+    clearBusted: () => setBustedInfo(null),
     sendAction,
     sendChat,
     clearHandResult: () => setHandResult(null),

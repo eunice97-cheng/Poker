@@ -226,8 +226,8 @@ export class GameEngine {
       return
     }
 
-    // Post-flop: first active player left of dealer
-    const firstSeat = this.nextActiveSeat(this.state.dealerSeat)
+    // Post-flop: first player (left of dealer) who can still act (not folded, not all-in)
+    const firstSeat = this.nextActingSeat(this.state.dealerSeat)
     this.state.currentSeat = firstSeat
 
     this.broadcastGameState()
@@ -323,11 +323,20 @@ export class GameEngine {
 
     // Remove busted players (stack = 0)
     for (const [seat, player] of this.state.players.entries()) {
-      if (player.stack <= 0) {
-        this.io.to(player.socketId).emit('busted', { message: 'You ran out of chips and have been removed from the table.' })
+      if (player.stack <= 0 && !player.isBot) {
+        this.io.to(player.socketId).emit('busted', {
+          message: 'You ran out of chips!',
+          minBuyin: this.state.minBuyin,
+          maxBuyin: this.state.maxBuyin,
+          tableId: this.state.tableId,
+        })
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
         await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
+      } else if (player.stack <= 0 && player.isBot) {
+        // Remove busted bots silently
+        this.state.players.delete(seat)
+        this.state.socketToSeat.delete(player.socketId)
       }
     }
 

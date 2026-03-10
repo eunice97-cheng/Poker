@@ -1,21 +1,30 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSocket } from '@/hooks/useSocket'
 import { useGameState } from '@/hooks/useGameState'
 import { PokerTable } from '@/components/game/PokerTable'
+import { RebuyModal } from '@/components/game/RebuyModal'
 
 interface TablePageClientProps {
   tableId: string
   token: string
   userId: string
+  chipBalance: number
 }
 
-export function TablePageClient({ tableId, token, userId }: TablePageClientProps) {
+const AUTO_REBUY_KEY = 'poker_auto_rebuy'
+
+export function TablePageClient({ tableId, token, userId, chipBalance: initialBalance }: TablePageClientProps) {
   const router = useRouter()
   const { socket, connected, error: socketError } = useSocket(token)
   const [leaving, setLeaving] = useState(false)
+  const [chipBalance, setChipBalance] = useState(initialBalance)
+  const [autoRebuy, setAutoRebuy] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem(AUTO_REBUY_KEY) === 'true'
+  })
 
   const {
     gameState,
@@ -24,38 +33,50 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
     actionLogs,
     timeLeft,
     countdown,
+    bustedInfo,
+    clearBusted,
     sendAction,
     sendChat,
     clearHandResult,
   } = useGameState(socket, tableId)
 
-  const handleLeave = () => {
+  const handleLeave = useCallback(() => {
     if (!socket || leaving) return
     setLeaving(true)
     socket.emit('leave_table', {}, () => {
       router.push('/lobby')
     })
-  }
+  }, [socket, leaving, router])
 
-  const handleSitOut = () => {
+  const handleRebuy = useCallback((amount: number, newAutoRebuy: boolean) => {
     if (!socket) return
-    socket.emit('sit_out', {})
-  }
+    // Persist auto-rebuy preference
+    setAutoRebuy(newAutoRebuy)
+    localStorage.setItem(AUTO_REBUY_KEY, String(newAutoRebuy))
 
-  const handleSitIn = () => {
-    if (!socket) return
-    socket.emit('sit_in', {})
-  }
+    clearBusted()
+    socket.emit('join_table', { tableId, buyIn: amount }, (res: { error?: string; seat?: number; stack?: number; balance?: number }) => {
+      if (res.error) {
+        console.error('Rebuy failed:', res.error)
+        router.push('/lobby')
+        return
+      }
+      if (res.balance !== undefined) setChipBalance(res.balance)
+    })
+  }, [socket, tableId, clearBusted, router])
 
-  // Busted: server removed us from the table
+  const handleSitOut = () => socket?.emit('sit_out', {})
+  const handleSitIn = () => socket?.emit('sit_in', {})
+
+  // Update chip balance after any cashout/join callback
   useEffect(() => {
     if (!socket) return
-    const onBusted = () => {
-      setTimeout(() => router.push('/lobby'), 3000)
+    const onLeaveAck = (res: { balance?: number }) => {
+      if (res.balance !== undefined) setChipBalance(res.balance)
     }
-    socket.on('busted', onBusted)
-    return () => { socket.off('busted', onBusted) }
-  }, [socket, router])
+    socket.on('leave_table', onLeaveAck)
+    return () => { socket.off('leave_table', onLeaveAck) }
+  }, [socket])
 
   if (socketError) {
     return (
@@ -82,19 +103,31 @@ export function TablePageClient({ tableId, token, userId }: TablePageClientProps
   }
 
   return (
-    <PokerTable
-      gameState={gameState}
-      handResult={handResult}
-      messages={messages}
-      actionLogs={actionLogs}
-      timeLeft={timeLeft}
-      countdown={countdown}
-      onAction={sendAction}
-      onChat={sendChat}
-      onLeave={handleLeave}
-      onSitOut={handleSitOut}
-      onSitIn={handleSitIn}
-      clearHandResult={clearHandResult}
-    />
+    <>
+      <PokerTable
+        gameState={gameState}
+        handResult={handResult}
+        messages={messages}
+        actionLogs={actionLogs}
+        timeLeft={timeLeft}
+        countdown={countdown}
+        onAction={sendAction}
+        onChat={sendChat}
+        onLeave={handleLeave}
+        onSitOut={handleSitOut}
+        onSitIn={handleSitIn}
+        clearHandResult={clearHandResult}
+      />
+      {bustedInfo && (
+        <RebuyModal
+          minBuyin={bustedInfo.minBuyin}
+          maxBuyin={bustedInfo.maxBuyin}
+          chipBalance={chipBalance}
+          autoRebuy={autoRebuy}
+          onRebuy={handleRebuy}
+          onLeave={handleLeave}
+        />
+      )}
+    </>
   )
 }

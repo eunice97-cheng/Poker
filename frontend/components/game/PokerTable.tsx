@@ -10,20 +10,48 @@ import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
 
-// ─── Seat positions ───────────────────────────────────────────────────────────
-// Coordinates are % of the TABLE container (max-w-2xl, paddingBottom 52%).
-// The felt oval occupies the full container. Seats are placed around its edge.
-// Negative values let seats hang slightly outside the oval boundary.
+// ─── Scene geometry ───────────────────────────────────────────────────────────
+// Single fixed-pixel scene: 560 × 360 px
+// Oval (rail edge): left=30, top=130, width=500, height=180  → 2.78:1 ratio → clearly horizontal
+// Oval centre: cx=280, cy=220
+// Dealer image: top of scene, centred horizontally (avoids oval top)
+// Seats placed on ellipse perimeter using ellipsePt(), angle 90° = top centre = dealer spot (avoided)
+
+const SCENE_W = 560
+const SCENE_H = 360
+
+// Oval dimensions
+const OW = 500   // oval width
+const OH = 180   // oval height
+const OCX = 280  // oval centre x
+const OCY = 220  // oval centre y
+
+// Padding around oval so seats don't clip
+const PAD_X = 40
+const PAD_Y = 30
+
+function ellipsePt(angleDeg: number): React.CSSProperties {
+  const rad = (angleDeg * Math.PI) / 180
+  return {
+    position: 'absolute',
+    left: `${Math.round(OCX + (OW / 2 + PAD_X) * Math.cos(rad))}px`,
+    top: `${Math.round(OCY - (OH / 2 + PAD_Y) * Math.sin(rad))}px`,
+    transform: 'translate(-50%, -50%)',
+  }
+}
+
+// Seat assignments — angles avoid 90° (top-centre = dealer area)
+// 0 = bottom-centre (human player), rest go clockwise
 const SEAT_POSITIONS: Record<number, React.CSSProperties> = {
-  0: { bottom: '-18%', left: '50%', transform: 'translateX(-50%)' }, // bottom-center (player)
-  1: { top: '45%',    left: '-6%', transform: 'translateY(-50%)' }, // left
-  2: { top: '-12%',   left: '12%' },                                 // top-left
-  3: { top: '-16%',   left: '33%' },                                 // top, left of center
-  4: { top: '-16%',   right: '33%' },                                // top, right of center
-  5: { top: '-12%',   right: '12%' },                                // top-right
-  6: { top: '45%',    right: '-6%', transform: 'translateY(-50%)' }, // right
-  7: { bottom: '-18%',left: '22%' },                                 // bottom-left
-  8: { bottom: '-18%',right: '22%' },                                // bottom-right
+  0: ellipsePt(270),   // bottom-centre
+  1: ellipsePt(220),   // bottom-left
+  2: ellipsePt(155),   // left-ish
+  3: ellipsePt(110),   // top-left (near dealer but clear)
+  4: ellipsePt(70),    // top-right
+  5: ellipsePt(25),    // right-ish
+  6: ellipsePt(320),   // bottom-right
+  7: ellipsePt(200),   // left
+  8: ellipsePt(340),   // right
 }
 
 interface PokerTableProps {
@@ -97,96 +125,106 @@ export function PokerTable({
         </div>
       </div>
 
-      {/* ── Table area ── */}
-      {/*
-        Layout (top → bottom inside flex-1):
-          1. Dealer row  — flex-shrink-0, always fully visible
-          2. Table scene — flex-shrink-0, oval + seats
-          3. flex spacer so the two items stay centered together
-      */}
-      <div className="flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden py-2 px-4">
+      {/* ── Main area: centred scene ── */}
+      <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
 
-        {/* 1. Dealer (Eunice) + speech bubble */}
-        <div className="flex-shrink-0 flex flex-col items-center z-30">
-          {/* Speech bubble — sits between dealer face and table */}
-          <div className="h-8 flex items-end justify-center mb-0.5">
+        {/*
+          Single fixed-pixel scene container.
+          Everything (dealer, speech bubble, oval, seats) is absolutely positioned inside.
+          Scene: 560 × 360 px
+        */}
+        <div
+          className="relative flex-shrink-0"
+          style={{ width: `${SCENE_W}px`, height: `${SCENE_H}px` }}
+        >
+
+          {/* ── Dealer (Eunice) — top-centre of scene ── */}
+          <div
+            className="absolute z-30 flex flex-col items-center"
+            style={{ top: 0, left: '50%', transform: 'translateX(-50%)' }}
+          >
+            <Image
+              src="/Eunice1.png"
+              alt="Dealer"
+              width={72}
+              height={96}
+              className="object-contain object-top select-none"
+              style={{
+                height: '96px',
+                width: 'auto',
+                filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.9))',
+              }}
+              priority
+            />
+
+            {/* Speech bubble — below the dealer image, above oval */}
             {dealerSpeech && (
-              <div className="relative bg-white text-gray-900 text-[11px] font-semibold
-                              px-3 py-1 rounded-2xl shadow-xl max-w-[240px] text-center leading-snug">
+              <div
+                className="relative bg-white text-gray-900 text-[11px] font-semibold
+                            px-3 py-1 rounded-2xl shadow-xl max-w-[200px] text-center leading-snug mt-1"
+              >
                 {dealerSpeech}
-                {/* Triangle pointing DOWN toward table */}
-                <span className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-0 h-0 block"
-                  style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '7px solid white' }} />
+                {/* Triangle pointing down toward oval */}
+                <span
+                  className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-0 h-0 block"
+                  style={{
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderTop: '7px solid white',
+                  }}
+                />
               </div>
             )}
           </div>
 
-          <Image
-            src="/Eunice1.png"
-            alt="Dealer"
-            width={108}
-            height={144}
-            className="object-contain object-top select-none"
+          {/* ── Felt oval ── */}
+          <div
+            className="absolute rounded-[50%] bg-amber-950 shadow-[0_0_60px_rgba(0,0,0,0.9)]"
             style={{
-              height: 'clamp(80px, 12vw, 140px)',
-              width: 'auto',
-              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.9))',
+              left: `${OCX - OW / 2}px`,   // 30px
+              top: `${OCY - OH / 2}px`,    // 130px
+              width: `${OW}px`,            // 500px
+              height: `${OH}px`,           // 180px
             }}
-            priority
-          />
-        </div>
-
-        {/* 2. Table scene — oval + seats */}
-        {/*
-          max-w-2xl = 672 px. paddingBottom 52% → height = 349 px at full width.
-          Seats use negative % to hang outside the oval boundary — no overflow:hidden
-          on any ancestor, so they render correctly.
-        */}
-        <div className="flex-shrink-0 relative w-full max-w-2xl" style={{ paddingBottom: '52%' }}>
-          <div className="absolute inset-0">
-
-            {/* Felt oval */}
-            <div className="absolute inset-0 rounded-[50%] bg-amber-950 shadow-[0_0_60px_rgba(0,0,0,0.9)]">
-              {/* Rail sheen */}
-              <div className="absolute inset-[3px] rounded-[50%] bg-gradient-to-b from-amber-700/40 to-transparent" />
-              {/* Felt surface */}
-              <div className="absolute inset-[10px] rounded-[50%] bg-felt">
-                <div className="absolute inset-3 rounded-[50%] border border-felt-light/20" />
-                {/* Center content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  {countdown !== null && gameState.phase === 'waiting' && (
-                    <div className="text-white text-lg font-bold animate-pulse">
-                      Game starting in {countdown}s...
-                    </div>
-                  )}
-                  {gameState.phase === 'waiting' && countdown === null && (
-                    <div className="text-gray-300 text-sm">Waiting for players...</div>
-                  )}
-                  {gameState.phase !== 'waiting' && (
-                    <CommunityCards cards={gameState.community} phase={gameState.phase} pot={gameState.pot} />
-                  )}
-                </div>
+          >
+            {/* Rail sheen */}
+            <div className="absolute inset-[3px] rounded-[50%] bg-gradient-to-b from-amber-700/40 to-transparent" />
+            {/* Felt surface */}
+            <div className="absolute inset-[10px] rounded-[50%] bg-felt">
+              <div className="absolute inset-3 rounded-[50%] border border-felt-light/20" />
+              {/* Centre content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                {countdown !== null && gameState.phase === 'waiting' && (
+                  <div className="text-white text-base font-bold animate-pulse">
+                    Starting in {countdown}s…
+                  </div>
+                )}
+                {gameState.phase === 'waiting' && countdown === null && (
+                  <div className="text-gray-300 text-sm">Waiting for players…</div>
+                )}
+                {gameState.phase !== 'waiting' && (
+                  <CommunityCards cards={gameState.community} phase={gameState.phase} pot={gameState.pot} />
+                )}
               </div>
             </div>
-
-            {/* Player seats — positioned relative to the paddingBottom container */}
-            {gameState.players.map((player) => {
-              const pos = SEAT_POSITIONS[player.seat]
-              if (!pos) return null
-              return (
-                <div key={player.playerId} className="absolute z-10" style={pos}>
-                  <PlayerSeat
-                    player={player}
-                    timeLeft={isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
-                    actionTimeLimit={30}
-                  />
-                </div>
-              )
-            })}
-
           </div>
-        </div>
 
+          {/* ── Player seats — absolute, placed on ellipse perimeter ── */}
+          {gameState.players.map((player) => {
+            const pos = SEAT_POSITIONS[player.seat]
+            if (!pos) return null
+            return (
+              <div key={player.playerId} className="absolute z-10" style={pos}>
+                <PlayerSeat
+                  player={player}
+                  timeLeft={isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
+                  actionTimeLimit={30}
+                />
+              </div>
+            )
+          })}
+
+        </div>
       </div>
 
       {/* ── Action bar ── */}
@@ -216,10 +254,10 @@ export function PokerTable({
           </div>
         ) : gameState.phase !== 'waiting' ? (
           <p className="text-gray-500 text-sm">
-            Waiting for <span className="text-white">{gameState.players.find(p => p.isCurrentTurn)?.username ?? '...'}</span> to act
+            Waiting for <span className="text-white">{gameState.players.find(p => p.isCurrentTurn)?.username ?? '…'}</span> to act
           </p>
         ) : (
-          <p className="text-gray-600 text-sm">Waiting for players to join...</p>
+          <p className="text-gray-600 text-sm">Waiting for players to join…</p>
         )}
       </div>
 
