@@ -64,14 +64,13 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     setSaving(false)
 
     if (updateError) {
-      setError(updateError.message.includes('unique') ? 'That username is already taken' : updateError.message)
+      setError(updateError.message)
     } else {
       setSaveMsg('Saved!')
+      router.refresh()
       setTimeout(() => setSaveMsg(''), 2000)
     }
   }
-
-  const currentAvatar = getAvatar(selectedAvatar)
 
   return (
     <div className="min-h-screen bg-gray-950">
