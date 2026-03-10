@@ -20,11 +20,11 @@ const SCENE_H = 520
 const OW = 580
 const OH = 210
 const OCX = 400
-const OCY = 295
+const OCY = 313
 const TABLE_W = 706
 const TABLE_H = 338
 const TABLE_LEFT = Math.round(OCX - TABLE_W / 2)
-const TABLE_TOP = 118
+const TABLE_TOP = 136
 
 const PAD_X = 16
 const PAD_Y = 16
