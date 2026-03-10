@@ -40,13 +40,13 @@ export function ActionPanel({ validActions, callAmount, minRaise, myStack, bigBl
         </div>
       )}
 
-      <div className="flex items-center gap-2 bg-black/70 border border-gray-700 rounded-2xl px-4 py-3 backdrop-blur">
+      <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-gray-700 bg-black/70 px-3 py-3 backdrop-blur sm:px-4">
         {/* Timer */}
-        <div className={`text-sm font-bold w-8 text-center ${timeLeft <= 10 ? 'text-red-400' : 'text-gray-400'}`}>
+        <div className={`w-8 text-center text-sm font-bold ${timeLeft <= 10 ? 'text-red-400' : 'text-gray-400'}`}>
           {timeLeft}s
         </div>
 
-        <div className="w-px h-8 bg-gray-700" />
+        <div className="hidden h-8 w-px bg-gray-700 sm:block" />
 
         {/* Action buttons */}
         {validActions.includes('fold') && (

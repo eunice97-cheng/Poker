@@ -108,9 +108,9 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-900/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-3xl">♠</span>
             <h1 className="text-xl font-bold text-white">ASL Basement Poker</h1>
             <div className="flex items-center gap-1.5 text-xs">
@@ -127,9 +127,9 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
             {profile && (
-              <div className="text-right">
+              <div className="text-left md:text-right">
                 <div className="text-white font-semibold">{profile.username}</div>
                 <div className="text-yellow-400 text-sm font-bold">
                   {profile.chip_balance.toLocaleString()} chips
@@ -172,13 +172,13 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
       </header>
 
       {/* Main */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 md:py-8">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">Available Tables</h2>
             <p className="text-gray-500 text-sm">Join a table or create your own</p>
           </div>
-          <Button variant="primary" size="md" onClick={() => setShowCreate(true)}>
+          <Button variant="primary" size="md" className="w-full sm:w-auto" onClick={() => setShowCreate(true)}>
             + Create Table
           </Button>
         </div>
@@ -202,7 +202,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
       >
         {joinModal && (
           <div className={`space-y-4 rounded-xl border p-1 ${joinTheme.lobbyCardClass}`}>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <div className={`${joinTheme.lobbyPanelClass} rounded-lg p-3`}>
                 <div className="text-gray-500">Blinds</div>
                 <div className={`font-bold ${joinTheme.lobbyAccentClass}`}>{joinModal.small_blind}/{joinModal.big_blind}</div>
@@ -228,7 +228,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
             {error && <p className="text-red-400 text-sm">{error}</p>}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button variant="ghost" className="flex-1" onClick={() => setJoinModal(null)}>Cancel</Button>
               <Button variant="primary" className="flex-1" loading={loading} onClick={confirmJoin}>
                 Take a Seat

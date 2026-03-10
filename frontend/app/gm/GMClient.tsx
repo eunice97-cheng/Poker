@@ -109,9 +109,9 @@ export function GMClient() {
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-10">
-      <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-6">
-        <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-900 p-8 shadow-2xl">
-          <div className="mb-6 flex items-center justify-between">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-stretch gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div className="w-full max-w-none rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-2xl sm:p-8 xl:max-w-lg">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-white">GM Chips</h1>
               <p className="text-sm text-gray-400">Grant chips to a player by exact username or player UUID.</p>
@@ -180,8 +180,8 @@ export function GMClient() {
           </form>
         </div>
 
-        <div className="w-full rounded-2xl border border-gray-800 bg-gray-900 p-8 shadow-2xl">
-          <div className="mb-6 flex items-center justify-between">
+        <div className="w-full rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-2xl sm:p-8">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold text-white">GM Tables</h2>
               <p className="text-sm text-gray-400">Close a stuck or unwanted table from the beta lobby.</p>
@@ -204,7 +204,7 @@ export function GMClient() {
             ) : (
               tables.map((table) => (
                 <div key={table.id} className="rounded-xl border border-gray-800 bg-gray-950/60 p-4">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="font-bold text-white">{table.name}</div>
                       <div className="mt-1 text-xs text-gray-500">
@@ -215,7 +215,7 @@ export function GMClient() {
                     <button
                       onClick={() => handleCloseTable(table.id)}
                       disabled={closingTableId === table.id}
-                      className="rounded-lg border border-red-700 px-3 py-2 text-sm font-semibold text-red-300 transition-colors hover:border-red-500 hover:text-white disabled:opacity-50"
+                      className="rounded-lg border border-red-700 px-3 py-2 text-sm font-semibold text-red-300 transition-colors hover:border-red-500 hover:text-white disabled:opacity-50 sm:self-start"
                     >
                       {closingTableId === table.id ? 'Closing…' : 'Close Table'}
                     </button>

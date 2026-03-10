@@ -104,6 +104,8 @@ export function PokerTable({
 
   const [dealerSpeech, setDealerSpeech] = useState('')
   const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
+  const [sceneScale, setSceneScale] = useState(1)
+  const [showMobilePanel, setShowMobilePanel] = useState(false)
 
   useEffect(() => {
     if (actionLogs.length === 0) return
@@ -112,6 +114,19 @@ export function PokerTable({
     const timeout = setTimeout(() => setDealerSpeech(''), 3500)
     return () => clearTimeout(timeout)
   }, [actionLogs])
+
+  useEffect(() => {
+    const updateSceneScale = () => {
+      if (typeof window === 'undefined') return
+      const horizontalScale = (window.innerWidth - 20) / SCENE_W
+      const verticalScale = (window.innerHeight - 280) / SCENE_H
+      setSceneScale(Math.min(1, horizontalScale, verticalScale))
+    }
+
+    updateSceneScale()
+    window.addEventListener('resize', updateSceneScale)
+    return () => window.removeEventListener('resize', updateSceneScale)
+  }, [])
 
   const handleInvite = async () => {
     try {
@@ -128,9 +143,9 @@ export function PokerTable({
 
   return (
     <div className={`relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
-      <div className={`z-10 flex shrink-0 items-center justify-between px-4 py-3 ${theme.topBarClass}`}>
+      <div className={`z-10 flex shrink-0 flex-col gap-2 px-4 py-3 md:flex-row md:items-center md:justify-between ${theme.topBarClass}`}>
         <div className="font-bold text-white">{gameState.tableName}</div>
-        <div className="flex items-center gap-4 text-sm text-gray-400">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 md:gap-4">
           <span>Hand #{gameState.handNumber}</span>
           <span className="text-white/90">
             {gameState.smallBlind}/{gameState.bigBlind}
@@ -141,7 +156,7 @@ export function PokerTable({
           {me && <span className="font-bold text-yellow-400">{me.stack.toLocaleString()} chips</span>}
           {isObserver && <span className="text-xs text-gray-500">Watching</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {me && gameState.phase === 'waiting' && (
             <button
               onClick={onSitOut}
@@ -178,7 +193,18 @@ export function PokerTable({
       </div>
 
       <div className="flex min-h-0 flex-1 items-start justify-center overflow-hidden pt-2">
-        <div className="relative shrink-0" style={{ width: `${SCENE_W}px`, height: `${SCENE_H}px` }}>
+        <div
+          className="relative shrink-0"
+          style={{ width: `${SCENE_W * sceneScale}px`, height: `${SCENE_H * sceneScale}px` }}
+        >
+          <div
+            className="absolute left-0 top-0 origin-top-left"
+            style={{
+              width: `${SCENE_W}px`,
+              height: `${SCENE_H}px`,
+              transform: `scale(${sceneScale})`,
+            }}
+          >
           <div className="absolute z-30 flex flex-col items-center" style={{ top: 0, left: '50%', transform: 'translateX(-50%)' }}>
             <div className={`absolute top-5 h-20 w-20 rounded-full blur-2xl ${theme.dealerGlowClass}`} />
             <Image
@@ -280,6 +306,7 @@ export function PokerTable({
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -321,9 +348,27 @@ export function PokerTable({
         )}
       </div>
 
-      <div className="absolute bottom-24 right-4 z-10 flex w-64 flex-col gap-2">
+      <div className="absolute bottom-24 right-4 z-10 hidden w-64 flex-col gap-2 lg:flex">
         <ActionLog logs={actionLogs} />
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
+      </div>
+
+      <div className="absolute bottom-24 right-3 z-20 lg:hidden">
+        {showMobilePanel ? (
+          <div className="w-[min(22rem,calc(100vw-1.5rem))] space-y-2">
+            <ActionLog logs={actionLogs} />
+            <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setShowMobilePanel((value) => !value)}
+          className="ml-auto mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-900/95 text-white shadow-lg ring-1 ring-white/10"
+          aria-expanded={showMobilePanel}
+          aria-label={showMobilePanel ? 'Hide chat panel' : 'Show chat panel'}
+        >
+          {showMobilePanel ? 'x' : 'Chat'}
+        </button>
       </div>
 
       {handResult && <HandResultModal result={handResult} onClose={clearHandResult} backImage={deckBackImage} />}
