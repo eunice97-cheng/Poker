@@ -8,21 +8,16 @@ import { registerConnectionHandler } from './handlers/connectionHandler'
 import { roomManager } from './rooms/RoomManager'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
-// Accept multiple origins: comma-separated CLIENT_URL env var, or allow all if not set
-const rawOrigins = process.env.CLIENT_URL ?? ''
-const allowedOrigins = rawOrigins
-  ? rawOrigins.split(',').map((s) => s.trim())
-  : true  // allow all origins if not configured
 
 const app = express()
-app.use(cors({ origin: allowedOrigins, credentials: true }))
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 
 const httpServer = createServer(app)
 
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -64,5 +59,4 @@ app.get('/tables', (_, res) => {
 
 httpServer.listen(PORT, () => {
   console.log(`[Server] Poker game server running on port ${PORT}`)
-  console.log(`[Server] CORS origins:`, allowedOrigins)
 })
