@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { ensureProfileExists } from '@/lib/profile'
 
 const REMEMBERED_EMAIL_KEY = 'poker_remembered_email'
 
@@ -32,6 +33,24 @@ export function LoginForm() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        throw userError ?? new Error('Unable to load your account')
+      }
+
+      if (!user.email_confirmed_at) {
+        await supabase.auth.signOut()
+        throw new Error('Please verify your email before signing in.')
+      }
+
+      const { error: profileError } = await ensureProfileExists(supabase, user)
+      if (profileError) throw profileError
+
       if (rememberEmail) {
         localStorage.setItem(REMEMBERED_EMAIL_KEY, email)
       } else {

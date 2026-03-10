@@ -25,20 +25,29 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { session } } = await supabase.auth.getSession()
-
-  // Protect routes that require auth
   const protectedPaths = ['/lobby', '/table', '/profile']
+  const authPaths = ['/auth/login', '/auth/register']
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+  const isAuthPage = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+
+  let isVerified = false
+  if (session) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    isVerified = !!user?.email_confirmed_at
+  }
 
   if (isProtected && !session) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Redirect authenticated users away from auth pages
-  const authPaths = ['/auth/login', '/auth/register']
-  const isAuthPage = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+  if (isProtected && session && !isVerified) {
+    await supabase.auth.signOut()
+    return NextResponse.redirect(new URL('/auth/login?unverified=true', request.url))
+  }
 
-  if (isAuthPage && session) {
+  if (isAuthPage && session && isVerified) {
     return NextResponse.redirect(new URL('/lobby', request.url))
   }
 

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
+import { getClientSiteUrl } from '@/lib/site-url'
 
 export function RegisterForm() {
   const [email, setEmail] = useState('')
@@ -32,7 +33,7 @@ export function RegisterForm() {
         password,
         options: {
           data: { username },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${getClientSiteUrl()}/auth/callback`,
         },
       })
       if (error) throw error
