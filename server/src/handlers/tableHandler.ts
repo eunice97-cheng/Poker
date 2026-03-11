@@ -84,7 +84,8 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       if (room.hasPendingJoin(socket.userId)) return callback?.({ error: 'Join already in progress' })
       room.beginPendingJoin(socket.userId)
       const aiOpponent = Array.from(room.state.players.values()).find((player) => player.isBot)
-      const shouldQueueBehindAi = room.isFull() && !!aiOpponent && room.getRealPlayerCount() === 1 && room.state.phase !== 'waiting'
+      const handInProgress = room.state.phase !== 'waiting'
+      const shouldQueueBehindAi = room.isFull() && !!aiOpponent && room.getRealPlayerCount() === 1 && handInProgress
 
       if (room.isFull() && !shouldQueueBehindAi) {
         const waitingBot = room.state.phase === 'waiting'
@@ -110,7 +111,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
       const balanceAfter = await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
 
-      if (shouldQueueBehindAi && aiOpponent) {
+      if (handInProgress) {
         const observer: ServerObserver = {
           socketId: socket.id,
           playerId: socket.userId,
@@ -121,10 +122,12 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         }
 
         room.addObserver(observer)
-        aiOpponent.botLeaveAfterHand = true
+        io.to(tableId).emit('action_log', { message: `${socket.username} takes a rail seat until this hand finishes` })
 
-        io.to(tableId).emit('action_log', { message: `${socket.username} takes a rail seat while ${aiOpponent.username} finishes the hand` })
-        io.to(tableId).emit('action_log', { message: `${aiOpponent.username} will leave after this hand` })
+        if (shouldQueueBehindAi && aiOpponent) {
+          aiOpponent.botLeaveAfterHand = true
+          io.to(tableId).emit('action_log', { message: `${aiOpponent.username} will leave after this hand` })
+        }
 
         room.engine.broadcastGameState()
         callback?.({ observer: true, stack: actualBuyIn, balance: balanceAfter })

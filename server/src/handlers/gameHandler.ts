@@ -55,6 +55,7 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
   socket.on('sit_in', (_: unknown, callback: (res: { ok?: boolean; error?: string }) => void) => {
     const room = roomManager.getRoomBySocketId(socket.id)
     if (!room) return callback?.({ error: 'Not at a table' })
+    if (room.state.phase !== 'waiting') return callback?.({ error: 'Please wait for the current hand to finish' })
 
     const observer = room.getObserverBySocketId(socket.id)
     if (!observer) return callback?.({ error: 'Not an observer' })
