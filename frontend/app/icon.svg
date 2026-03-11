@@ -1,17 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="14" fill="#1e293b"/>
-  <!-- Spade: two lobes + downward triangle + stem -->
-  <path fill="#f0b429"
-    d="M50 10
-       C37 10 26 19 26 30
-       C26 39 32 46 40 50
-       C34 49 28 50 23 54
-       C18 59 20 67 27 69
-       C21 74 15 79  8 82
-       L92 82
-       C85 79 79 74 73 69
-       C80 67 82 59 77 54
-       C72 50 66 49 60 50
-       C68 46 74 39 74 30
-       C74 19 63 10 50 10Z"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#20110a" />
+      <stop offset="55%" stop-color="#120907" />
+      <stop offset="100%" stop-color="#050302" />
+    </linearGradient>
+    <radialGradient id="glow" cx="35%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#fff7d1" stop-opacity="0.75" />
+      <stop offset="30%" stop-color="#f8d57e" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#f8d57e" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff4bf" />
+      <stop offset="20%" stop-color="#f6d677" />
+      <stop offset="55%" stop-color="#d99a2f" />
+      <stop offset="100%" stop-color="#8f5b12" />
+    </linearGradient>
+  </defs>
+
+  <rect width="100" height="100" rx="18" fill="url(#bg)" />
+  <rect x="3" y="3" width="94" height="94" rx="15" fill="none" stroke="#f6d677" stroke-opacity="0.28" />
+  <circle cx="34" cy="28" r="34" fill="url(#glow)" />
+
+  <path
+    fill="url(#gold)"
+    d="M50 15
+       C37 15 27 24 27 35
+       C27 45 34 52 43 56
+       C36 56 30 58 25 63
+       C19 69 22 79 32 80
+       H43
+       L39 90
+       H61
+       L57 80
+       H68
+       C78 79 81 69 75 63
+       C70 58 64 56 57 56
+       C66 52 73 45 73 35
+       C73 24 63 15 50 15Z"
+  />
+
+  <path
+    d="M39 29 C44 22 56 22 61 29"
+    fill="none"
+    stroke="#fff7d8"
+    stroke-opacity="0.55"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <circle cx="67" cy="24" r="3" fill="#fff7d8" fill-opacity="0.95" />
 </svg>
