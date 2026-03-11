@@ -133,18 +133,20 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,180,79,0.14),transparent_22%),linear-gradient(180deg,#120907_0%,#160a08_46%,#120907_100%)]" />
-      <div
-        className="absolute inset-x-0 top-0 h-[34rem] bg-no-repeat"
-        style={{
-          backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
-          backgroundPosition: 'center top',
-          backgroundSize: 'contain',
-        }}
-      />
-      <div className="absolute inset-x-0 top-0 h-[36rem] bg-[linear-gradient(180deg,rgba(18,9,7,0.08)_0%,rgba(18,9,7,0.18)_32%,rgba(18,9,7,0.76)_78%,rgba(18,9,7,1)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,9,7,0.84)_0%,transparent_16%,transparent_84%,rgba(18,9,7,0.9)_100%)]" />
-      <div className="absolute inset-x-0 top-[24rem] h-56 bg-[radial-gradient(circle,rgba(250,204,21,0.12),transparent_70%)] blur-3xl" />
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-no-repeat"
+          style={{
+            backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
+            backgroundPosition: 'center top',
+            backgroundSize: 'cover',
+          }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,6,5,0.2)_0%,rgba(12,6,5,0.35)_24%,rgba(12,6,5,0.72)_58%,rgba(12,6,5,0.92)_82%,rgba(18,9,7,1)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,9,7,0.78)_0%,transparent_18%,transparent_82%,rgba(18,9,7,0.82)_100%)]" />
+        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/20 to-transparent" />
+        <div className="absolute inset-x-0 top-[24rem] h-64 bg-[radial-gradient(circle,rgba(250,204,21,0.14),transparent_72%)] blur-3xl" />
+      </div>
 
       <div className="relative">
         <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
@@ -292,8 +294,6 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 </div>
               </div>
 
-              <LobbyChat socket={socket} profile={profile} />
-
               <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Tonight&apos;s pour</div>
                 <div className="mt-3 flex items-center justify-between text-sm text-white/72">
@@ -320,6 +320,8 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
             <TableList initialTables={initialTables} onJoin={handleJoinTable} onTablesChange={setLiveTables} />
           </section>
+        
+          <LobbyChat socket={socket} profile={profile} />
         </main>
 
         <CreateTableModal
