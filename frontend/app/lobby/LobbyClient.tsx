@@ -133,7 +133,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907] text-white">
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute inset-0 bg-no-repeat"
           style={{
@@ -148,7 +148,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
         <div className="absolute inset-x-0 top-[24rem] h-64 bg-[radial-gradient(circle,rgba(250,204,21,0.14),transparent_72%)] blur-3xl" />
       </div>
 
-      <div className="relative">
+      <div className="relative z-10">
         <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3">
@@ -377,4 +377,5 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
     </div>
   )
 }
+
 
