@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { FloatingButtons } from '@/components/ui/FloatingButtons'
+import { AudioProvider } from '@/hooks/useAudio'
 
 export const metadata: Metadata = {
   title: 'ASL Basement Poker',
@@ -11,8 +12,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        {children}
-        <FloatingButtons />
+        <AudioProvider>
+          {children}
+          <FloatingButtons />
+        </AudioProvider>
       </body>
     </html>
   )

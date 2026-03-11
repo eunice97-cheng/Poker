@@ -28,30 +28,12 @@ export function FloatingButtons() {
   const [open, setOpen] = useState(false)
 
   return (
-    <>
-      <div className="fixed right-4 top-20 z-[9999] hidden select-none flex-col items-end gap-3 md:right-5 md:top-24 md:flex">
-        <a
-          href="https://discord.com/users/909063517280296961"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={discordClasses}
-        >
-          <DiscordIcon />
-          <span>Message Eunice</span>
-        </a>
-
-        <a
-          href="https://ko-fi.com/eunicecheng"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={kofiClasses}
-        >
-          <KofiIcon />
-          <span>Tip Eunice</span>
-        </a>
-      </div>
-
-      <div className="fixed right-4 top-20 z-[9999] flex select-none flex-col items-end gap-2 md:hidden">
+    <div className="fixed right-4 top-20 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
+      <div
+        className={`flex flex-col items-end gap-2 transition-all duration-200 ${
+          open ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
+        }`}
+      >
         {open && (
           <>
             <a
@@ -61,7 +43,7 @@ export function FloatingButtons() {
               className={discordClasses}
             >
               <DiscordIcon />
-              <span>Discord</span>
+              <span>Message Eunice</span>
             </a>
 
             <a
@@ -71,29 +53,29 @@ export function FloatingButtons() {
               className={kofiClasses}
             >
               <KofiIcon />
-              <span>Ko-fi</span>
+              <span>Tip Eunice</span>
             </a>
           </>
         )}
-
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          aria-label={open ? 'Close support menu' : 'Open support menu'}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900/95 text-white shadow-lg ring-1 ring-white/10 transition-colors hover:bg-gray-800"
-        >
-          {open ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          )}
-        </button>
       </div>
-    </>
+
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-label={open ? 'Close support menu' : 'Open support menu'}
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900/95 text-white shadow-lg ring-1 ring-white/10 transition-colors hover:bg-gray-800"
+      >
+        {open ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        )}
+      </button>
+    </div>
   )
 }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ensureProfileExists } from '@/lib/profile'
+import { getAuthErrorMessage } from '@/lib/auth-errors'
 
 const REMEMBERED_EMAIL_KEY = 'poker_remembered_email'
 
@@ -58,7 +59,7 @@ export function LoginForm() {
       }
       router.push('/lobby')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(getAuthErrorMessage(err, 'Login failed'))
     } finally {
       setLoading(false)
     }

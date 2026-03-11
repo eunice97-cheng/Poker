@@ -51,11 +51,13 @@ export function HandResultModal({ result, onClose, backImage }: HandResultModalP
                 <span className="text-yellow-400 font-bold text-lg">+{winner.amount.toLocaleString()}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex gap-1">
-                  {winner.holeCards.map((card, j) => (
-                    <CardComponent key={j} card={card} size="sm" backImage={backImage} />
-                  ))}
-                </div>
+                {winner.holeCards.length > 0 ? (
+                  <div className="flex gap-1">
+                    {winner.holeCards.map((card, j) => (
+                      <CardComponent key={j} card={card} size="sm" backImage={backImage} />
+                    ))}
+                  </div>
+                ) : null}
                 <span className="text-yellow-300 text-sm font-semibold">{winner.handRank}</span>
               </div>
             </div>

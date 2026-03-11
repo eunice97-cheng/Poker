@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { getClientSiteUrl } from '@/lib/site-url'
+import { getAuthErrorMessage } from '@/lib/auth-errors'
 
 export function RegisterForm() {
   const [email, setEmail] = useState('')
@@ -39,7 +40,7 @@ export function RegisterForm() {
       if (error) throw error
       setSuccess(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed')
+      setError(getAuthErrorMessage(err, 'Registration failed'))
     } finally {
       setLoading(false)
     }

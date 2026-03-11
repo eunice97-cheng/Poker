@@ -14,6 +14,7 @@ import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import Link from 'next/link'
 import { buildLobbyInvite, shareInvite } from '@/lib/invite'
+import { useAudio } from '@/hooks/useAudio'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -25,6 +26,7 @@ interface LobbyClientProps {
 export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { playSfx } = useAudio()
   const [showCreate, setShowCreate] = useState(false)
   const [joinModal, setJoinModal] = useState<TableInfo | null>(null)
   const [buyIn, setBuyIn] = useState(0)
@@ -63,6 +65,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
         if (res.error) {
           reject(new Error(res.error))
         } else {
+          playSfx('joinLeave')
           router.push(`/table/${res.tableId}`)
           resolve()
         }
@@ -85,12 +88,14 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
       if (res.error) {
         setError(res.error)
       } else {
+        playSfx('joinLeave')
         router.push(`/table/${joinModal.id}`)
       }
     })
   }
 
   const handleSignOut = async () => {
+    playSfx('click')
     await supabase.auth.signOut()
     router.push('/auth/login')
   }

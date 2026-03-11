@@ -360,7 +360,7 @@ export class GameEngine {
     winner.stack += this.state.pot
 
     const result: HandResult = {
-      winners: [{ playerId: winner.playerId, username: winner.username, amount: this.state.pot, handRank: 'Last player standing', holeCards: winner.holeCards }],
+      winners: [{ playerId: winner.playerId, username: winner.username, amount: this.state.pot, handRank: 'Last player standing', holeCards: [] }],
       allHoleCards: [],
       pot: this.state.pot,
       community: this.state.community,

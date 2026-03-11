@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GameState, HandResult, ChatMessage, ClientObserver } from '@/types/poker'
 import { PlayerSeat } from './PlayerSeat'
 import { CommunityCards } from './CommunityCards'
@@ -13,6 +13,7 @@ import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { getTableTheme } from '@/lib/table-theme'
 import { getDealerImage, getDeckBackImage, getTableImage } from '@/lib/table-assets'
 import { buildTableInvite, shareInvite } from '@/lib/invite'
+import { useAudio } from '@/hooks/useAudio'
 
 const SCENE_W = 800
 const SCENE_H = 520
@@ -101,11 +102,15 @@ export function PokerTable({
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
   const theme = getTableTheme(gameState.bigBlind)
+  const { playSfx } = useAudio()
 
   const [dealerSpeech, setDealerSpeech] = useState('')
   const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
   const [sceneScale, setSceneScale] = useState(1)
   const [showMobilePanel, setShowMobilePanel] = useState(false)
+  const lastShuffleKey = useRef('')
+  const lastActionSfx = useRef('')
+  const lastResultKey = useRef('')
 
   useEffect(() => {
     if (actionLogs.length === 0) return
@@ -114,6 +119,39 @@ export function PokerTable({
     const timeout = setTimeout(() => setDealerSpeech(''), 3500)
     return () => clearTimeout(timeout)
   }, [actionLogs])
+
+  useEffect(() => {
+    if (actionLogs.length === 0) return
+
+    const latest = actionLogs[actionLogs.length - 1]
+    if (latest === lastActionSfx.current) return
+    lastActionSfx.current = latest
+
+    const normalized = latest.toLowerCase()
+    if (normalized.includes('all in')) {
+      playSfx('allin')
+      return
+    }
+
+    if (normalized.includes('folds')) {
+      playSfx('fold')
+      return
+    }
+
+    if (normalized.includes('checks')) {
+      playSfx('check')
+      return
+    }
+
+    if (normalized.includes('raises to') || normalized.includes('raises all in')) {
+      playSfx('raise')
+      return
+    }
+
+    if (normalized.includes('calls')) {
+      playSfx('call')
+    }
+  }, [actionLogs, playSfx])
 
   useEffect(() => {
     const updateSceneScale = () => {
@@ -127,6 +165,29 @@ export function PokerTable({
     window.addEventListener('resize', updateSceneScale)
     return () => window.removeEventListener('resize', updateSceneScale)
   }, [])
+
+  useEffect(() => {
+    if (gameState.phase !== 'preflop') return
+
+    const shuffleKey = `${gameState.tableId}:${gameState.handNumber}`
+    if (shuffleKey === lastShuffleKey.current) return
+    lastShuffleKey.current = shuffleKey
+    playSfx('shuffle')
+    setTimeout(() => {
+      playSfx('deal')
+    }, 250)
+  }, [gameState.handNumber, gameState.phase, gameState.tableId, playSfx])
+
+  useEffect(() => {
+    if (!handResult) return
+
+    const resultKey = `${gameState.tableId}:${gameState.handNumber}:${handResult.winners.map((winner) => winner.playerId).join(',')}`
+    if (resultKey === lastResultKey.current) return
+    lastResultKey.current = resultKey
+
+    const iWon = handResult.winners.some((winner) => winner.playerId === gameState.myPlayerId)
+    playSfx(iWon ? 'win' : 'lose')
+  }, [gameState.handNumber, gameState.myPlayerId, gameState.tableId, handResult, playSfx])
 
   const handleInvite = async () => {
     try {

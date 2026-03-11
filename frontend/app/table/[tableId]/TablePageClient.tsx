@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSocket } from '@/hooks/useSocket'
 import { useGameState } from '@/hooks/useGameState'
+import { useAudio } from '@/hooks/useAudio'
 import { PokerTable } from '@/components/game/PokerTable'
 import { RebuyModal } from '@/components/game/RebuyModal'
 
@@ -19,6 +20,7 @@ const AUTO_REBUY_KEY = 'poker_auto_rebuy'
 export function TablePageClient({ tableId, token, userId, chipBalance: initialBalance }: TablePageClientProps) {
   const router = useRouter()
   const { socket, connected, error: socketError } = useSocket(token)
+  const { playSfx } = useAudio()
   const [leaving, setLeaving] = useState(false)
   const [chipBalance, setChipBalance] = useState(initialBalance)
   const [autoRebuy, setAutoRebuy] = useState(() => {
@@ -43,10 +45,11 @@ export function TablePageClient({ tableId, token, userId, chipBalance: initialBa
   const handleLeave = useCallback(() => {
     if (!socket || leaving) return
     setLeaving(true)
+    playSfx('joinLeave')
     socket.emit('leave_table', {}, () => {
       router.push('/lobby')
     })
-  }, [socket, leaving, router])
+  }, [socket, leaving, playSfx, router])
 
   const handleRebuy = useCallback((amount: number, newAutoRebuy: boolean) => {
     if (!socket) return
@@ -61,12 +64,20 @@ export function TablePageClient({ tableId, token, userId, chipBalance: initialBa
         router.push('/lobby')
         return
       }
+      playSfx('joinLeave')
       if (res.balance !== undefined) setChipBalance(res.balance)
     })
-  }, [socket, tableId, clearBusted, router])
+  }, [socket, tableId, clearBusted, playSfx, router])
 
-  const handleSitOut = () => socket?.emit('sit_out', {})
-  const handleSitIn = () => socket?.emit('sit_in', {})
+  const handleSitOut = () => {
+    playSfx('sitStand')
+    socket?.emit('sit_out', {})
+  }
+
+  const handleSitIn = () => {
+    playSfx('sitStand')
+    socket?.emit('sit_in', {})
+  }
 
   // Update chip balance after any cashout/join callback
   useEffect(() => {
