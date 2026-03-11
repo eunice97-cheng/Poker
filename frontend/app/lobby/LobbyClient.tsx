@@ -133,18 +133,18 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,180,79,0.14),transparent_22%),linear-gradient(180deg,#120907_0%,#160a08_46%,#120907_100%)]" />
       <div
-        className="absolute inset-0"
+        className="absolute inset-x-0 top-0 h-[34rem] bg-no-repeat"
         style={{
-          backgroundImage:
-            "linear-gradient(180deg, rgba(14,7,6,0.12) 0%, rgba(14,7,6,0.48) 32%, rgba(14,7,6,0.88) 70%, rgba(14,7,6,1) 100%), radial-gradient(circle at top, rgba(249,180,79,0.16), transparent 24%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
+          backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
           backgroundPosition: 'center top',
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,9,7,0.8)_0%,transparent_20%,transparent_80%,rgba(18,9,7,0.86)_100%)]" />
-      <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/25 to-transparent" />
-      <div className="absolute inset-x-0 top-[28rem] h-52 bg-[radial-gradient(circle,rgba(250,204,21,0.12),transparent_70%)] blur-3xl" />
+      <div className="absolute inset-x-0 top-0 h-[36rem] bg-[linear-gradient(180deg,rgba(18,9,7,0.08)_0%,rgba(18,9,7,0.18)_32%,rgba(18,9,7,0.76)_78%,rgba(18,9,7,1)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,9,7,0.84)_0%,transparent_16%,transparent_84%,rgba(18,9,7,0.9)_100%)]" />
+      <div className="absolute inset-x-0 top-[24rem] h-56 bg-[radial-gradient(circle,rgba(250,204,21,0.12),transparent_70%)] blur-3xl" />
 
       <div className="relative">
         <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
@@ -375,3 +375,4 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
     </div>
   )
 }
+
