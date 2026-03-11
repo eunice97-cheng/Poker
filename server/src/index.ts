@@ -113,15 +113,6 @@ app.get('/tables', (_, res) => {
 
 async function reconcileLobbyTables() {
   const rooms = roomManager.getAllRooms()
-  const activeRoomIds = new Set(rooms.map((room) => room.tableId))
-
-  const dbTables = await supabaseService.listTables()
-
-  for (const table of dbTables) {
-    if (!activeRoomIds.has(table.id)) {
-      await supabaseService.deleteTable(table.id).catch(console.error)
-    }
-  }
 
   for (const room of rooms) {
     const status = room.state.phase === 'waiting' ? 'waiting' : 'playing'
