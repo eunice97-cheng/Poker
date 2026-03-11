@@ -1,5 +1,5 @@
 import { Server } from 'socket.io'
-import { ServerGameState, ServerPlayer, PlayerAction, SidePot, HandResult } from '../types/game'
+import { ServerGameState, ServerObserver, ServerPlayer, PlayerAction, SidePot, HandResult } from '../types/game'
 import { createShuffledDeck, dealCards } from './Deck'
 import { evaluateHands, findWinners } from './HandEvaluator'
 import { calculatePots } from './PotCalculator'
@@ -355,6 +355,8 @@ export class GameEngine {
       }
     }
 
+    await this.seatQueuedObservers()
+
     // If no real players remain after busts, delete the table — no next hand needed
     const realPlayersLeft = Array.from(this.state.players.values()).filter(p => !p.isBot)
     if (realPlayersLeft.length === 0) {
@@ -397,6 +399,8 @@ export class GameEngine {
       this.state.socketToSeat.delete(player.socketId)
       this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
     }
+
+    await this.seatQueuedObservers()
 
     setTimeout(() => {
       this.startHand().catch(console.error)
@@ -657,6 +661,51 @@ export class GameEngine {
 
   private getBBSeat(): number {
     return this.nextActiveSeat(this.getSBSeat())
+  }
+
+  private async seatQueuedObservers() {
+    const queuedObservers = Array.from(this.state.observers.values()).filter((observer) => !observer.hasTableEntry)
+    if (queuedObservers.length === 0) return
+
+    for (const observer of queuedObservers) {
+      const seat = this.findEmptySeat()
+      if (seat === null) break
+
+      this.state.observers.delete(observer.playerId)
+
+      const player: ServerPlayer = {
+        socketId: observer.socketId,
+        playerId: observer.playerId,
+        username: observer.username,
+        avatar: observer.avatar,
+        seat,
+        stack: observer.stack,
+        holeCards: [],
+        currentBet: 0,
+        totalBetThisHand: 0,
+        folded: false,
+        allIn: false,
+        sittingOut: false,
+        hasActed: false,
+        isConnected: true,
+        isBot: false,
+      }
+
+      this.state.players.set(seat, player)
+      this.state.socketToSeat.set(player.socketId, seat)
+      this.io.to(this.state.tableId).emit('action_log', { message: `${observer.username} takes a seat` })
+      this.io.to(this.state.tableId).emit('player_joined', {
+        playerId: observer.playerId,
+        username: observer.username,
+        seat,
+        stack: observer.stack,
+      })
+
+      await supabaseService.addTablePlayer(this.state.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+    }
+
+    this.state.status = 'waiting'
+    this.broadcastGameState()
   }
 
   private findEmptySeat(): number | null {
