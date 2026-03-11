@@ -3,7 +3,7 @@ import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
 import { ServerPlayer } from '../types/game'
 import { Server } from 'socket.io'
-import { releaseHousePlayer } from '../ai/housePlayers'
+import { getHouseExitLine, releaseHousePlayer } from '../ai/housePlayers'
 
 export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   // Create a new table
@@ -87,7 +87,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         if (waitingBot) {
           room.removePlayer(waitingBot.socketId)
           releaseHousePlayer(waitingBot, 'normal')
-          io.to(tableId).emit('action_log', { message: `${waitingBot.username} leaves a seat for a guest` })
+          io.to(tableId).emit('action_log', { message: getHouseExitLine(waitingBot.playerId, 'guest') ?? `${waitingBot.username} leaves a seat for a guest` })
         } else {
           return callback?.({ error: 'Table is full' })
         }
@@ -134,7 +134,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         if (room.state.phase === 'waiting') {
           room.removePlayer(houseAi.socketId)
           releaseHousePlayer(houseAi, 'normal')
-          io.to(tableId).emit('action_log', { message: `${houseAi.username} leaves the table for the real players` })
+          io.to(tableId).emit('action_log', { message: getHouseExitLine(houseAi.playerId, 'guest') ?? `${houseAi.username} leaves the table for the real players` })
         } else {
           houseAi.botLeaveAfterHand = true
           io.to(tableId).emit('action_log', { message: `${houseAi.username} will leave after this hand` })

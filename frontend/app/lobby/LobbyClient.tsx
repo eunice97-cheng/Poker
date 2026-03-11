@@ -152,8 +152,13 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
         <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#f3d2a2]/20 bg-[#f1b45b]/10 text-xl text-[#f7e7ce] shadow-[0_0_24px_rgba(241,180,91,0.18)]">
-                &#9824;
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#f3d2a2]/26 bg-[radial-gradient(circle_at_35%_30%,rgba(255,247,214,0.34),rgba(241,180,91,0.22)_32%,rgba(113,63,18,0.14)_72%,rgba(0,0,0,0.18)_100%)] shadow-[0_0_24px_rgba(241,180,91,0.22)]">
+                <span className="absolute inset-[2px] rounded-full border border-[#fff1ba]/16" />
+                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#fff7cf] shadow-[0_0_12px_rgba(255,247,207,0.95)]" />
+                <span className="absolute left-2 top-2 h-px w-4 rotate-[-18deg] bg-gradient-to-r from-transparent via-[#fff4bf] to-transparent opacity-85" />
+                <span className="bg-[linear-gradient(180deg,#fff3bd_0%,#f3cf73_26%,#cc8c27_62%,#8f5b12_100%)] bg-clip-text text-xl text-transparent [text-shadow:0_2px_14px_rgba(243,207,115,0.34)]">
+                  &#9824;
+                </span>
               </span>
               <div>
                 <div className="font-serif text-2xl tracking-wide text-[#fff3e2]">ASL Basement Poker</div>

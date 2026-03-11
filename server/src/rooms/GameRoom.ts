@@ -1,7 +1,7 @@
 import { Server } from 'socket.io'
 import { ServerGameState, ServerPlayer, ServerObserver, TableInfo } from '../types/game'
 import { GameEngine } from '../game/GameEngine'
-import { assignHousePlayer, releaseHousePlayersForTable } from '../ai/housePlayers'
+import { assignHousePlayer, getHouseIntroLine, releaseHousePlayersForTable } from '../ai/housePlayers'
 
 const MIN_PLAYERS_TO_START = 2
 const START_COUNTDOWN_MS = 10_000
@@ -222,7 +222,7 @@ export class GameRoom {
     if (!bot) return
 
     this.addBotPlayer(bot)
-    this.io.to(this.tableId).emit('action_log', { message: `${bot.username} takes a seat` })
+    this.io.to(this.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} takes a seat` })
     this.engine.broadcastGameState()
   }
 }

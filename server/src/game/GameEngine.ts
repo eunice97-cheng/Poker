@@ -5,7 +5,7 @@ import { evaluateHands, findWinners } from './HandEvaluator'
 import { calculatePots } from './PotCalculator'
 import { validateAction, getValidActions, getCallAmount, getMinRaise } from './ActionValidator'
 import { supabaseService } from '../services/supabaseService'
-import { assignHousePlayer, decideHouseAction, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
+import { assignHousePlayer, decideHouseAction, getHouseExitLine, getHouseIntroLine, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
 
 const ACTION_TIMEOUT = parseInt(process.env.ACTION_TIMEOUT_SECONDS ?? '30') * 1000
 const BETWEEN_HAND_DELAY = parseInt(process.env.BETWEEN_HAND_DELAY_SECONDS ?? '5') * 1000
@@ -29,7 +29,7 @@ export class GameEngine {
         if (bot) {
           this.state.players.set(seat, bot)
           this.state.socketToSeat.set(bot.socketId, seat)
-          this.io.to(this.state.tableId).emit('action_log', { message: `${bot.username} takes a seat` })
+          this.io.to(this.state.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} takes a seat` })
         }
       }
     }
@@ -358,12 +358,12 @@ export class GameEngine {
         releaseHousePlayer(player, 'rest')
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
-        this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves to rest for a while` })
+        this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'rest') ?? `${player.username} leaves to rest for a while` })
       } else if (player.isBot && player.botLeaveAfterHand) {
         releaseHousePlayer(player, 'normal')
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
-        this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves the table` })
+        this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
       }
     }
 
@@ -407,7 +407,7 @@ export class GameEngine {
       releaseHousePlayer(player, 'normal')
       this.state.players.delete(seat)
       this.state.socketToSeat.delete(player.socketId)
-      this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves the table` })
+      this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
     }
 
     setTimeout(() => {

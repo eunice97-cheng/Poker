@@ -60,9 +60,9 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
     <Modal open={open} onClose={onClose} title="Create Table">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-gray-400 text-sm mb-1">Table Name</label>
+          <label className="mb-1 block text-sm text-gray-400">Table Name</label>
           <input
-            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none focus:border-yellow-500"
+            className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none focus:border-yellow-500"
             placeholder="My Table"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -72,9 +72,9 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-gray-400 text-sm mb-1">Max Players</label>
+            <label className="mb-1 block text-sm text-gray-400">Max Players</label>
             <select
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none"
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
             >
@@ -85,9 +85,9 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
           </div>
 
           <div>
-            <label className="block text-gray-400 text-sm mb-1">Big Blind</label>
+            <label className="mb-1 block text-sm text-gray-400">Big Blind</label>
             <select
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none"
               value={bigBlind}
               onChange={(e) => setBigBlind(Number(e.target.value))}
             >
@@ -99,34 +99,38 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
         </div>
 
         <div>
-          <label className="block text-gray-400 text-sm mb-1">
-            Your Buy-in ({minBuyin.toLocaleString()}–{maxBuyin.toLocaleString()})
+          <label className="mb-1 block text-sm text-gray-400">
+            Your Buy-in ({minBuyin.toLocaleString()}-{maxBuyin.toLocaleString()})
           </label>
           <input
             type="number"
-            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none focus:border-yellow-500"
+            className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none focus:border-yellow-500"
             value={buyIn}
             onChange={(e) => setBuyIn(Number(e.target.value))}
             min={minBuyin}
             max={maxBuyin}
           />
           {!canAfford && (
-            <p className="text-red-400 text-xs mt-1">Insufficient chips (balance: {chipBalance.toLocaleString()})</p>
+            <p className="mt-1 text-xs text-red-400">Insufficient chips (balance: {chipBalance.toLocaleString()})</p>
           )}
         </div>
 
-        <div className="bg-gray-800/50 rounded-lg p-3 text-sm text-gray-400 space-y-1">
+        <div className="space-y-1 rounded-lg bg-gray-800/50 p-3 text-sm text-gray-400">
           <div className="flex justify-between">
             <span>Blinds</span>
             <span className="text-white">{smallBlind}/{bigBlind}</span>
           </div>
           <div className="flex justify-between">
             <span>Buy-in range</span>
-            <span className="text-white">{minBuyin.toLocaleString()}–{maxBuyin.toLocaleString()}</span>
+            <span className="text-white">{minBuyin.toLocaleString()}-{maxBuyin.toLocaleString()}</span>
           </div>
         </div>
 
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        <p className="rounded-lg border border-[#f3d2a2]/10 bg-[#f1b45b]/6 px-3 py-2 text-xs leading-5 text-[#f7dfba]/78">
+          A house player may join if the room is empty.
+        </p>
+
+        {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>

@@ -13,6 +13,9 @@ interface HousePlayerDefinition {
   title: string
   avatar: string
   style: HouseStyle
+  introLine: string
+  restLine: string
+  guestLine: string
   aggression: number
   looseness: number
   bluffRate: number
@@ -29,12 +32,12 @@ interface HousePlayerState {
 }
 
 const HOUSE_ROSTER: HousePlayerDefinition[] = [
-  { id: 'ai_alice', name: 'Alice', title: 'The Calm Cultivator', avatar: 'ai_alice', style: 'calm', aggression: 0.22, looseness: 0.2, bluffRate: 0.06, allInRate: 0.01 },
-  { id: 'ai_bernice', name: 'Bernice', title: 'The Drunken Gambler', avatar: 'ai_bernice', style: 'drunk', aggression: 0.72, looseness: 0.9, bluffRate: 0.2, allInRate: 0.14 },
-  { id: 'ai_candice', name: 'Candice', title: 'The Fox Trickster', avatar: 'ai_candice', style: 'trickster', aggression: 0.58, looseness: 0.52, bluffRate: 0.34, allInRate: 0.04 },
-  { id: 'ai_denice', name: 'Denice', title: 'The Iron Warrior', avatar: 'ai_denice', style: 'warrior', aggression: 0.82, looseness: 0.55, bluffRate: 0.15, allInRate: 0.08 },
-  { id: 'ai_felice', name: 'Felice', title: 'The Lucky Disciple', avatar: 'ai_felice', style: 'lucky', aggression: 0.42, looseness: 0.7, bluffRate: 0.18, allInRate: 0.06 },
-  { id: 'ai_gillece', name: 'Gillece', title: 'The Silent Assassin', avatar: 'ai_gillece', style: 'assassin', aggression: 0.48, looseness: 0.34, bluffRate: 0.1, allInRate: 0.03 },
+  { id: 'ai_alice', name: 'Alice', title: 'The Calm Cultivator', avatar: 'ai_alice', style: 'calm', introLine: 'Alice takes a quiet seat and smooths the felt.', restLine: 'Alice exhales softly. "That is enough for tonight."', guestLine: 'Alice gives up the seat without complaint.', aggression: 0.22, looseness: 0.2, bluffRate: 0.06, allInRate: 0.01 },
+  { id: 'ai_bernice', name: 'Bernice', title: 'The Drunken Gambler', avatar: 'ai_bernice', style: 'drunk', introLine: 'Bernice drops into the seat with a drink and a bad idea.', restLine: 'Bernice laughs into her drink. "All right, I need a breather."', guestLine: 'Bernice slides out of the seat. "Your turn to make bad decisions."', aggression: 0.72, looseness: 0.9, bluffRate: 0.2, allInRate: 0.14 },
+  { id: 'ai_candice', name: 'Candice', title: 'The Fox Trickster', avatar: 'ai_candice', style: 'trickster', introLine: 'Candice slips into the game with a smile that means trouble.', restLine: 'Candice smirks. "Fine. I will save the rest for later."', guestLine: 'Candice rises with a grin. "I will leave the mind games to you two."', aggression: 0.58, looseness: 0.52, bluffRate: 0.34, allInRate: 0.04 },
+  { id: 'ai_denice', name: 'Denice', title: 'The Iron Warrior', avatar: 'ai_denice', style: 'warrior', introLine: 'Denice takes her seat like she owns the room.', restLine: 'Denice pushes back from the table. "Not my round. Next time."', guestLine: 'Denice stands and yields the seat like a challenge, not a favor.', aggression: 0.82, looseness: 0.55, bluffRate: 0.15, allInRate: 0.08 },
+  { id: 'ai_felice', name: 'Felice', title: 'The Lucky Disciple', avatar: 'ai_felice', style: 'lucky', introLine: 'Felice takes a seat with the kind of luck that scares people.', restLine: 'Felice blinks at the stack. "Oh. That went fast."', guestLine: 'Felice hops off the seat. "Looks like you two need the space."', aggression: 0.42, looseness: 0.7, bluffRate: 0.18, allInRate: 0.06 },
+  { id: 'ai_gillece', name: 'Gillece', title: 'The Silent Assassin', avatar: 'ai_gillece', style: 'assassin', introLine: 'Gillece sits in silence. That is warning enough.', restLine: 'Gillece says nothing, only vanishes from the table.', guestLine: 'Gillece leaves the seat in silence for the new arrival.', aggression: 0.48, looseness: 0.34, bluffRate: 0.1, allInRate: 0.03 },
 ]
 
 const houseStates = new Map<string, HousePlayerState>()
@@ -307,4 +310,19 @@ export function getHouseRestingSummary() {
     availableAt: state.availableAt,
     assignedTableId: state.assignedTableId,
   }))
+}
+
+function getHouseProfile(playerId: string) {
+  ensureDailyReset()
+  return houseStates.get(playerId)?.profile ?? null
+}
+
+export function getHouseIntroLine(playerId: string) {
+  return getHouseProfile(playerId)?.introLine ?? null
+}
+
+export function getHouseExitLine(playerId: string, reason: 'rest' | 'guest') {
+  const profile = getHouseProfile(playerId)
+  if (!profile) return null
+  return reason === 'rest' ? profile.restLine : profile.guestLine
 }
