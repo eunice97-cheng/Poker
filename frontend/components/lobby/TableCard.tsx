@@ -10,9 +10,9 @@ interface TableCardProps {
 }
 
 const statusColors = {
-  waiting: 'text-green-400',
-  playing: 'text-yellow-400',
-  finished: 'text-gray-500',
+  waiting: 'text-emerald-300',
+  playing: 'text-amber-300',
+  finished: 'text-stone-500',
 }
 
 export function TableCard({ table, onJoin }: TableCardProps) {
@@ -21,7 +21,7 @@ export function TableCard({ table, onJoin }: TableCardProps) {
   const seatsLeft = Math.max(table.max_players - table.player_count, 0)
 
   return (
-    <div className={`${theme.lobbyCardClass} group relative overflow-hidden rounded-[24px] border p-5 shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(0,0,0,0.45)]`}>
+    <div className={`${theme.lobbyCardClass} group relative overflow-hidden rounded-[26px] border p-5 shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(0,0,0,0.45)]`}>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-70" />
       <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-white/10 blur-3xl transition-opacity duration-300 group-hover:opacity-80" />
 
@@ -34,20 +34,20 @@ export function TableCard({ table, onJoin }: TableCardProps) {
             </span>
           </div>
           <span className={`text-sm font-medium ${statusColors[table.status]}`}>
-            {table.status === 'waiting' ? 'Waiting for players' : table.status === 'playing' ? 'In progress' : 'Finished'}
+            {table.status === 'waiting' ? 'Gathering players' : table.status === 'playing' ? 'Cards in the air' : 'Night is over'}
           </span>
         </div>
         <div className="text-right">
-          <div className="font-bold text-yellow-300">
+          <div className="font-bold text-amber-200">
             {table.player_count}/{table.max_players}
           </div>
-          <div className="text-xs uppercase tracking-[0.18em] text-white/45">seated</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-white/45">inside</div>
         </div>
       </div>
 
       <div className="relative mb-4 grid grid-cols-2 gap-2 text-sm">
         <div className={`${theme.lobbyPanelClass} rounded-lg px-3 py-2`}>
-          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Blinds</div>
+          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Stakes</div>
           <div className={`font-medium ${theme.lobbyAccentClass}`}>{table.small_blind}/{table.big_blind}</div>
         </div>
         <div className={`${theme.lobbyPanelClass} rounded-lg px-3 py-2`}>
@@ -56,9 +56,9 @@ export function TableCard({ table, onJoin }: TableCardProps) {
         </div>
       </div>
 
-      <div className="relative mb-4 flex items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.18em] text-white/55">
-        <span>{seatsLeft} seats open</span>
-        <span>{canJoin ? 'Joinable now' : 'Unavailable'}</span>
+      <div className="relative mb-4 flex items-center justify-between rounded-xl border border-white/8 bg-black/18 px-3 py-2 text-xs uppercase tracking-[0.18em] text-white/55">
+        <span>{seatsLeft} stools open</span>
+        <span>{canJoin ? 'Step in now' : 'No seats left'}</span>
       </div>
 
       <Button
@@ -68,7 +68,7 @@ export function TableCard({ table, onJoin }: TableCardProps) {
         disabled={!canJoin}
         onClick={() => onJoin(table)}
       >
-        {table.status === 'finished' ? 'Finished' : !canJoin ? 'Full' : 'Join Table'}
+        {table.status === 'finished' ? 'Closed' : !canJoin ? 'Full House' : 'Join This Table'}
       </Button>
     </div>
   )

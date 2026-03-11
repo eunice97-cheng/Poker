@@ -52,10 +52,12 @@ interface AudioContextValue {
   sfxVol: number
   musicMute: boolean
   sfxMute: boolean
+  currentTrackLabel: string
   setMusicVol: (value: number) => void
   setSfxVol: (value: number) => void
   toggleMusic: () => void
   toggleSfx: () => void
+  nextTrack: () => void
   playSfx: (name: SfxName) => void
 }
 
@@ -87,12 +89,18 @@ function getPlaylist(pathname: string | null) {
   return DEFAULT_PLAYLIST
 }
 
+function getTrackLabel(src: string) {
+  const fileName = src.split('/').pop()?.replace('.mp3', '') ?? 'track'
+  return fileName.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [musicVol, setMusicVolState] = useState<number>(() => loadPref(MUSIC_VOL_KEY, 0.4) as number)
   const [sfxVol, setSfxVolState] = useState<number>(() => loadPref(SFX_VOL_KEY, 0.6) as number)
   const [musicMute, setMusicMuteState] = useState<boolean>(() => loadPref(MUSIC_MUTE_KEY, false) as boolean)
   const [sfxMute, setSfxMuteState] = useState<boolean>(() => loadPref(SFX_MUTE_KEY, false) as boolean)
+  const [currentTrackLabel, setCurrentTrackLabel] = useState('Jazz 1')
 
   const bgAudio = useRef<HTMLAudioElement | null>(null)
   const playlistRef = useRef<string[]>([])
@@ -118,6 +126,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       bgAudio.current.loop = playlist.length === 1
       bgAudio.current.src = playlist[trackIndexRef.current]
       bgAudio.current.load()
+      setCurrentTrackLabel(getTrackLabel(playlist[trackIndexRef.current]))
       syncPlayback()
     },
     [syncPlayback]
@@ -220,13 +229,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       sfxVol,
       musicMute,
       sfxMute,
+      currentTrackLabel,
       setMusicVol,
       setSfxVol,
       toggleMusic,
       toggleSfx,
+      nextTrack: advanceTrack,
       playSfx,
     }),
-    [musicMute, musicVol, playSfx, setMusicVol, setSfxVol, sfxMute, sfxVol, toggleMusic, toggleSfx]
+    [advanceTrack, currentTrackLabel, musicMute, musicVol, playSfx, setMusicVol, setSfxVol, sfxMute, sfxVol, toggleMusic, toggleSfx]
   )
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>

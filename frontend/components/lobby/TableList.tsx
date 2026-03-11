@@ -48,12 +48,12 @@ export function TableList({ onJoin, initialTables, onTablesChange }: TableListPr
 
   if (tables.length === 0) {
     return (
-      <div className="rounded-[28px] border border-white/10 bg-black/35 px-6 py-16 text-center shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-md">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/25 bg-amber-200/10 text-3xl text-amber-100">
+      <div className="rounded-[30px] border border-white/10 bg-black/28 px-6 py-16 text-center shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-md">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#f3d2a2]/25 bg-[#f1b45b]/10 text-3xl text-[#f7dfba]">
           &#9824;
         </div>
-        <p className="text-lg font-semibold text-white">No tables are open yet.</p>
-        <p className="mt-2 text-sm text-white/60">Start the first game and the lobby will populate in real time.</p>
+        <p className="text-lg font-semibold text-white">The lounge is open, but no table is drawing a crowd yet.</p>
+        <p className="mt-2 text-sm text-white/60">Start the first game, send an invite, and give people somewhere to gather.</p>
       </div>
     )
   }

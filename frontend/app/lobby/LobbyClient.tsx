@@ -42,8 +42,8 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   const activeTables = liveTables.filter((table) => table.status !== 'finished')
   const playersSeated = liveTables.reduce((sum, table) => sum + table.player_count, 0)
   const openSeats = liveTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
-  const featuredTable = [...liveTables].sort((a, b) => b.big_blind - a.big_blind)[0]
-  const hottestAction = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'Waiting on the opener'
+  const featuredTable = [...liveTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
+  const featuredStakes = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'House warming up'
 
   useEffect(() => {
     if (socket.connected) setSocketStatus('connected')
@@ -131,32 +131,32 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#080403] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#120907] text-white">
       <div
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(180deg, rgba(11,6,5,0.2) 0%, rgba(11,6,5,0.64) 34%, rgba(8,4,3,0.94) 72%, rgba(8,4,3,1) 100%), radial-gradient(circle at top, rgba(254,214,122,0.18), transparent 26%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
+            "linear-gradient(180deg, rgba(14,7,6,0.12) 0%, rgba(14,7,6,0.48) 32%, rgba(14,7,6,0.88) 70%, rgba(14,7,6,1) 100%), radial-gradient(circle at top, rgba(249,180,79,0.16), transparent 24%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
           backgroundPosition: 'center top',
           backgroundSize: 'cover',
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,4,3,0.78)_0%,transparent_26%,transparent_74%,rgba(8,4,3,0.85)_100%)]" />
-      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/35 to-transparent" />
-      <div className="absolute inset-x-0 top-[26rem] h-40 bg-[radial-gradient(circle,rgba(245,158,11,0.16),transparent_68%)] blur-3xl" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,9,7,0.8)_0%,transparent_20%,transparent_80%,rgba(18,9,7,0.86)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/25 to-transparent" />
+      <div className="absolute inset-x-0 top-[28rem] h-52 bg-[radial-gradient(circle,rgba(250,204,21,0.12),transparent_70%)] blur-3xl" />
 
       <div className="relative">
-        <header className="sticky top-0 z-20 border-b border-amber-200/10 bg-[#0a0606]/72 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-200/25 bg-amber-300/10 text-xl text-amber-100 shadow-[0_0_24px_rgba(245,158,11,0.2)]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#f3d2a2]/20 bg-[#f1b45b]/10 text-xl text-[#f7e7ce] shadow-[0_0_24px_rgba(241,180,91,0.18)]">
                 &#9824;
               </span>
               <div>
-                <div className="font-serif text-2xl tracking-wide text-amber-50">ASL Basement Poker</div>
-                <p className="text-[11px] uppercase tracking-[0.36em] text-amber-100/45">Private room. Cash on the felt.</p>
+                <div className="font-serif text-2xl tracking-wide text-[#fff3e2]">ASL Basement Poker</div>
+                <p className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Drinks first. Cards after.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-xs text-white/65">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs text-white/62">
                 <span
                   className={`h-2 w-2 rounded-full ${
                     socketStatus === 'connected'
@@ -168,19 +168,19 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 />
                 <span>
                   {socketStatus === 'connected'
-                    ? 'Table server live'
+                    ? 'Bar open'
                     : socketStatus === 'error'
                       ? `Connection issue: ${socketError || 'offline'}`
-                      : 'Connecting dealer...' }
+                      : 'Pouring the room...' }
                 </span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 md:justify-end">
               {profile && (
-                <div className="rounded-full border border-amber-200/12 bg-black/25 px-4 py-2 text-left md:text-right">
-                  <div className="text-sm font-semibold text-amber-50">{profile.username}</div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-amber-200/65">Bankroll {profile.chip_balance.toLocaleString()}</div>
+                <div className="rounded-full border border-[#f3d2a2]/10 bg-black/20 px-4 py-2 text-left md:text-right">
+                  <div className="text-sm font-semibold text-[#fff3e2]">{profile.username}</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">Tab {profile.chip_balance.toLocaleString()} chips</div>
                 </div>
               )}
               <button
@@ -191,7 +191,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 {profile?.avatar ? (
                   <AvatarDisplay avatarId={profile.avatar} size="md" />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/30 text-xs font-medium text-white/60">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/28 text-xs font-medium text-white/62">
                     Profile
                   </div>
                 )}
@@ -199,15 +199,15 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
               <AudioControls />
               <button
                 onClick={handleInvite}
-                className="rounded-full border border-amber-200/20 bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
+                className="rounded-full border border-[#f3d2a2]/14 bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
                 title="Copy invite and open Discord"
               >
-                {inviteLabel === 'done' ? 'Invite copied' : 'Bring players in'}
+                {inviteLabel === 'done' ? 'Invite copied' : 'Invite to the bar'}
               </button>
               {isAdmin && (
                 <Link
                   href="/gm"
-                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/75 transition-colors hover:border-amber-200/35 hover:text-white"
+                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/76 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
                 >
                   GM Chips
                 </Link>
@@ -218,18 +218,18 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
         </header>
 
         <main className="mx-auto max-w-7xl px-4 pb-8 pt-6 md:pt-10">
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
-            <div className="rounded-[36px] border border-amber-200/12 bg-[linear-gradient(180deg,rgba(8,4,3,0.72),rgba(8,4,3,0.3))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.45)] backdrop-blur-md md:p-8">
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_380px]">
+            <div className="rounded-[38px] border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(18,9,7,0.68),rgba(18,9,7,0.26))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.44)] backdrop-blur-md md:p-8">
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <div className="inline-flex rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-amber-100">
-                    Underground action
+                  <div className="inline-flex rounded-full border border-[#f3d2a2]/18 bg-[#f1b45b]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#f7dfba]">
+                    Pre-game lounge
                   </div>
-                  <h1 className="mt-5 max-w-xl font-serif text-5xl leading-[0.94] text-amber-50 md:text-7xl">
-                    The room is warm. The table is not.
+                  <h1 className="mt-5 max-w-xl font-serif text-5xl leading-[0.94] text-[#fff3e2] md:text-7xl">
+                    Hang out by the drinks before the cards hit the felt.
                   </h1>
-                  <p className="mt-5 max-w-xl text-base leading-7 text-amber-50/74">
-                    Pick a live table, sit down with chips, and let the dealer handle the rest. This lobby should feel like walking into the game, not opening a spreadsheet.
+                  <p className="mt-5 max-w-xl text-base leading-7 text-[#ffe8ca]/76">
+                    This is the spot to idle, talk, and see who is ready to play. When a table feels right, step out of the lounge and sit down with the room already warm.
                   </p>
                 </div>
 
@@ -237,80 +237,80 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                   <Button
                     variant="primary"
                     size="lg"
-                    className="rounded-full px-7 shadow-[0_18px_48px_rgba(245,158,11,0.28)]"
+                    className="rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)]"
                     onClick={() => setShowCreate(true)}
                   >
-                    Host a table
+                    Start a table
                   </Button>
                   <button
                     onClick={handleInvite}
-                    className="rounded-full border border-white/15 bg-black/20 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-amber-200/35 hover:text-white"
+                    className="rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
                   >
-                    {inviteLabel === 'done' ? 'Copied to clipboard' : 'Share the room'}
+                    {inviteLabel === 'done' ? 'Copied to clipboard' : 'Text the crew'}
                   </button>
                 </div>
               </div>
 
-              <div className="mt-10 grid gap-3 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
-                <div className="rounded-[28px] border border-amber-200/14 bg-black/22 p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-amber-200/46">Featured stakes</div>
-                  <div className="mt-3 font-serif text-3xl text-amber-50">{hottestAction}</div>
-                  <p className="mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'Open the first table and set the tone.'}</p>
+              <div className="mt-10 grid gap-3 md:grid-cols-[1.15fr_1fr_1fr_1fr]">
+                <div className="rounded-[28px] border border-[#f3d2a2]/14 bg-black/18 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-[#f3d2a2]/46">Tonight's main table</div>
+                  <div className="mt-3 font-serif text-3xl text-[#fff3e2]">{featuredStakes}</div>
+                  <p className="mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'No table has the room talking yet.'}</p>
                 </div>
-                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
+                <div className="rounded-[28px] border border-white/10 bg-black/18 p-5">
                   <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Tables open</div>
                   <div className="mt-3 text-4xl font-bold text-white">{activeTables.length}</div>
                 </div>
-                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Players seated</div>
+                <div className="rounded-[28px] border border-white/10 bg-black/18 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">People inside</div>
                   <div className="mt-3 text-4xl font-bold text-white">{playersSeated}</div>
                 </div>
-                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Seats open</div>
+                <div className="rounded-[28px] border border-white/10 bg-black/18 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Empty stools</div>
                   <div className="mt-3 text-4xl font-bold text-white">{openSeats}</div>
                 </div>
               </div>
             </div>
 
-            <aside className="flex flex-col gap-4 rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(10,6,6,0.82),rgba(10,6,6,0.44))] p-6 shadow-[0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md">
+            <aside className="flex flex-col gap-4 rounded-[38px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,10,8,0.82),rgba(20,10,8,0.46))] p-6 shadow-[0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-amber-100/45">Floor notes</div>
-                <div className="mt-3 font-serif text-3xl text-amber-50">{featuredTable ? 'High attention table' : 'No hands on the felt yet'}</div>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/45">By the bar</div>
+                <div className="mt-3 font-serif text-3xl text-[#fff3e2]">{featuredTable ? 'People are already drifting toward a game.' : 'The room is open, but nobody has called first deal yet.'}</div>
                 <p className="mt-3 text-sm leading-7 text-white/68">
                   {featuredTable
-                    ? `${featuredTable.name} is carrying the room right now with ${featuredTable.player_count} of ${featuredTable.max_players} seats occupied.`
-                    : 'Start a table and the room will switch from quiet lounge to active floor.'}
+                    ? `${featuredTable.name} has ${featuredTable.player_count} out of ${featuredTable.max_players} seats taken. Good table if you want to step in without the awkward wait.`
+                    : 'Start one soft table and the rest of the room usually follows. Empty lobbies die when nobody wants to be first.'}
                 </p>
               </div>
 
-              <div className="rounded-[28px] border border-amber-200/12 bg-black/18 p-5">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-amber-100/42">House read</div>
+              <div className="rounded-[28px] border border-[#f3d2a2]/12 bg-black/18 p-5">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">House chatter</div>
                 <div className="mt-3 space-y-3 text-sm text-white/70">
-                  <p>Warm low-stakes tables move fastest when the first player hosts instead of waiting for a full room.</p>
-                  <p>Use the invite button once the first table exists. Empty lobbies do not convert.</p>
+                  <p>Use this page like a drinking spot. Linger, watch who joins, then move when the energy feels right.</p>
+                  <p>The invite button works better once there is already one live table on the board.</p>
                 </div>
               </div>
 
-              <div className="mt-auto rounded-[28px] border border-white/10 bg-black/20 p-5">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Live status</div>
+              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Tonight's pour</div>
                 <div className="mt-3 flex items-center justify-between text-sm text-white/72">
-                  <span>Realtime lobby sync</span>
+                  <span>Realtime room sync</span>
                   <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-emerald-200">
-                    On
+                    Fresh
                   </span>
                 </div>
               </div>
             </aside>
           </section>
 
-          <section className="mt-8 rounded-[36px] border border-white/8 bg-[linear-gradient(180deg,rgba(9,5,4,0.82),rgba(9,5,4,0.58))] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:p-6">
+          <section className="mt-8 rounded-[38px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:p-6">
             <div className="mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-amber-100/42">Table board</div>
-                <h2 className="mt-2 font-serif text-4xl text-amber-50">Choose your seat</h2>
-                <p className="mt-2 text-sm text-white/58">The board updates live. Full tables stay visible so the room still feels occupied.</p>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
+                <h2 className="mt-2 font-serif text-4xl text-[#fff3e2]">Pick where the night goes next</h2>
+                <p className="mt-2 text-sm text-white/58">Watch the room, join a warm table, or open one that turns the lounge into a game.</p>
               </div>
-              <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
+              <div className="rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
                 Live updates enabled
               </div>
             </div>
