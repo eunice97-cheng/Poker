@@ -25,6 +25,9 @@ export async function authenticateSocket(
     if (error || !data.user) {
       return next(new Error('Invalid or expired token'))
     }
+    if (!data.user.email_confirmed_at) {
+      return next(new Error('Email verification required'))
+    }
 
     // Fetch profile for username
     const { data: profile, error: profileError } = await supabase

@@ -12,15 +12,58 @@ import redeemCodeRouter from './routes/redeemCode'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
 
+function getAllowedOrigins() {
+  return Array.from(
+    new Set(
+      [
+        process.env.NEXT_PUBLIC_SITE_URL,
+        process.env.CORS_ALLOWED_ORIGINS,
+        process.env.SOCKET_ALLOWED_ORIGINS,
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+      ]
+        .flatMap((value) => (value ?? '').split(','))
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  )
+}
+
+const allowedOrigins = getAllowedOrigins()
+
+function isAllowedOrigin(origin?: string) {
+  if (!origin) return true
+  return allowedOrigins.includes(origin)
+}
+
 const app = express()
-app.use(cors({ origin: true, credentials: true }))
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error('Origin not allowed by CORS'))
+    },
+    credentials: true,
+  })
+)
 app.use(express.json())
 
 const httpServer = createServer(app)
 
 const io = new Server(httpServer, {
   cors: {
-    origin: true,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error('Origin not allowed by CORS'))
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
