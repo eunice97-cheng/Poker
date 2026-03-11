@@ -157,7 +157,7 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
                 onChange={(e) => setDraft(e.target.value.slice(0, 240))}
                 rows={3}
                 placeholder={placeholder}
-                className="w-full resize-none rounded-2xl border border-[#f3d2a2]/16 bg-black/42 px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-white/38 focus:border-[#f3d2a2]/42 focus:bg-black/55"
+                className="w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
               />
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/240`}</div>
