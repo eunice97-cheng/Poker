@@ -9,7 +9,7 @@ interface ChatBoxProps {
   myPlayerId: string
 }
 
-const CHAT_EMOJIS = ['🃏', '🔥', '😂', '😮', '😎', '👀', '🍀', '💀']
+const CHAT_EMOJIS = ['🍸', '🥂', '♠️', '🃏', '🔥', '😎', '😂', '😬']
 
 export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
   const [input, setInput] = useState('')

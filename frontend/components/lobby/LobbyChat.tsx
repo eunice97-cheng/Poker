@@ -10,7 +10,7 @@ interface LobbyChatProps {
   profile: Profile | null
 }
 
-const CHAT_EMOJIS = ['🍸', '🥂', '🎲', '🃏', '🔥', '😂', '😎', '👀']
+const CHAT_EMOJIS = ['🍸', '🥂', '♠️', '🃏', '🔥', '😎', '😂', '😬']
 
 function formatTime(timestamp: string) {
   return new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
