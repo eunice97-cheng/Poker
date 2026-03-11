@@ -4,6 +4,8 @@ import { GameEngine } from '../game/GameEngine'
 import { assignHousePlayer, getHouseIntroLine, releaseHousePlayersForTable } from '../ai/housePlayers'
 
 const MIN_PLAYERS_TO_START = 2
+const HOUSE_AI_JOIN_DELAY_MS = 30_000
+const PRE_START_GRACE_MS = 5_000
 const START_COUNTDOWN_MS = 10_000
 
 export class GameRoom {
@@ -11,6 +13,8 @@ export class GameRoom {
   public readonly engine: GameEngine
   public state: ServerGameState
   private io: Server
+  private houseJoinTimer: NodeJS.Timeout | null = null
+  private preStartTimer: NodeJS.Timeout | null = null
   private startTimer: NodeJS.Timeout | null = null
   private pendingJoinPlayerIds: Set<string> = new Set()
 
@@ -117,9 +121,7 @@ export class GameRoom {
     this.state.socketToSeat.delete(socketId)
     this.io.sockets.sockets.get(socketId)?.leave(this.tableId)
 
-    if (this.state.players.size < MIN_PLAYERS_TO_START) {
-      this.clearStartTimer()
-    }
+    this.maybeScheduleStart()
 
     return player
   }
@@ -212,42 +214,83 @@ export class GameRoom {
   private maybeScheduleStart() {
     if (this.state.phase !== 'waiting') return
     this.ensureHouseOpponent()
-    if (this.state.players.size < MIN_PLAYERS_TO_START) return
-    if (this.startTimer) return
 
-    this.io.to(this.tableId).emit('game_starting', { countdown: START_COUNTDOWN_MS / 1000 })
+    if (this.state.players.size < MIN_PLAYERS_TO_START) {
+      this.clearStartSequence()
+      return
+    }
 
-    this.startTimer = setTimeout(() => {
-      this.startTimer = null
-      this.state.status = 'playing'
-      this.engine.startHand().catch(console.error)
-    }, START_COUNTDOWN_MS)
+    this.clearHouseJoinTimer()
+    if (this.preStartTimer || this.startTimer) return
+
+    this.preStartTimer = setTimeout(() => {
+      this.preStartTimer = null
+      if (this.state.phase !== 'waiting' || this.state.players.size < MIN_PLAYERS_TO_START) return
+
+      this.io.to(this.tableId).emit('game_starting', { countdown: START_COUNTDOWN_MS / 1000 })
+
+      this.startTimer = setTimeout(() => {
+        this.startTimer = null
+        if (this.state.phase !== 'waiting' || this.state.players.size < MIN_PLAYERS_TO_START) return
+        this.state.status = 'playing'
+        this.engine.startHand().catch(console.error)
+      }, START_COUNTDOWN_MS)
+    }, PRE_START_GRACE_MS)
   }
 
-  private clearStartTimer() {
+  private clearStartSequence() {
+    if (this.preStartTimer) {
+      clearTimeout(this.preStartTimer)
+      this.preStartTimer = null
+    }
     if (this.startTimer) {
       clearTimeout(this.startTimer)
       this.startTimer = null
     }
   }
 
+  private clearHouseJoinTimer() {
+    if (this.houseJoinTimer) {
+      clearTimeout(this.houseJoinTimer)
+      this.houseJoinTimer = null
+    }
+  }
+
   destroy() {
     releaseHousePlayersForTable(this.state.players.values())
-    this.clearStartTimer()
+    this.clearHouseJoinTimer()
+    this.clearStartSequence()
     this.engine.clearActionTimer()
   }
 
   private ensureHouseOpponent() {
-    if (this.getRealPlayerCount() !== 1) return
-    if (this.getBotPlayerCount() > 0) return
-    const seat = this.findEmptySeat()
-    if (seat === null) return
+    if (this.state.phase !== 'waiting') {
+      this.clearHouseJoinTimer()
+      return
+    }
 
-    const bot = assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
-    if (!bot) return
+    if (this.getRealPlayerCount() !== 1 || this.getBotPlayerCount() > 0) {
+      this.clearHouseJoinTimer()
+      return
+    }
 
-    this.addBotPlayer(bot)
-    this.io.to(this.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} takes a seat` })
-    this.engine.broadcastGameState()
+    if (this.houseJoinTimer) return
+
+    this.houseJoinTimer = setTimeout(() => {
+      this.houseJoinTimer = null
+      if (this.state.phase !== 'waiting') return
+      if (this.getRealPlayerCount() !== 1 || this.getBotPlayerCount() > 0) return
+
+      const seat = this.findEmptySeat()
+      if (seat === null) return
+
+      const bot = assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+      if (!bot) return
+
+      this.addBotPlayer(bot)
+      this.io.to(this.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} takes a seat` })
+      this.engine.broadcastGameState()
+      this.maybeScheduleStart()
+    }, HOUSE_AI_JOIN_DELAY_MS)
   }
 }

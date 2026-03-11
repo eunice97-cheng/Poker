@@ -5,10 +5,10 @@ import { evaluateHands, findWinners } from './HandEvaluator'
 import { calculatePots } from './PotCalculator'
 import { validateAction, getValidActions, getCallAmount, getMinRaise } from './ActionValidator'
 import { supabaseService } from '../services/supabaseService'
-import { assignHousePlayer, decideHouseAction, getHouseExitLine, getHouseIntroLine, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
+import { decideHouseAction, getHouseExitLine, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
 
 const ACTION_TIMEOUT = parseInt(process.env.ACTION_TIMEOUT_SECONDS ?? '30') * 1000
-const BETWEEN_HAND_DELAY = parseInt(process.env.BETWEEN_HAND_DELAY_SECONDS ?? '5') * 1000
+const BETWEEN_HAND_DELAY = Math.max(parseInt(process.env.BETWEEN_HAND_DELAY_SECONDS ?? '5'), 5) * 1000
 
 export class GameEngine {
   private io: Server
@@ -22,18 +22,6 @@ export class GameEngine {
   // ─── Hand Lifecycle ───────────────────────────────────────────────────────
 
   async startHand() {
-    if (this.getActivePlayers().filter((player) => !player.isBot).length === 1 && this.getActivePlayers().filter((player) => player.isBot).length === 0) {
-      const seat = this.findEmptySeat()
-      if (seat !== null) {
-        const bot = assignHousePlayer(this.state.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
-        if (bot) {
-          this.state.players.set(seat, bot)
-          this.state.socketToSeat.set(bot.socketId, seat)
-          this.io.to(this.state.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} takes a seat` })
-        }
-      }
-    }
-
     const activePlayers = this.getActivePlayers()
     if (activePlayers.length < 2) {
       this.state.phase = 'waiting'
