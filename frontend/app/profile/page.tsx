@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/admin'
 import { ProfileClient } from './ProfileClient'
 
 export default async function ProfilePage() {
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
       handHistory={hands ?? []}
       userId={session.user.id}
       email={session.user.email ?? ''}
+      isAdmin={isAdminEmail(session.user.email)}
     />
   )
 }

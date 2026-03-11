@@ -2,6 +2,7 @@ export interface AvatarOption {
   id: string
   image: string
   label: string
+  adminOnly?: boolean
 }
 
 const buildAvatarSet = (prefix: 'm' | 'f', label: 'Male' | 'Female') =>
@@ -17,6 +18,7 @@ const buildAvatarSet = (prefix: 'm' | 'f', label: 'Male' | 'Female') =>
 export const AVATARS: AvatarOption[] = [
   ...buildAvatarSet('m', 'Male'),
   ...buildAvatarSet('f', 'Female'),
+  { id: 'avatar_gm', image: '/avatars/GM.png', label: 'GM', adminOnly: true },
   { id: 'ai_alice', image: '/avatars/ai/Alice.png', label: 'Alice' },
   { id: 'ai_bernice', image: '/avatars/ai/Bernice.png', label: 'Bernice' },
   { id: 'ai_candice', image: '/avatars/ai/Candice.png', label: 'Candice' },
@@ -27,4 +29,12 @@ export const AVATARS: AvatarOption[] = [
 
 export function getAvatar(id: string): AvatarOption {
   return AVATARS.find((a) => a.id === id) ?? AVATARS[0]
+}
+
+export function getSelectableAvatars(isAdmin: boolean): AvatarOption[] {
+  return AVATARS.filter((avatar) => !avatar.id.startsWith('ai_') && (isAdmin || !avatar.adminOnly))
+}
+
+export function isAvatarSelectable(id: string, isAdmin: boolean): boolean {
+  return getSelectableAvatars(isAdmin).some((avatar) => avatar.id === id)
 }

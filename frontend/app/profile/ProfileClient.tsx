@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { AVATARS } from '@/lib/avatars'
+import { getSelectableAvatars, isAvatarSelectable } from '@/lib/avatars'
 import { Button } from '@/components/ui/Button'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 
@@ -30,16 +30,21 @@ interface ProfileClientProps {
   handHistory: HandRecord[]
   userId: string
   email: string
+  isAdmin: boolean
 }
 
 type Tab = 'profile' | 'stats' | 'hands'
 
-export function ProfileClient({ initialProfile, handHistory, userId, email }: ProfileClientProps) {
+export function ProfileClient({ initialProfile, handHistory, userId, email, isAdmin }: ProfileClientProps) {
   const router = useRouter()
   const supabase = createClient()
+  const selectableAvatars = getSelectableAvatars(isAdmin)
+  const currentAvatar = isAvatarSelectable(initialProfile?.avatar ?? 'avatar_m1', isAdmin)
+    ? (initialProfile?.avatar ?? 'avatar_m1')
+    : 'avatar_m1'
 
   const username = initialProfile?.username ?? ''
-  const [selectedAvatar, setSelectedAvatar] = useState(initialProfile?.avatar ?? 'avatar_m1')
+  const [selectedAvatar, setSelectedAvatar] = useState(currentAvatar)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
@@ -50,7 +55,7 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     ? Math.round((profile.games_won / profile.games_played) * 100)
     : 0
 
-  const isDirty = !profile || selectedAvatar !== profile.avatar
+  const isDirty = !profile || selectedAvatar !== currentAvatar
 
   const handleSave = async () => {
     if (!isDirty) return
@@ -58,19 +63,23 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
     setError('')
     setSaveMsg('')
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar: selectedAvatar })
-      .eq('id', userId)
-
-    setSaving(false)
-
-    if (updateError) {
-      setError(updateError.message)
-    } else {
+    try {
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: selectedAvatar }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Failed to save avatar')
+      }
       setSaveMsg('Saved!')
       router.refresh()
       setTimeout(() => setSaveMsg(''), 2000)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save avatar')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -134,24 +143,20 @@ export function ProfileClient({ initialProfile, handHistory, userId, email }: Pr
             <div>
               <p className="text-gray-400 text-sm mb-3">Choose your avatar</p>
               <div className="grid grid-cols-4 gap-4 justify-items-center">
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((n) => {
-                  const male = AVATARS.find((a) => a.id === `avatar_m${n}`)!
-                  const female = AVATARS.find((a) => a.id === `avatar_f${n}`)!
-                  return [male, female].map((avatar) => (
-                    <button
-                      key={avatar.id}
-                      onClick={() => setSelectedAvatar(avatar.id)}
-                      title={avatar.label}
-                      className={`block rounded-xl transition-all hover:scale-105 ${
-                        selectedAvatar === avatar.id
-                          ? 'ring-[3px] ring-yellow-400 ring-offset-2 ring-offset-gray-900 scale-105'
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <AvatarDisplay avatarId={avatar.id} size="2xl" />
-                    </button>
-                  ))
-                })}
+                {selectableAvatars.map((avatar) => (
+                  <button
+                    key={avatar.id}
+                    onClick={() => setSelectedAvatar(avatar.id)}
+                    title={avatar.label}
+                    className={`block rounded-xl transition-all hover:scale-105 ${
+                      selectedAvatar === avatar.id
+                        ? 'ring-[3px] ring-yellow-400 ring-offset-2 ring-offset-gray-900 scale-105'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <AvatarDisplay avatarId={avatar.id} size="2xl" />
+                  </button>
+                ))}
               </div>
             </div>
 
