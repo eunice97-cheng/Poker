@@ -45,6 +45,14 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
       {/* Name + Stack */}
       <div className="text-center">
         <div className="text-white text-xs font-semibold truncate max-w-[80px]">{player.username}</div>
+        {player.isBot && (
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3d2a2]">
+            AI
+          </div>
+        )}
+        {player.isBot && player.botTitle && (
+          <div className="max-w-[88px] truncate text-[10px] text-white/55">{player.botTitle}</div>
+        )}
         <div className="text-yellow-400 text-xs">{player.stack.toLocaleString()}</div>
       </div>
 

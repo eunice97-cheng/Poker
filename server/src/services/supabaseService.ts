@@ -93,8 +93,10 @@ export const supabaseService = {
   },
 
   async updateChipBalances(players: ServerPlayer[], tableId: string) {
+    const humanPlayers = players.filter((p) => !p.isBot)
+    if (humanPlayers.length === 0) return
     // Update each player's stack in table_players (in-game stack)
-    const updates = players.map((p) =>
+    const updates = humanPlayers.map((p) =>
       supabase
         .from('table_players')
         .update({ stack: p.stack })
@@ -154,6 +156,7 @@ export const supabaseService = {
       username: p.username,
       hole_cards: p.holeCards,
       stack: p.stack,
+      is_bot: p.isBot,
     }))
 
     await supabase.from('hand_history').insert({
@@ -167,10 +170,16 @@ export const supabaseService = {
     })
 
     // Update games_played and games_won
-    const winnerIds = winners.map((w) => w.playerId)
-    const allPlayerIds = Array.from(state.players.values()).map((p) => p.playerId)
+    const winnerIds = winners
+      .map((w) => w.playerId)
+      .filter((playerId) => !playerId.startsWith('ai_'))
+    const allPlayerIds = Array.from(state.players.values())
+      .filter((p) => !p.isBot)
+      .map((p) => p.playerId)
 
-    await supabase.rpc('increment_games_played', { player_ids: allPlayerIds })
+    if (allPlayerIds.length > 0) {
+      await supabase.rpc('increment_games_played', { player_ids: allPlayerIds })
+    }
     if (winnerIds.length > 0) {
       await supabase.rpc('increment_games_won', { player_ids: winnerIds })
     }

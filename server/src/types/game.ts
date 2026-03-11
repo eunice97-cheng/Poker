@@ -26,6 +26,10 @@ export interface ServerPlayer {
   hasActed: boolean     // has acted in the current betting round
   isConnected: boolean
   isBot: boolean
+  botTitle?: string
+  botStyle?: string
+  botJoinStack?: number
+  botLeaveAfterHand?: boolean
   reconnectTimer?: NodeJS.Timeout
 }
 
@@ -73,6 +77,7 @@ export interface ClientObserver {
 export interface ClientPlayer {
   playerId: string
   username: string
+  avatar: string
   seat: number
   stack: number
   currentBet: number
@@ -86,6 +91,8 @@ export interface ClientPlayer {
   isSB: boolean
   isBB: boolean
   isCurrentTurn: boolean
+  isBot: boolean
+  botTitle?: string
 }
 
 export interface ClientGameState {

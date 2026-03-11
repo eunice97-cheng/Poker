@@ -6,6 +6,8 @@ export interface ClientPlayer {
   playerId: string
   username: string
   avatar: string
+  isBot: boolean
+  botTitle?: string
   seat: number
   stack: number
   currentBet: number

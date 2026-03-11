@@ -5,6 +5,7 @@ import { evaluateHands, findWinners } from './HandEvaluator'
 import { calculatePots } from './PotCalculator'
 import { validateAction, getValidActions, getCallAmount, getMinRaise } from './ActionValidator'
 import { supabaseService } from '../services/supabaseService'
+import { assignHousePlayer, decideHouseAction, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
 
 const ACTION_TIMEOUT = parseInt(process.env.ACTION_TIMEOUT_SECONDS ?? '30') * 1000
 const BETWEEN_HAND_DELAY = parseInt(process.env.BETWEEN_HAND_DELAY_SECONDS ?? '5') * 1000
@@ -21,9 +22,22 @@ export class GameEngine {
   // ─── Hand Lifecycle ───────────────────────────────────────────────────────
 
   async startHand() {
+    if (this.getActivePlayers().filter((player) => !player.isBot).length === 1 && this.getActivePlayers().filter((player) => player.isBot).length === 0) {
+      const seat = this.findEmptySeat()
+      if (seat !== null) {
+        const bot = assignHousePlayer(this.state.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+        if (bot) {
+          this.state.players.set(seat, bot)
+          this.state.socketToSeat.set(bot.socketId, seat)
+          this.io.to(this.state.tableId).emit('action_log', { message: `${bot.username} takes a seat` })
+        }
+      }
+    }
+
     const activePlayers = this.getActivePlayers()
     if (activePlayers.length < 2) {
       this.state.phase = 'waiting'
+      this.state.status = 'waiting'
       this.broadcastGameState()
       return
     }
@@ -337,8 +351,19 @@ export class GameEngine {
         await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
       } else if (player.stack <= 0 && player.isBot) {
         // Remove busted bots silently
+        releaseHousePlayer(player, 'rest')
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
+      } else if (player.isBot && shouldHousePlayerRest(player)) {
+        releaseHousePlayer(player, 'rest')
+        this.state.players.delete(seat)
+        this.state.socketToSeat.delete(player.socketId)
+        this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves to rest for a while` })
+      } else if (player.isBot && player.botLeaveAfterHand) {
+        releaseHousePlayer(player, 'normal')
+        this.state.players.delete(seat)
+        this.state.socketToSeat.delete(player.socketId)
+        this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves the table` })
       }
     }
 
@@ -375,6 +400,14 @@ export class GameEngine {
       await supabaseService.updateChipBalances(Array.from(this.state.players.values()), this.state.tableId)
     } catch (err) {
       console.error('Failed to update chip balances:', err)
+    }
+
+    for (const [seat, player] of this.state.players.entries()) {
+      if (!player.isBot || !player.botLeaveAfterHand) continue
+      releaseHousePlayer(player, 'normal')
+      this.state.players.delete(seat)
+      this.state.socketToSeat.delete(player.socketId)
+      this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} leaves the table` })
     }
 
     setTimeout(() => {
@@ -475,9 +508,8 @@ export class GameEngine {
     if (player.isBot) {
       this.state.actionTimer = setTimeout(() => {
         if (this.state.currentSeat !== seat) return
-        const callAmt = getCallAmount(player, this.state)
-        const action = callAmt > 0 ? 'call' : 'check'
-        this.handleAction(player.socketId, action).catch(console.error)
+        const { action, amount } = decideHouseAction(player, this.state)
+        this.handleAction(player.socketId, action, amount).catch(console.error)
       }, 1500)
       return
     }
@@ -542,6 +574,8 @@ export class GameEngine {
         allIn: p.allIn,
         sittingOut: p.sittingOut,
         isConnected: p.isConnected,
+        isBot: p.isBot,
+        botTitle: p.botTitle,
         holeCards: p.playerId === player.playerId ? p.holeCards : p.holeCards.map(() => '??'),
         isDealer: s === this.state.dealerSeat,
         isSB: s === sbSeat,
@@ -598,6 +632,8 @@ export class GameEngine {
           allIn: p.allIn,
           sittingOut: p.sittingOut,
           isConnected: p.isConnected,
+          isBot: p.isBot,
+          botTitle: p.botTitle,
           holeCards: p.holeCards.map(() => '??'),
           isDealer: s === this.state.dealerSeat,
           isSB: s === this.getSBSeat(),
@@ -633,5 +669,12 @@ export class GameEngine {
 
   private getBBSeat(): number {
     return this.nextActiveSeat(this.getSBSeat())
+  }
+
+  private findEmptySeat(): number | null {
+    for (let seat = 0; seat < this.state.maxPlayers; seat++) {
+      if (!this.state.players.has(seat)) return seat
+    }
+    return null
   }
 }

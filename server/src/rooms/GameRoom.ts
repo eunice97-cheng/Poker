@@ -1,6 +1,7 @@
 import { Server } from 'socket.io'
 import { ServerGameState, ServerPlayer, ServerObserver, TableInfo } from '../types/game'
 import { GameEngine } from '../game/GameEngine'
+import { assignHousePlayer, releaseHousePlayersForTable } from '../ai/housePlayers'
 
 const MIN_PLAYERS_TO_START = 2
 const START_COUNTDOWN_MS = 10_000
@@ -47,6 +48,14 @@ export class GameRoom {
 
   getPlayerCount(): number {
     return this.state.players.size
+  }
+
+  getRealPlayerCount(): number {
+    return Array.from(this.state.players.values()).filter((player) => !player.isBot).length
+  }
+
+  getBotPlayerCount(): number {
+    return Array.from(this.state.players.values()).filter((player) => player.isBot).length
   }
 
   isFull(): boolean {
@@ -177,6 +186,7 @@ export class GameRoom {
 
   private maybeScheduleStart() {
     if (this.state.phase !== 'waiting') return
+    this.ensureHouseOpponent()
     if (this.state.players.size < MIN_PLAYERS_TO_START) return
     if (this.startTimer) return
 
@@ -197,7 +207,22 @@ export class GameRoom {
   }
 
   destroy() {
+    releaseHousePlayersForTable(this.state.players.values())
     this.clearStartTimer()
     this.engine.clearActionTimer()
+  }
+
+  private ensureHouseOpponent() {
+    if (this.getRealPlayerCount() !== 1) return
+    if (this.getBotPlayerCount() > 0) return
+    const seat = this.findEmptySeat()
+    if (seat === null) return
+
+    const bot = assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+    if (!bot) return
+
+    this.addBotPlayer(bot)
+    this.io.to(this.tableId).emit('action_log', { message: `${bot.username} takes a seat` })
+    this.engine.broadcastGameState()
   }
 }

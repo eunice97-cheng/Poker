@@ -3,6 +3,7 @@ import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
 import { ServerPlayer } from '../types/game'
 import { Server } from 'socket.io'
+import { releaseHousePlayer } from '../ai/housePlayers'
 
 export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   // Create a new table
@@ -79,7 +80,18 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const { tableId, buyIn } = params
       const room = roomManager.getRoom(tableId)
       if (!room) return callback?.({ error: 'Table not found' })
-      if (room.isFull()) return callback?.({ error: 'Table is full' })
+      if (room.isFull()) {
+        const waitingBot = room.state.phase === 'waiting'
+          ? Array.from(room.state.players.values()).find((player) => player.isBot)
+          : null
+        if (waitingBot) {
+          room.removePlayer(waitingBot.socketId)
+          releaseHousePlayer(waitingBot, 'normal')
+          io.to(tableId).emit('action_log', { message: `${waitingBot.username} leaves a seat for a guest` })
+        } else {
+          return callback?.({ error: 'Table is full' })
+        }
+      }
       if (room.hasPlayer(socket.userId)) return callback?.({ error: 'Already at this table' })
 
       const { minBuyin, maxBuyin } = room.state
@@ -116,6 +128,18 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
       room.addPlayer(player)
       io.to(tableId).emit('action_log', { message: `${socket.username} joined the game` })
+
+      const houseAi = Array.from(room.state.players.values()).find((tablePlayer) => tablePlayer.isBot)
+      if (houseAi && room.getRealPlayerCount() > 1) {
+        if (room.state.phase === 'waiting') {
+          room.removePlayer(houseAi.socketId)
+          releaseHousePlayer(houseAi, 'normal')
+          io.to(tableId).emit('action_log', { message: `${houseAi.username} leaves the table for the real players` })
+        } else {
+          houseAi.botLeaveAfterHand = true
+          io.to(tableId).emit('action_log', { message: `${houseAi.username} will leave after this hand` })
+        }
+      }
 
       io.to(tableId).emit('player_joined', {
         playerId: socket.userId,
