@@ -218,12 +218,17 @@ export function PokerTable({
           {isObserver && <span className="text-xs text-gray-500">Watching</span>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {me && gameState.phase === 'waiting' && (
+          {me && (
             <button
               onClick={onSitOut}
-              className="rounded-lg border border-gray-700 px-3 py-1 text-sm text-gray-400 transition-colors hover:text-yellow-400"
+              disabled={!!me.standUpAfterHand}
+              className="rounded-lg border border-gray-700 px-3 py-1 text-sm text-gray-400 transition-colors hover:text-yellow-400 disabled:cursor-not-allowed disabled:border-yellow-700/50 disabled:text-yellow-500"
             >
-              Stand Up
+              {me.standUpAfterHand
+                ? 'Leaving After Hand'
+                : gameState.phase === 'waiting' || gameState.phase === 'showdown'
+                  ? 'Stand Up'
+                  : 'Stand Up After Hand'}
             </button>
           )}
           {isObserver && (

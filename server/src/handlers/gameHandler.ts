@@ -1,10 +1,25 @@
 import { Server } from 'socket.io'
 import { AuthenticatedSocket } from '../middleware/authMiddleware'
 import { roomManager } from '../rooms/RoomManager'
+import { GameRoom } from '../rooms/GameRoom'
 import { PlayerAction, ServerObserver, ServerPlayer } from '../types/game'
 import { supabaseService } from '../services/supabaseService'
 
 export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
+  const movePlayerToObserver = (room: GameRoom, player: ServerPlayer) => {
+    room.removePlayer(player.socketId)
+
+    const observer: ServerObserver = {
+      socketId: player.socketId,
+      playerId: player.playerId,
+      username: player.username,
+      avatar: player.avatar,
+      stack: player.stack,
+      hasTableEntry: true,
+    }
+    room.addObserver(observer)
+  }
+
   socket.on('player_action', async (data: { action: PlayerAction; amount?: number }, callback) => {
     try {
       const room = roomManager.getRoomBySocketId(socket.id)
@@ -23,30 +38,28 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
   })
 
   // Stand up: player leaves their seat and becomes an observer
-  // Only allowed during waiting phase (no active hand)
   socket.on('sit_out', (_: unknown, callback: (res: { ok?: boolean; error?: string }) => void) => {
     const room = roomManager.getRoomBySocketId(socket.id)
     if (!room) return callback?.({ error: 'Not at a table' })
-    if (room.state.phase !== 'waiting') return callback?.({ error: 'Cannot stand up during a hand' })
 
     const player = room.getPlayerBySocketId(socket.id)
     if (!player) return callback?.({ error: 'Player not found' })
 
-    // Remove from seated players
-    room.removePlayer(socket.id)
-
-    // Add as observer (keeps their stack)
-    const observer: ServerObserver = {
-      socketId: socket.id,
-      playerId: player.playerId,
-      username: player.username,
-      avatar: player.avatar,
-      stack: player.stack,
-      hasTableEntry: true,
+    if (room.state.phase === 'waiting' || room.state.phase === 'showdown') {
+      movePlayerToObserver(room, player)
+      io.to(room.tableId).emit('action_log', { message: `${player.username} stands up` })
+      room.engine.broadcastGameState()
+      callback?.({ ok: true })
+      return
     }
-    room.addObserver(observer)
 
-    io.to(room.tableId).emit('action_log', { message: `${player.username} stands up` })
+    if (player.standUpAfterHand) {
+      callback?.({ error: 'You are already set to stand up after this hand' })
+      return
+    }
+
+    player.standUpAfterHand = true
+    io.to(room.tableId).emit('action_log', { message: `${player.username} will stand up after this hand` })
     room.engine.broadcastGameState()
     callback?.({ ok: true })
   })
@@ -85,6 +98,7 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
       hasActed: false,
       isConnected: true,
       isBot: false,
+      standUpAfterHand: false,
     }
 
     room.addPlayer(player)

@@ -31,6 +31,7 @@ export interface ServerPlayer {
   botStyle?: string
   botJoinStack?: number
   botLeaveAfterHand?: boolean
+  standUpAfterHand?: boolean
   reconnectTimer?: NodeJS.Timeout
 }
 
@@ -94,6 +95,7 @@ export interface ClientPlayer {
   isCurrentTurn: boolean
   isBot: boolean
   botTitle?: string
+  standUpAfterHand?: boolean
 }
 
 export interface ClientGameState {

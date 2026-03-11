@@ -60,6 +60,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         hasActed: false,
         isConnected: true,
         isBot: false,
+        standUpAfterHand: false,
       }
 
       room.addPlayer(player)
@@ -85,7 +86,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       room.beginPendingJoin(socket.userId)
       const aiOpponent = Array.from(room.state.players.values()).find((player) => player.isBot)
       const handInProgress = room.state.phase !== 'waiting'
-      const shouldQueueBehindAi = room.isFull() && !!aiOpponent && room.getRealPlayerCount() === 1 && handInProgress
+      const shouldQueueBehindAi = !!aiOpponent && room.getRealPlayerCount() === 1 && handInProgress
 
       if (room.isFull() && !shouldQueueBehindAi) {
         const waitingBot = room.state.phase === 'waiting'
@@ -124,7 +125,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         room.addObserver(observer)
         io.to(tableId).emit('action_log', { message: `${socket.username} takes a rail seat until this hand finishes` })
 
-        if (shouldQueueBehindAi && aiOpponent) {
+        if (shouldQueueBehindAi && aiOpponent && !aiOpponent.botLeaveAfterHand) {
           aiOpponent.botLeaveAfterHand = true
           io.to(tableId).emit('action_log', { message: `${aiOpponent.username} will leave after this hand` })
         }
@@ -155,6 +156,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         hasActed: false,
         isConnected: true,
         isBot: false,
+        standUpAfterHand: false,
       }
 
       room.addPlayer(player)

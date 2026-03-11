@@ -337,24 +337,10 @@ export class GameEngine {
         await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
         // Mark as broke so they receive 2,000 free chips after 24 hours
         await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
-      } else if (player.stack <= 0 && player.isBot) {
-        // Remove busted bots silently
-        releaseHousePlayer(player, 'rest')
-        this.state.players.delete(seat)
-        this.state.socketToSeat.delete(player.socketId)
-      } else if (player.isBot && shouldHousePlayerRest(player)) {
-        releaseHousePlayer(player, 'rest')
-        this.state.players.delete(seat)
-        this.state.socketToSeat.delete(player.socketId)
-        this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'rest') ?? `${player.username} leaves to rest for a while` })
-      } else if (player.isBot && player.botLeaveAfterHand) {
-        releaseHousePlayer(player, 'normal')
-        this.state.players.delete(seat)
-        this.state.socketToSeat.delete(player.socketId)
-        this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
       }
     }
 
+    await this.processPostHandSeatTransitions()
     await this.seatQueuedObservers()
 
     // If no real players remain after busts, delete the table — no next hand needed
@@ -392,14 +378,7 @@ export class GameEngine {
       console.error('Failed to update chip balances:', err)
     }
 
-    for (const [seat, player] of this.state.players.entries()) {
-      if (!player.isBot || !player.botLeaveAfterHand) continue
-      releaseHousePlayer(player, 'normal')
-      this.state.players.delete(seat)
-      this.state.socketToSeat.delete(player.socketId)
-      this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
-    }
-
+    await this.processPostHandSeatTransitions()
     await this.seatQueuedObservers()
 
     setTimeout(() => {
@@ -568,6 +547,7 @@ export class GameEngine {
         isConnected: p.isConnected,
         isBot: p.isBot,
         botTitle: p.botTitle,
+        standUpAfterHand: p.standUpAfterHand,
         holeCards: p.playerId === player.playerId ? p.holeCards : p.holeCards.map(() => '??'),
         isDealer: s === this.state.dealerSeat,
         isSB: s === sbSeat,
@@ -626,6 +606,7 @@ export class GameEngine {
           isConnected: p.isConnected,
           isBot: p.isBot,
           botTitle: p.botTitle,
+          standUpAfterHand: p.standUpAfterHand,
           holeCards: p.holeCards.map(() => '??'),
           isDealer: s === this.state.dealerSeat,
           isSB: s === this.getSBSeat(),
@@ -689,6 +670,7 @@ export class GameEngine {
         hasActed: false,
         isConnected: true,
         isBot: false,
+        standUpAfterHand: false,
       }
 
       this.state.players.set(seat, player)
@@ -713,5 +695,58 @@ export class GameEngine {
       if (!this.state.players.has(seat)) return seat
     }
     return null
+  }
+
+  private async processPostHandSeatTransitions() {
+    const moreThanOneRealPlayer = Array.from(this.state.players.values()).filter((player) => !player.isBot).length > 1
+    const queuedHumanObservers = Array.from(this.state.observers.values()).filter(
+      (observer) => !observer.hasTableEntry && !observer.playerId.startsWith('ai_')
+    ).length
+
+    for (const [seat, player] of this.state.players.entries()) {
+      if (player.stack <= 0 && !player.isBot) {
+        continue
+      }
+
+      if (player.isBot) {
+        const shouldExitForGuests = player.botLeaveAfterHand || moreThanOneRealPlayer || queuedHumanObservers > 0
+        if (player.stack <= 0) {
+          releaseHousePlayer(player, 'rest')
+          this.state.players.delete(seat)
+          this.state.socketToSeat.delete(player.socketId)
+          continue
+        }
+        if (shouldHousePlayerRest(player)) {
+          releaseHousePlayer(player, 'rest')
+          this.state.players.delete(seat)
+          this.state.socketToSeat.delete(player.socketId)
+          this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'rest') ?? `${player.username} leaves to rest for a while` })
+          continue
+        }
+        if (shouldExitForGuests) {
+          releaseHousePlayer(player, 'normal')
+          this.state.players.delete(seat)
+          this.state.socketToSeat.delete(player.socketId)
+          this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
+        }
+        continue
+      }
+
+      if (!player.standUpAfterHand) continue
+
+      player.standUpAfterHand = false
+      this.state.players.delete(seat)
+      this.state.socketToSeat.delete(player.socketId)
+      const observer: ServerObserver = {
+        socketId: player.socketId,
+        playerId: player.playerId,
+        username: player.username,
+        avatar: player.avatar,
+        stack: player.stack,
+        hasTableEntry: true,
+      }
+      this.state.observers.set(player.playerId, observer)
+      this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} stands up` })
+    }
   }
 }
