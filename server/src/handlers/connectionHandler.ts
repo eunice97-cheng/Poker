@@ -74,7 +74,16 @@ export function registerConnectionHandler(io: Server) {
       if (!room) return callback?.({ error: 'Table not found' })
 
       const player = room.getPlayerByPlayerId(authed.userId)
-      if (!player) return callback?.({ error: 'Not at this table' })
+      if (!player) {
+        const observer = room.state.observers.get(authed.userId)
+        if (!observer) return callback?.({ error: 'Not at this table' })
+
+        observer.socketId = socket.id
+        socket.join(room.tableId)
+        room.engine.broadcastGameState()
+        callback?.({ ok: true, observer: true })
+        return
+      }
 
       const oldSocketId = player.socketId
       room.reconnectPlayer(oldSocketId, socket.id)
@@ -96,10 +105,10 @@ export function registerConnectionHandler(io: Server) {
         if (observer.stack > 0) {
           await supabaseService.addChips(observer.playerId, room.tableId, observer.stack, 'cashout').catch(console.error)
         }
-        await supabaseService.removeTablePlayer(room.tableId, observer.playerId).catch(console.error)
-        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-        const hasObservers = room.state.observers.size > 0
-        if (realPlayers.length === 0 && !hasObservers) {
+        if (observer.hasTableEntry) {
+          await supabaseService.removeTablePlayer(room.tableId, observer.playerId).catch(console.error)
+        }
+        if (!room.shouldKeepAlive()) {
           await supabaseService.deleteTable(room.tableId).catch(console.error)
           roomManager.deleteRoom(room.tableId)
         }
@@ -109,43 +118,23 @@ export function registerConnectionHandler(io: Server) {
       const player = room.getPlayerBySocketId(socket.id)
       if (!player) return
 
-      if (room.state.phase === 'waiting') {
-        const cashout = player.stack
-        room.removePlayer(socket.id)
-        io.to(room.tableId).emit('player_left', {
-          playerId: player.playerId,
-          username: player.username,
-          reason: 'disconnected',
-        })
-        if (cashout > 0) {
-          await supabaseService.addChips(player.playerId, room.tableId, cashout, 'cashout').catch(console.error)
+      io.to(room.tableId).emit('player_disconnected', {
+        playerId: player.playerId,
+        username: player.username,
+      })
+      room.engine.broadcastGameState()
+
+      room.handleDisconnect(socket.id, async (removedPlayer) => {
+        if (removedPlayer.stack > 0) {
+          await supabaseService.addChips(removedPlayer.playerId, room.tableId, removedPlayer.stack, 'cashout').catch(console.error)
         }
-        await supabaseService.removeTablePlayer(room.tableId, player.playerId).catch(console.error)
-        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-        if (realPlayers.length === 0) {
+        await supabaseService.removeTablePlayer(room.tableId, removedPlayer.playerId).catch(console.error)
+
+        if (!room.shouldKeepAlive()) {
           await supabaseService.deleteTable(room.tableId).catch(console.error)
           roomManager.deleteRoom(room.tableId)
         }
-      } else {
-        io.to(room.tableId).emit('player_disconnected', {
-          playerId: player.playerId,
-          username: player.username,
-        })
-        room.engine.broadcastGameState()
-
-        room.handleDisconnect(socket.id, async (removedPlayer) => {
-          if (removedPlayer.stack > 0) {
-            await supabaseService.addChips(removedPlayer.playerId, room.tableId, removedPlayer.stack, 'cashout').catch(console.error)
-          }
-          await supabaseService.removeTablePlayer(room.tableId, removedPlayer.playerId).catch(console.error)
-
-          const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-          if (realPlayers.length === 0) {
-            await supabaseService.deleteTable(room.tableId).catch(console.error)
-            roomManager.deleteRoom(room.tableId)
-          }
-        })
-      }
+      })
     })
   })
 }

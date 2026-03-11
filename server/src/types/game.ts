@@ -8,6 +8,7 @@ export interface ServerObserver {
   username: string
   avatar: string
   stack: number
+  hasTableEntry?: boolean
 }
 
 export interface ServerPlayer {

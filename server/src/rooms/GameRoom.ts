@@ -12,6 +12,7 @@ export class GameRoom {
   public state: ServerGameState
   private io: Server
   private startTimer: NodeJS.Timeout | null = null
+  private pendingJoinPlayerIds: Set<string> = new Set()
 
   constructor(io: Server, tableInfo: TableInfo) {
     this.io = io
@@ -58,6 +59,10 @@ export class GameRoom {
     return Array.from(this.state.players.values()).filter((player) => player.isBot).length
   }
 
+  getRealObserverCount(): number {
+    return Array.from(this.state.observers.values()).filter((observer) => !observer.playerId.startsWith('ai_')).length
+  }
+
   isFull(): boolean {
     return this.state.players.size >= this.state.maxPlayers
   }
@@ -74,6 +79,18 @@ export class GameRoom {
       if (p.playerId === playerId) return true
     }
     return this.state.observers.has(playerId)
+  }
+
+  hasPendingJoin(playerId: string): boolean {
+    return this.pendingJoinPlayerIds.has(playerId)
+  }
+
+  beginPendingJoin(playerId: string) {
+    this.pendingJoinPlayerIds.add(playerId)
+  }
+
+  endPendingJoin(playerId: string) {
+    this.pendingJoinPlayerIds.delete(playerId)
   }
 
   addPlayer(player: ServerPlayer) {
@@ -133,7 +150,7 @@ export class GameRoom {
 
   addObserver(observer: ServerObserver) {
     this.state.observers.set(observer.playerId, observer)
-    // Observer stays in the socket room to receive game state
+    this.io.sockets.sockets.get(observer.socketId)?.join(this.tableId)
   }
 
   removeObserver(playerId: string): ServerObserver | null {
@@ -160,6 +177,14 @@ export class GameRoom {
 
     this.io.sockets.sockets.get(newSocketId)?.join(this.tableId)
     this.engine.broadcastGameState()
+  }
+
+  hasPendingReconnects(): boolean {
+    return Array.from(this.state.players.values()).some((player) => !!player.reconnectTimer)
+  }
+
+  shouldKeepAlive(): boolean {
+    return this.getRealPlayerCount() > 0 || this.getRealObserverCount() > 0 || this.hasPendingReconnects()
   }
 
   handleDisconnect(socketId: string, onTimeout?: (player: ServerPlayer) => Promise<void>) {

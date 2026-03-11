@@ -42,6 +42,7 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
       username: player.username,
       avatar: player.avatar,
       stack: player.stack,
+      hasTableEntry: true,
     }
     room.addObserver(observer)
 
@@ -87,8 +88,12 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
 
     room.addPlayer(player)
 
-    // Update seat in DB (non-blocking)
-    supabaseService.updateTablePlayerSeat(room.tableId, observer.playerId, seat).catch(console.error)
+    // Create or update the seat row in DB depending on how the observer entered the table.
+    if (observer.hasTableEntry) {
+      supabaseService.updateTablePlayerSeat(room.tableId, observer.playerId, seat).catch(console.error)
+    } else {
+      supabaseService.addTablePlayer(room.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+    }
 
     io.to(room.tableId).emit('action_log', { message: `${observer.username} takes a seat` })
     room.engine.broadcastGameState()

@@ -1,7 +1,7 @@
 import { AuthenticatedSocket } from '../middleware/authMiddleware'
 import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
-import { ServerPlayer } from '../types/game'
+import { ServerObserver, ServerPlayer } from '../types/game'
 import { Server } from 'socket.io'
 import { getHouseExitLine, releaseHousePlayer } from '../ai/housePlayers'
 
@@ -76,11 +76,17 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
   // Join an existing table
   socket.on('join_table', async (params: { tableId: string; buyIn: number }, callback) => {
+    let room = null as ReturnType<typeof roomManager.getRoom>
     try {
       const { tableId, buyIn } = params
-      const room = roomManager.getRoom(tableId)
+      room = roomManager.getRoom(tableId)
       if (!room) return callback?.({ error: 'Table not found' })
-      if (room.isFull()) {
+      if (room.hasPendingJoin(socket.userId)) return callback?.({ error: 'Join already in progress' })
+      room.beginPendingJoin(socket.userId)
+      const aiOpponent = Array.from(room.state.players.values()).find((player) => player.isBot)
+      const shouldQueueBehindAi = room.isFull() && !!aiOpponent && room.getRealPlayerCount() === 1 && room.state.phase !== 'waiting'
+
+      if (room.isFull() && !shouldQueueBehindAi) {
         const waitingBot = room.state.phase === 'waiting'
           ? Array.from(room.state.players.values()).find((player) => player.isBot)
           : null
@@ -102,10 +108,32 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         return callback?.({ error: 'Insufficient chips for buy-in' })
       }
 
+      const balanceAfter = await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
+
+      if (shouldQueueBehindAi && aiOpponent) {
+        const observer: ServerObserver = {
+          socketId: socket.id,
+          playerId: socket.userId,
+          username: socket.username,
+          avatar: profile.avatar ?? 'avatar_m1',
+          stack: actualBuyIn,
+          hasTableEntry: false,
+        }
+
+        room.addObserver(observer)
+        aiOpponent.botLeaveAfterHand = true
+
+        io.to(tableId).emit('action_log', { message: `${socket.username} takes a rail seat while ${aiOpponent.username} finishes the hand` })
+        io.to(tableId).emit('action_log', { message: `${aiOpponent.username} will leave after this hand` })
+
+        room.engine.broadcastGameState()
+        callback?.({ observer: true, stack: actualBuyIn, balance: balanceAfter })
+        return
+      }
+
       const seat = room.findEmptySeat()
       if (seat === null) return callback?.({ error: 'No seats available' })
 
-      const balanceAfter = await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
       await supabaseService.addTablePlayer(tableId, socket.userId, seat, actualBuyIn)
 
       const player: ServerPlayer = {
@@ -153,6 +181,8 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
     } catch (err) {
       console.error('join_table error:', err)
       callback?.({ error: 'Failed to join table' })
+    } finally {
+      room?.endPendingJoin(socket.userId)
     }
   })
 
@@ -171,15 +201,17 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         room.engine.broadcastGameState()
         if (cashout > 0) {
           const balanceAfter = await supabaseService.addChips(socket.userId, room.tableId, cashout, 'cashout')
-          await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          if (observer.hasTableEntry) {
+            await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          }
           callback?.({ cashout, balance: balanceAfter })
         } else {
-          await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          if (observer.hasTableEntry) {
+            await supabaseService.removeTablePlayer(room.tableId, socket.userId)
+          }
           callback?.({ cashout: 0 })
         }
-        const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-        const hasObservers = room.state.observers.size > 0
-        if (realPlayers.length === 0 && !hasObservers) {
+        if (!room.shouldKeepAlive()) {
           await supabaseService.deleteTable(room.tableId)
           roomManager.deleteRoom(room.tableId)
         }
@@ -211,9 +243,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         callback?.({ cashout: 0 })
       }
 
-      const realPlayers = Array.from(room.state.players.values()).filter(p => !p.isBot)
-      const hasObservers = room.state.observers.size > 0
-      if (realPlayers.length === 0 && !hasObservers) {
+      if (!room.shouldKeepAlive()) {
         await supabaseService.deleteTable(room.tableId)
         roomManager.deleteRoom(room.tableId)
       }
