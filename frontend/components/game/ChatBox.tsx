@@ -9,6 +9,8 @@ interface ChatBoxProps {
   myPlayerId: string
 }
 
+const CHAT_EMOJIS = ['🃏', '🔥', '😂', '😮', '😎', '👀', '🍀', '💀']
+
 export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
   const [input, setInput] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -22,6 +24,10 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
     if (!input.trim()) return
     onSend(input.trim())
     setInput('')
+  }
+
+  const appendEmoji = (emoji: string) => {
+    setInput((prev) => (prev + emoji).slice(0, 200))
   }
 
   return (
@@ -52,21 +58,36 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
             <div ref={bottomRef} />
           </div>
 
-          <div className="flex border-t border-gray-700/50">
-            <input
-              className="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none placeholder-gray-600"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-              maxLength={200}
-            />
-            <button
-              onClick={handleSend}
-              className="px-3 text-yellow-400 hover:text-yellow-300 text-sm font-bold"
-            >
-              Send
-            </button>
+          <div className="border-t border-gray-700/50">
+            <div className="flex flex-wrap gap-2 px-3 py-2">
+              {CHAT_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => appendEmoji(emoji)}
+                  className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-sm transition-colors hover:border-yellow-400/30 hover:bg-white/10"
+                  aria-label={`Insert ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <div className="flex border-t border-gray-700/50">
+              <input
+                className="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none placeholder-gray-600"
+                placeholder="Type a message..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+                maxLength={200}
+              />
+              <button
+                onClick={handleSend}
+                className="px-3 text-yellow-400 hover:text-yellow-300 text-sm font-bold"
+              >
+                Send
+              </button>
+            </div>
           </div>
         </>
       )}

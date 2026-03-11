@@ -10,6 +10,8 @@ interface LobbyChatProps {
   profile: Profile | null
 }
 
+const CHAT_EMOJIS = ['🍸', '🥂', '🎲', '🃏', '🔥', '😂', '😎', '👀']
+
 function formatTime(timestamp: string) {
   return new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
@@ -74,19 +76,33 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
     })
   }
 
+  const appendEmoji = (emoji: string) => {
+    setDraft((prev) => (prev + emoji).slice(0, 240))
+  }
+
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-30 md:bottom-6 md:left-auto md:right-6 md:w-[360px] xl:w-[390px]">
-      <div className="overflow-hidden rounded-[30px] border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+    <div
+      className={`fixed bottom-4 left-4 right-4 z-30 md:bottom-6 md:left-auto md:right-6 ${
+        open ? 'md:w-[360px] xl:w-[390px]' : 'md:w-auto'
+      }`}
+    >
+      <div
+        className={`overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
+          open ? 'rounded-[30px]' : 'rounded-full'
+        }`}
+      >
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+          className={`flex items-center justify-between gap-3 text-left ${open ? 'w-full px-4 py-3' : 'w-full px-4 py-2.5'}`}
         >
-          <div>
+          <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">Lounge chat</div>
-            <div className="mt-1 font-serif text-xl text-[#fff3e2]">Hear the room</div>
+            <div className={open ? 'mt-1 font-serif text-xl text-[#fff3e2]' : 'text-sm font-semibold text-[#fff3e2]'}>
+              Hear the room
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-white/52">
               {messages.length} msgs
             </div>
@@ -123,12 +139,25 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
             </div>
 
             <form onSubmit={submit} className="mt-4 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {CHAT_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => appendEmoji(emoji)}
+                    className="rounded-full border border-white/10 bg-black/24 px-3 py-1 text-sm transition-colors hover:border-[#f3d2a2]/30 hover:bg-black/40"
+                    aria-label={`Insert ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value.slice(0, 240))}
                 rows={3}
                 placeholder={placeholder}
-                className="w-full resize-none rounded-2xl border border-white/10 bg-black/18 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/32 focus:border-[#f3d2a2]/26"
+                className="w-full resize-none rounded-2xl border border-[#f3d2a2]/16 bg-black/42 px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-white/38 focus:border-[#f3d2a2]/42 focus:bg-black/55"
               />
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/240`}</div>
