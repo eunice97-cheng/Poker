@@ -135,7 +135,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(180deg, rgba(3,8,7,0.42) 0%, rgba(3,8,7,0.78) 38%, rgba(3,8,7,0.96) 100%), radial-gradient(circle at top right, rgba(212,175,55,0.18), transparent 32%), url('/lobby-background/lobby-bg.jpg')",
+            "linear-gradient(180deg, rgba(3,8,7,0.42) 0%, rgba(3,8,7,0.78) 38%, rgba(3,8,7,0.96) 100%), radial-gradient(circle at top right, rgba(212,175,55,0.18), transparent 32%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
           backgroundPosition: 'center',
           backgroundSize: 'cover',
         }}
@@ -268,7 +268,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Background slot</div>
-                  <div className="mt-2 text-sm text-white/70">Lobby artwork is wired to <span className="font-mono text-white/90">frontend/public/lobby-background/lobby-bg.jpg</span>.</div>
+                  <div className="mt-2 text-sm text-white/70">Lobby artwork is wired to <span className="font-mono text-white/90">frontend/public/lobby-background/ASL Dungeon Poker.png</span>.</div>
                 </div>
               </div>
             </aside>
@@ -342,3 +342,4 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
     </div>
   )
 }
+
