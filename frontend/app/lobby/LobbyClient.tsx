@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TableList } from '@/components/lobby/TableList'
+import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { CreateTableModal } from '@/components/lobby/CreateTableModal'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -253,7 +254,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
 
               <div className="mt-10 grid gap-3 md:grid-cols-[1.15fr_1fr_1fr_1fr]">
                 <div className="rounded-[28px] border border-[#f3d2a2]/14 bg-black/18 p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-[#f3d2a2]/46">Tonight's main table</div>
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-[#f3d2a2]/46">Tonight&apos;s main table</div>
                   <div className="mt-3 font-serif text-3xl text-[#fff3e2]">{featuredStakes}</div>
                   <p className="mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'No table has the room talking yet.'}</p>
                 </div>
@@ -291,8 +292,10 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 </div>
               </div>
 
+              <LobbyChat socket={socket} profile={profile} />
+
               <div className="rounded-[28px] border border-white/10 bg-black/20 p-5">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Tonight's pour</div>
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Tonight&apos;s pour</div>
                 <div className="mt-3 flex items-center justify-between text-sm text-white/72">
                   <span>Realtime room sync</span>
                   <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-emerald-200">

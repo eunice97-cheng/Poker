@@ -14,7 +14,7 @@ export interface ClientPlayer {
   allIn: boolean
   sittingOut: boolean
   isConnected: boolean
-  holeCards: string[]   // own real cards, '??' for opponents
+  holeCards: string[]
   isDealer: boolean
   isSB: boolean
   isBB: boolean
@@ -95,6 +95,7 @@ export interface Profile {
 export interface ChatMessage {
   playerId: string
   username: string
+  avatar?: string
   text: string
   timestamp: string
   isSystem?: boolean

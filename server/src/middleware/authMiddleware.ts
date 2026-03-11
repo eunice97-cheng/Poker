@@ -9,6 +9,7 @@ const supabase = createClient(
 export interface AuthenticatedSocket extends Socket {
   userId: string
   username: string
+  avatar: string
 }
 
 export async function authenticateSocket(
@@ -29,10 +30,9 @@ export async function authenticateSocket(
       return next(new Error('Email verification required'))
     }
 
-    // Fetch profile for username
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('username')
+      .select('username, avatar')
       .eq('id', data.user.id)
       .single()
 
@@ -42,6 +42,7 @@ export async function authenticateSocket(
 
     ;(socket as AuthenticatedSocket).userId = data.user.id
     ;(socket as AuthenticatedSocket).username = profile.username
+    ;(socket as AuthenticatedSocket).avatar = profile.avatar ?? 'avatar_m1'
     next()
   } catch {
     next(new Error('Authentication failed'))

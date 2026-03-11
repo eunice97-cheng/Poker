@@ -26,6 +26,7 @@ const DEFAULT_PLAYLIST = [
   '/sounds/bgm/mix3.mp3',
   '/sounds/bgm/rock.mp3',
   '/sounds/bgm/rock2.mp3',
+  '/sounds/bgm/bossa-nova.mp3',
 ]
 
 const REGISTER_PLAYLIST = ['/sounds/bgm/welcome.mp3']
@@ -252,3 +253,4 @@ export function useAudio() {
 
   return context
 }
+
