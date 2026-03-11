@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-
 const discordClasses =
   'group flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-indigo-500 hover:shadow-indigo-500/50 active:scale-95'
 
@@ -25,57 +23,27 @@ function KofiIcon() {
 }
 
 export function FloatingButtons() {
-  const [open, setOpen] = useState(false)
-
   return (
     <div className="fixed right-4 top-20 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
-      <div
-        className={`flex flex-col items-end gap-2 transition-all duration-200 ${
-          open ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
-        }`}
+      <a
+        href="https://discord.com/users/909063517280296961"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={discordClasses}
       >
-        {open && (
-          <>
-            <a
-              href="https://discord.com/users/909063517280296961"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={discordClasses}
-            >
-              <DiscordIcon />
-              <span>Message Eunice</span>
-            </a>
+        <DiscordIcon />
+        <span>Message Eunice</span>
+      </a>
 
-            <a
-              href="https://ko-fi.com/eunicecheng"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={kofiClasses}
-            >
-              <KofiIcon />
-              <span>Tip Eunice</span>
-            </a>
-          </>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-label={open ? 'Close support menu' : 'Open support menu'}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900/95 text-white shadow-lg ring-1 ring-white/10 transition-colors hover:bg-gray-800"
+      <a
+        href="https://ko-fi.com/eunicecheng"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={kofiClasses}
       >
-        {open ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        )}
-      </button>
+        <KofiIcon />
+        <span>Tip Eunice</span>
+      </a>
     </div>
   )
 }

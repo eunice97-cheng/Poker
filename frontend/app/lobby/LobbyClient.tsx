@@ -43,6 +43,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   const playersSeated = liveTables.reduce((sum, table) => sum + table.player_count, 0)
   const openSeats = liveTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
   const featuredTable = [...liveTables].sort((a, b) => b.big_blind - a.big_blind)[0]
+  const hottestAction = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'Waiting on the opener'
 
   useEffect(() => {
     if (socket.connected) setSocketStatus('connected')
@@ -130,55 +131,56 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#08110f] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#080403] text-white">
       <div
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(180deg, rgba(3,8,7,0.42) 0%, rgba(3,8,7,0.78) 38%, rgba(3,8,7,0.96) 100%), radial-gradient(circle at top right, rgba(212,175,55,0.18), transparent 32%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
-          backgroundPosition: 'center',
+            "linear-gradient(180deg, rgba(11,6,5,0.2) 0%, rgba(11,6,5,0.64) 34%, rgba(8,4,3,0.94) 72%, rgba(8,4,3,1) 100%), radial-gradient(circle at top, rgba(254,214,122,0.18), transparent 26%), url('/lobby-background/ASL%20Dungeon%20Poker.png')",
+          backgroundPosition: 'center top',
           backgroundSize: 'cover',
         }}
       />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.09),_transparent_24%),linear-gradient(135deg,_rgba(255,255,255,0.04)_0%,_transparent_40%)]" />
-      <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-amber-200/10 to-transparent blur-3xl" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,4,3,0.78)_0%,transparent_26%,transparent_74%,rgba(8,4,3,0.85)_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/35 to-transparent" />
+      <div className="absolute inset-x-0 top-[26rem] h-40 bg-[radial-gradient(circle,rgba(245,158,11,0.16),transparent_68%)] blur-3xl" />
 
       <div className="relative">
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07100e]/72 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-amber-200/10 bg-[#0a0606]/72 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-300/25 bg-amber-300/10 text-2xl text-amber-100 shadow-[0_0_30px_rgba(250,204,21,0.12)]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-200/25 bg-amber-300/10 text-xl text-amber-100 shadow-[0_0_24px_rgba(245,158,11,0.2)]">
                 &#9824;
               </span>
               <div>
-                <h1 className="text-xl font-bold text-white">ASL Basement Poker</h1>
-                <p className="text-xs uppercase tracking-[0.25em] text-white/45">Private lobby</p>
+                <div className="font-serif text-2xl tracking-wide text-amber-50">ASL Basement Poker</div>
+                <p className="text-[11px] uppercase tracking-[0.36em] text-amber-100/45">Private room. Cash on the felt.</p>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-xs">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-1.5 text-xs text-white/65">
                 <span
                   className={`h-2 w-2 rounded-full ${
                     socketStatus === 'connected'
-                      ? 'bg-green-400'
+                      ? 'bg-emerald-400'
                       : socketStatus === 'error'
                         ? 'bg-red-400'
-                        : 'animate-pulse bg-yellow-400'
+                        : 'animate-pulse bg-amber-300'
                   }`}
                 />
-                <span className="text-white/60">
+                <span>
                   {socketStatus === 'connected'
-                    ? 'Server online'
+                    ? 'Table server live'
                     : socketStatus === 'error'
-                      ? `Error: ${socketError || 'Server offline'}`
-                      : 'Connecting...'}
+                      ? `Connection issue: ${socketError || 'offline'}`
+                      : 'Connecting dealer...' }
                 </span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 md:justify-end">
               {profile && (
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-left md:text-right">
-                  <div className="font-semibold text-white">{profile.username}</div>
-                  <div className="text-sm font-bold text-yellow-300">{profile.chip_balance.toLocaleString()} chips</div>
+                <div className="rounded-full border border-amber-200/12 bg-black/25 px-4 py-2 text-left md:text-right">
+                  <div className="text-sm font-semibold text-amber-50">{profile.username}</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-amber-200/65">Bankroll {profile.chip_balance.toLocaleString()}</div>
                 </div>
               )}
               <button
@@ -189,7 +191,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
                 {profile?.avatar ? (
                   <AvatarDisplay avatarId={profile.avatar} size="md" />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-gray-600 bg-gray-800 text-xs font-medium text-gray-400 transition-colors hover:border-yellow-500 hover:text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/30 text-xs font-medium text-white/60">
                     Profile
                   </div>
                 )}
@@ -197,90 +199,118 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
               <AudioControls />
               <button
                 onClick={handleInvite}
-                className="flex items-center gap-1.5 rounded-xl border border-indigo-400/25 bg-indigo-500/85 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-400"
+                className="rounded-full border border-amber-200/20 bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400"
                 title="Copy invite and open Discord"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" /></svg>
-                {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+                {inviteLabel === 'done' ? 'Invite copied' : 'Bring players in'}
               </button>
               {isAdmin && (
                 <Link
                   href="/gm"
-                  className="rounded-xl border border-yellow-700/80 px-3 py-2 text-sm font-semibold text-yellow-300 transition-colors hover:border-yellow-500 hover:text-white"
+                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/75 transition-colors hover:border-amber-200/35 hover:text-white"
                 >
                   GM Chips
                 </Link>
               )}
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
+              <Button variant="ghost" size="sm" className="rounded-full" onClick={handleSignOut}>Sign Out</Button>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-6 md:py-8">
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
-            <div className="overflow-hidden rounded-[32px] border border-white/10 bg-black/30 p-6 shadow-[0_28px_90px_rgba(0,0,0,0.38)] backdrop-blur-md md:p-8">
-              <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <main className="mx-auto max-w-7xl px-4 pb-8 pt-6 md:pt-10">
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_360px]">
+            <div className="rounded-[36px] border border-amber-200/12 bg-[linear-gradient(180deg,rgba(8,4,3,0.72),rgba(8,4,3,0.3))] p-6 shadow-[0_40px_120px_rgba(0,0,0,0.45)] backdrop-blur-md md:p-8">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <div className="mb-3 inline-flex rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-100">
-                    Tonight's tables
+                  <div className="inline-flex rounded-full border border-amber-300/20 bg-amber-200/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-amber-100">
+                    Underground action
                   </div>
-                  <h2 className="max-w-xl text-4xl font-bold tracking-tight text-white md:text-5xl">
-                    Take a seat before the next hand starts.
-                  </h2>
-                  <p className="mt-4 max-w-2xl text-sm leading-6 text-white/68 md:text-base">
-                    The lobby now treats the background as part of the room. Open tables stay in the foreground, and the live seat count updates as players come and go.
+                  <h1 className="mt-5 max-w-xl font-serif text-5xl leading-[0.94] text-amber-50 md:text-7xl">
+                    The room is warm. The table is not.
+                  </h1>
+                  <p className="mt-5 max-w-xl text-base leading-7 text-amber-50/74">
+                    Pick a live table, sit down with chips, and let the dealer handle the rest. This lobby should feel like walking into the game, not opening a spreadsheet.
                   </p>
                 </div>
-                <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => setShowCreate(true)}>
-                  + Create Table
-                </Button>
+
+                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="rounded-full px-7 shadow-[0_18px_48px_rgba(245,158,11,0.28)]"
+                    onClick={() => setShowCreate(true)}
+                  >
+                    Host a table
+                  </Button>
+                  <button
+                    onClick={handleInvite}
+                    className="rounded-full border border-white/15 bg-black/20 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-amber-200/35 hover:text-white"
+                  >
+                    {inviteLabel === 'done' ? 'Copied to clipboard' : 'Share the room'}
+                  </button>
+                </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Active tables</div>
-                  <div className="mt-2 text-3xl font-bold text-white">{activeTables.length}</div>
+              <div className="mt-10 grid gap-3 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
+                <div className="rounded-[28px] border border-amber-200/14 bg-black/22 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-amber-200/46">Featured stakes</div>
+                  <div className="mt-3 font-serif text-3xl text-amber-50">{hottestAction}</div>
+                  <p className="mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'Open the first table and set the tone.'}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Players seated</div>
-                  <div className="mt-2 text-3xl font-bold text-white">{playersSeated}</div>
+                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Tables open</div>
+                  <div className="mt-3 text-4xl font-bold text-white">{activeTables.length}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Open seats</div>
-                  <div className="mt-2 text-3xl font-bold text-white">{openSeats}</div>
+                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Players seated</div>
+                  <div className="mt-3 text-4xl font-bold text-white">{playersSeated}</div>
+                </div>
+                <div className="rounded-[28px] border border-white/10 bg-black/22 p-5">
+                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Seats open</div>
+                  <div className="mt-3 text-4xl font-bold text-white">{openSeats}</div>
                 </div>
               </div>
             </div>
 
-            <aside className="rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(0,0,0,0.42),rgba(0,0,0,0.22))] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.32)] backdrop-blur-md">
-              <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">Featured action</div>
-              <div className="mt-3 text-2xl font-bold text-white">{featuredTable ? featuredTable.name : 'No headline table yet'}</div>
-              <p className="mt-3 text-sm leading-6 text-white/65">
-                {featuredTable
-                  ? `${featuredTable.small_blind}/${featuredTable.big_blind} blinds with ${featuredTable.player_count} of ${featuredTable.max_players} seats taken.`
-                  : 'Create a table to put the first game on the board.'}
-              </p>
+            <aside className="flex flex-col gap-4 rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(10,6,6,0.82),rgba(10,6,6,0.44))] p-6 shadow-[0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-amber-100/45">Floor notes</div>
+                <div className="mt-3 font-serif text-3xl text-amber-50">{featuredTable ? 'High attention table' : 'No hands on the felt yet'}</div>
+                <p className="mt-3 text-sm leading-7 text-white/68">
+                  {featuredTable
+                    ? `${featuredTable.name} is carrying the room right now with ${featuredTable.player_count} of ${featuredTable.max_players} seats occupied.`
+                    : 'Start a table and the room will switch from quiet lounge to active floor.'}
+                </p>
+              </div>
 
-              <div className="mt-6 space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Fast join</div>
-                  <div className="mt-2 text-sm text-white/70">Pick any card below and buy in directly from the join modal.</div>
+              <div className="rounded-[28px] border border-amber-200/12 bg-black/18 p-5">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-amber-100/42">House read</div>
+                <div className="mt-3 space-y-3 text-sm text-white/70">
+                  <p>Warm low-stakes tables move fastest when the first player hosts instead of waiting for a full room.</p>
+                  <p>Use the invite button once the first table exists. Empty lobbies do not convert.</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Background slot</div>
-                  <div className="mt-2 text-sm text-white/70">Lobby artwork is wired to <span className="font-mono text-white/90">frontend/public/lobby-background/ASL Dungeon Poker.png</span>.</div>
+              </div>
+
+              <div className="mt-auto rounded-[28px] border border-white/10 bg-black/20 p-5">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Live status</div>
+                <div className="mt-3 flex items-center justify-between text-sm text-white/72">
+                  <span>Realtime lobby sync</span>
+                  <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-emerald-200">
+                    On
+                  </span>
                 </div>
               </div>
             </aside>
           </section>
 
-          <section className="mt-8">
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <section className="mt-8 rounded-[36px] border border-white/8 bg-[linear-gradient(180deg,rgba(9,5,4,0.82),rgba(9,5,4,0.58))] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:p-6">
+            <div className="mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-white">Open tables</h3>
-                <p className="text-sm text-white/55">Join an active game or start a fresh table.</p>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-amber-100/42">Table board</div>
+                <h2 className="mt-2 font-serif text-4xl text-amber-50">Choose your seat</h2>
+                <p className="mt-2 text-sm text-white/58">The board updates live. Full tables stay visible so the room still feels occupied.</p>
               </div>
-              <div className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/50">
+              <div className="rounded-full border border-white/10 bg-black/25 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
                 Live updates enabled
               </div>
             </div>
@@ -342,4 +372,3 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
     </div>
   )
 }
-
