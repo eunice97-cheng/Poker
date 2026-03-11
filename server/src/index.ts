@@ -17,6 +17,7 @@ function getAllowedOrigins() {
     new Set(
       [
         process.env.NEXT_PUBLIC_SITE_URL,
+        process.env.CLIENT_URL,
         process.env.CORS_ALLOWED_ORIGINS,
         process.env.SOCKET_ALLOWED_ORIGINS,
         'http://localhost:3000',
@@ -149,3 +150,4 @@ setInterval(() => {
 setInterval(() => {
   reconcileLobbyTables().catch(console.error)
 }, 30 * 1000)
+
