@@ -34,7 +34,7 @@ export function AudioControls() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white"
+        className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white md:text-xs md:tracking-[0.22em]"
         title="Audio settings"
         aria-label="Audio settings"
       >
@@ -42,7 +42,7 @@ export function AudioControls() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-gray-700 bg-gray-800 p-3 shadow-2xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] rounded-xl border border-gray-700 bg-gray-800 p-3 shadow-2xl md:w-52">
           <div className="mb-3 rounded-lg border border-white/8 bg-black/20 p-2.5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-gray-500">Now playing</div>
             <div className="mt-1 text-sm font-semibold text-white">{currentTrackLabel}</div>

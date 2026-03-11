@@ -156,8 +156,9 @@ export function PokerTable({
   useEffect(() => {
     const updateSceneScale = () => {
       if (typeof window === 'undefined') return
-      const horizontalScale = (window.innerWidth - 20) / SCENE_W
-      const verticalScale = (window.innerHeight - 280) / SCENE_H
+      const isMobile = window.innerWidth < 640
+      const horizontalScale = (window.innerWidth - (isMobile ? 8 : 20)) / SCENE_W
+      const verticalScale = (window.innerHeight - (isMobile ? 220 : 280)) / SCENE_H
       setSceneScale(Math.min(1, horizontalScale, verticalScale))
     }
 
@@ -204,14 +205,14 @@ export function PokerTable({
 
   return (
     <div className={`relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
-      <div className={`z-10 flex shrink-0 flex-col gap-2 px-4 py-3 md:flex-row md:items-center md:justify-between ${theme.topBarClass}`}>
-        <div className="font-bold text-white">{gameState.tableName}</div>
-        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 md:gap-4">
+      <div className={`z-10 flex shrink-0 flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:justify-between md:px-4 md:py-3 ${theme.topBarClass}`}>
+        <div className="truncate text-sm font-bold text-white md:text-base">{gameState.tableName}</div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 md:gap-4 md:text-sm">
           <span>Hand #{gameState.handNumber}</span>
           <span className="text-white/90">
             {gameState.smallBlind}/{gameState.bigBlind}
           </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/80 md:text-[10px] md:tracking-[0.2em]">
             {theme.tier}
           </span>
           {me && <span className="font-bold text-yellow-400">{me.stack.toLocaleString()} chips</span>}
@@ -222,7 +223,7 @@ export function PokerTable({
             <button
               onClick={onSitOut}
               disabled={!!me.standUpAfterHand}
-              className="rounded-lg border border-gray-700 px-3 py-1 text-sm text-gray-400 transition-colors hover:text-yellow-400 disabled:cursor-not-allowed disabled:border-yellow-700/50 disabled:text-yellow-500"
+              className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-yellow-400 disabled:cursor-not-allowed disabled:border-yellow-700/50 disabled:text-yellow-500 md:px-3 md:text-sm"
             >
               {me.standUpAfterHand
                 ? 'Leaving After Hand'
@@ -234,14 +235,14 @@ export function PokerTable({
           {isObserver && (
             <button
               onClick={onSitIn}
-              className="rounded-lg border border-yellow-600 px-3 py-1 text-sm text-yellow-400 transition-colors hover:text-white"
+              className="rounded-lg border border-yellow-600 px-2.5 py-1 text-xs text-yellow-400 transition-colors hover:text-white md:px-3 md:text-sm"
             >
               Sit Down
             </button>
           )}
           <button
             onClick={handleInvite}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 md:px-3 md:text-sm"
             title="Copy table invite and open Discord"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -251,7 +252,7 @@ export function PokerTable({
           </button>
           <button
             onClick={onLeave}
-            className="rounded-lg border border-gray-700 px-3 py-1 text-sm text-gray-400 transition-colors hover:text-red-400"
+            className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 md:px-3 md:text-sm"
           >
             Leave Room
           </button>
@@ -356,7 +357,7 @@ export function PokerTable({
           })}
 
           {observers.length > 0 && (
-            <div className="absolute right-1 top-1/2 z-20 flex min-w-[110px] -translate-y-1/2 flex-col gap-1">
+            <div className="absolute right-1 top-1/2 z-20 hidden min-w-[110px] -translate-y-1/2 flex-col gap-1 sm:flex">
               <div className="mb-0.5 text-center text-[10px] uppercase tracking-wide text-gray-600">Watching</div>
               {observers.map((obs) => (
                 <div
@@ -372,11 +373,27 @@ export function PokerTable({
               ))}
             </div>
           )}
+          {observers.length > 0 && (
+            <div className="absolute inset-x-3 bottom-2 z-20 flex gap-2 overflow-x-auto pb-1 sm:hidden">
+              {observers.map((obs) => (
+                <div
+                  key={obs.playerId}
+                  className={`flex min-w-[116px] items-center gap-2 rounded-xl border px-2 py-1.5 ${theme.sidePanelClass}`}
+                >
+                  <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
+                  <div className="min-w-0">
+                    <div className="truncate text-[11px] font-semibold text-white">{obs.username}</div>
+                    <div className="text-[10px] text-yellow-500">{obs.stack.toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           </div>
         </div>
       </div>
 
-      <div className={`z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-4 px-4 py-3 ${theme.actionBarClass}`}>
+      <div className={`z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-3 px-3 py-3 md:gap-4 md:px-4 ${theme.actionBarClass}`}>
         {gameState.myHandRank && gameState.phase !== 'waiting' && (
           <div className="hidden text-center sm:block">
             <div className="text-xs font-bold uppercase tracking-wide text-yellow-400">{gameState.myHandRank}</div>
@@ -421,7 +438,7 @@ export function PokerTable({
 
       <div className="absolute bottom-24 right-3 z-20 lg:hidden">
         {showMobilePanel ? (
-          <div className="w-[min(22rem,calc(100vw-1.5rem))] space-y-2">
+          <div className="w-[min(22rem,calc(100vw-1rem))] space-y-2">
             <ActionLog logs={actionLogs} />
             <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
           </div>
@@ -429,11 +446,11 @@ export function PokerTable({
         <button
           type="button"
           onClick={() => setShowMobilePanel((value) => !value)}
-          className="ml-auto mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-900/95 text-white shadow-lg ring-1 ring-white/10"
+          className="ml-auto mt-2 flex min-w-[4.5rem] items-center justify-center rounded-full bg-gray-900/95 px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10"
           aria-expanded={showMobilePanel}
           aria-label={showMobilePanel ? 'Hide chat panel' : 'Show chat panel'}
         >
-          {showMobilePanel ? 'x' : 'Chat'}
+          {showMobilePanel ? 'Close' : 'Chat'}
         </button>
       </div>
 

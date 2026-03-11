@@ -82,8 +82,8 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
 
   return (
     <div
-      className={`fixed bottom-4 left-4 right-4 z-30 md:bottom-6 md:left-auto md:right-6 ${
-        open ? 'md:w-[360px] xl:w-[390px]' : 'md:w-auto'
+      className={`fixed bottom-3 z-30 transition-all md:bottom-6 md:right-6 ${
+        open ? 'left-3 right-3 md:left-auto md:w-[360px] xl:w-[390px]' : 'right-3 left-auto md:w-auto'
       }`}
     >
       <div
@@ -94,27 +94,27 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className={`flex items-center justify-between gap-3 text-left ${open ? 'w-full px-4 py-3' : 'w-full px-4 py-2.5'}`}
+          className={`flex items-center justify-between gap-3 text-left ${open ? 'w-full px-3 py-3 md:px-4' : 'w-full px-3 py-2.5 md:px-4'}`}
         >
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">Lounge chat</div>
-            <div className={open ? 'mt-1 font-serif text-xl text-[#fff3e2]' : 'text-sm font-semibold text-[#fff3e2]'}>
+            <div className={open ? 'mt-1 font-serif text-lg text-[#fff3e2] md:text-xl' : 'text-sm font-semibold text-[#fff3e2]'}>
               Hear the room
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-white/52">
+            <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/52 md:px-3 md:tracking-[0.22em]">
               {messages.length} msgs
             </div>
-            <div className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.22em] text-white/60">
+            <div className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/60 md:tracking-[0.22em]">
               {open ? 'Hide' : 'Show'}
             </div>
           </div>
         </button>
 
         {open && (
-          <div className="border-t border-white/8 px-4 pb-4 pt-3">
-            <div ref={scrollRef} className="h-72 space-y-3 overflow-y-auto pr-1">
+          <div className="border-t border-white/8 px-3 pb-3 pt-3 md:px-4 md:pb-4">
+            <div ref={scrollRef} className="h-[48vh] max-h-72 space-y-3 overflow-y-auto pr-1 md:h-72">
               {messages.length === 0 ? (
                 <div className="rounded-2xl border border-white/8 bg-black/18 px-4 py-5 text-sm text-white/55">
                   No one has said anything yet. Start the first table or break the silence.
@@ -138,7 +138,7 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
               )}
             </div>
 
-            <form onSubmit={submit} className="mt-4 space-y-2">
+            <form onSubmit={submit} className="mt-3 space-y-2">
               <div className="flex flex-wrap gap-2">
                 {CHAT_EMOJIS.map((emoji) => (
                   <button
@@ -155,7 +155,7 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value.slice(0, 240))}
-                rows={3}
+                rows={2}
                 placeholder={placeholder}
                 className="w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
               />

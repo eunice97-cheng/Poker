@@ -45,7 +45,7 @@ function GoldRim() {
 
 export function FloatingButtons() {
   return (
-    <div className="fixed right-4 top-20 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
+    <div className="fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
       <a
         href="https://discord.com/users/909063517280296961"
         target="_blank"
