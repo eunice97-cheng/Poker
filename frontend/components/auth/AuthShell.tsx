@@ -9,15 +9,14 @@ export function AuthShell({ children }: AuthShellProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907] px-4">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-no-repeat opacity-100 saturate-110"
-          style={{
-            backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
-            backgroundPosition: 'center center',
-            backgroundSize: 'contain',
-            filter: 'brightness(1.15) contrast(1.04)',
-          }}
-        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src="/lobby-background/ASL Dungeon Poker.png"
+            alt=""
+            aria-hidden="true"
+            className="h-auto max-h-[92vh] w-auto max-w-[96vw] object-contain opacity-100 [filter:brightness(1.15)_contrast(1.04)_saturate(1.1)]"
+          />
+        </div>
       </div>
 
       <div className="relative z-10">
