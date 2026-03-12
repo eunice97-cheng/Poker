@@ -112,7 +112,7 @@ export function FloatingButtons() {
 
         <div
           id="support-pill"
-          className={`absolute right-0 top-14 w-[320px] rounded-[28px] border border-[#f7d57a]/20 bg-[linear-gradient(180deg,rgba(17,24,39,0.96),rgba(10,15,24,0.98))] p-4 text-left shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-200 ${
+          className={`absolute right-0 top-14 max-h-[min(78vh,38rem)] w-[320px] overflow-y-auto rounded-[28px] border border-[#f7d57a]/20 bg-[linear-gradient(180deg,rgba(17,24,39,0.96),rgba(10,15,24,0.98))] p-4 text-left shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-200 ${
             supportOpen ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
           }`}
         >
