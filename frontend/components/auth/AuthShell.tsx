@@ -1,5 +1,7 @@
+import Image from 'next/image'
 import type { ReactNode } from 'react'
 import { AudioControls } from '@/components/ui/AudioControls'
+import authBackground from '@/public/lobby-background/asl-dungeon-poker.png'
 
 interface AuthShellProps {
   children: ReactNode
@@ -7,19 +9,21 @@ interface AuthShellProps {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#120907] px-4">
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 flex justify-center">
-          <img
-            src="/lobby-background/asl-dungeon-poker.png"
+    <div className="relative min-h-screen overflow-hidden bg-[#120907]">
+      <div className="pointer-events-none fixed inset-0 z-0 flex items-start justify-center">
+        <div className="relative h-screen w-full max-w-[1600px]">
+          <Image
+            src={authBackground}
             alt=""
-            aria-hidden="true"
-            className="h-auto w-full max-w-[1600px] object-contain"
+            fill
+            priority
+            sizes="100vw"
+            className="object-contain object-top"
           />
         </div>
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 min-h-screen px-4">
         <div className="flex justify-end px-1 pt-5 sm:px-3">
           <AudioControls />
         </div>
