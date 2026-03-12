@@ -11,14 +11,14 @@ export function AuthShell({ children }: AuthShellProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907]">
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 flex justify-center">
-        <div className="relative aspect-[19/6] w-full min-w-[1200px] max-w-[2200px] -translate-y-[4%]">
+        <div className="relative aspect-[19/6] w-full max-w-[2200px]">
           <Image
             src={authBackground}
             alt=""
             fill
             priority
             sizes="100vw"
-            className="object-cover object-top"
+            className="object-contain object-top"
           />
         </div>
       </div>
