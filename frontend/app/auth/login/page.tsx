@@ -1,9 +1,10 @@
 import { AuthBrandMark } from '@/components/auth/AuthBrandMark'
+import { AuthShell } from '@/components/auth/AuthShell'
 import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function LoginPage({ searchParams }: { searchParams: { verified?: string } }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+    <AuthShell>
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <div className="mb-4">
@@ -28,6 +29,6 @@ export default function LoginPage({ searchParams }: { searchParams: { verified?:
           <LoginForm />
         </div>
       </div>
-    </div>
+    </AuthShell>
   )
 }
