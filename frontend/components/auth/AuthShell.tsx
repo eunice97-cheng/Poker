@@ -10,11 +10,11 @@ export function AuthShell({ children }: AuthShellProps) {
     <div className="relative min-h-screen overflow-hidden bg-[#120907] px-4">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div
-          className="absolute inset-0 scale-[1.04] bg-no-repeat opacity-100 saturate-110"
+          className="absolute inset-0 bg-no-repeat opacity-100 saturate-110"
           style={{
             backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
             backgroundPosition: 'center center',
-            backgroundSize: 'cover',
+            backgroundSize: 'contain',
             filter: 'brightness(1.15) contrast(1.04)',
           }}
         />
