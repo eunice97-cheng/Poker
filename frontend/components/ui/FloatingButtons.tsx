@@ -13,7 +13,7 @@ const discordClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#7b2ff7,#f107a3)] shadow-lg shadow-[#b5179e]/30 hover:shadow-[#f72585]/45`
 
 const supportButtonClasses =
-  'relative flex h-11 w-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#6d28d9,#0f766e)] text-white shadow-lg shadow-[#0f766e]/30 transition-all duration-300 hover:scale-105 hover:shadow-[#14b8a6]/40 active:scale-95 md:w-auto md:justify-start md:px-3'
+  `${baseButtonClasses} h-10 w-10 justify-center px-0 sm:h-11 sm:w-11 md:w-11 md:hover:w-[154px] md:justify-start md:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
 
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
@@ -94,8 +94,6 @@ export function FloatingButtons() {
       <div
         ref={supportRef}
         className="relative flex flex-col items-end"
-        onMouseEnter={() => setSupportOpen(true)}
-        onMouseLeave={() => setSupportOpen(false)}
       >
         <button
           type="button"
@@ -107,7 +105,7 @@ export function FloatingButtons() {
         >
           <GoldRim />
           <ChampagneIcon />
-          <span className="relative z-10 hidden whitespace-nowrap pl-2 md:inline">
+          <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[108px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
             Tip the Host
           </span>
         </button>
