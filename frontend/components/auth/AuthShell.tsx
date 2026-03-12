@@ -8,13 +8,13 @@ interface AuthShellProps {
 export function AuthShell({ children }: AuthShellProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907] px-4">
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute inset-0 bg-no-repeat"
           style={{
             backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
-            backgroundPosition: 'center center',
-            backgroundSize: 'contain',
+            backgroundPosition: 'center 38%',
+            backgroundSize: 'min(96vw, 1400px)',
             filter: 'brightness(1.12) contrast(1.03) saturate(1.08)',
           }}
         />
