@@ -1,18 +1,19 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface RedeemClientProps {
-  userId: string
   serverUrl: string
 }
 
-export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
+export function RedeemClient({ serverUrl }: RedeemClientProps) {
   const [code, setCode] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [chipsAdded, setChipsAdded] = useState(0)
+  const supabase = createClient()
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,10 +22,23 @@ export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
     setMessage('')
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setStatus('error')
+        setMessage('Your session has expired. Please sign in again.')
+        return
+      }
+
       const res = await fetch(`${serverUrl}/api/redeem-code`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.trim(), playerId: userId }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ code: code.trim() }),
       })
       const data = await res.json()
 
@@ -48,7 +62,7 @@ export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🎰</div>
           <h1 className="text-white text-2xl font-bold">Redeem Chip Code</h1>
-          <p className="text-gray-400 text-sm mt-1">Enter the code from your chip purchase email</p>
+          <p className="text-gray-400 text-sm mt-1">Enter the code from your chip support email</p>
         </div>
 
         {status === 'success' ? (
@@ -60,7 +74,10 @@ export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
             <p className="text-gray-400 text-sm mb-6">Your balance has been updated.</p>
             <div className="flex gap-3 justify-center">
               <button
-                onClick={() => { setStatus('idle'); setMessage('') }}
+                onClick={() => {
+                  setStatus('idle')
+                  setMessage('')
+                }}
                 className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:text-white text-sm transition-colors"
               >
                 Redeem another
@@ -80,9 +97,7 @@ export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="CHIP-XXXX-XXXX-XXXX"
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3
-                         text-white placeholder-gray-500 font-mono text-center text-lg
-                         focus:outline-none focus:border-yellow-500 mb-3"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 font-mono text-center text-lg focus:outline-none focus:border-yellow-500 mb-3"
               maxLength={20}
               spellCheck={false}
             />
@@ -94,10 +109,9 @@ export function RedeemClient({ userId, serverUrl }: RedeemClientProps) {
             <button
               type="submit"
               disabled={status === 'loading' || !code.trim()}
-              className="w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50
-                         text-black font-bold text-base transition-colors"
+              className="w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-bold text-base transition-colors"
             >
-              {status === 'loading' ? 'Redeeming…' : 'Redeem'}
+              {status === 'loading' ? 'Redeeming...' : 'Redeem'}
             </button>
           </form>
         )}
