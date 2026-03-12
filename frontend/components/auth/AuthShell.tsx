@@ -12,7 +12,7 @@ export function AuthShell({ children }: AuthShellProps) {
         <div
           className="absolute inset-0 bg-no-repeat"
           style={{
-            backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
+            backgroundImage: "url('/lobby-background/asl-dungeon-poker.png')",
             backgroundPosition: 'center top',
             backgroundSize: 'cover',
           }}
