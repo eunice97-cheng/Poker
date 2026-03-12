@@ -10,11 +10,12 @@ export function AuthShell({ children }: AuthShellProps) {
     <div className="relative min-h-screen overflow-hidden bg-[#120907] px-4">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div
-          className="absolute inset-0 bg-no-repeat"
+          className="absolute inset-0 scale-[1.04] bg-no-repeat opacity-100 saturate-110"
           style={{
             backgroundImage: "url('/lobby-background/ASL%20Dungeon%20Poker.png')",
-            backgroundPosition: 'center top',
+            backgroundPosition: 'center center',
             backgroundSize: 'cover',
+            filter: 'brightness(1.15) contrast(1.04)',
           }}
         />
       </div>
@@ -25,7 +26,7 @@ export function AuthShell({ children }: AuthShellProps) {
         </div>
 
         <div className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center py-8">
-          <div className="w-full max-w-lg rounded-[32px] border border-[#f3d2a2]/14 bg-[linear-gradient(180deg,rgba(18,9,7,0.34),rgba(18,9,7,0.18))] px-5 py-6 shadow-[0_30px_90px_rgba(0,0,0,0.24)] backdrop-blur-[1px] sm:px-7">
+          <div className="w-full max-w-lg rounded-[32px] border border-[#f3d2a2]/14 bg-[linear-gradient(180deg,rgba(18,9,7,0.26),rgba(18,9,7,0.12))] px-5 py-6 shadow-[0_30px_90px_rgba(0,0,0,0.18)] backdrop-blur-[1px] sm:px-7">
             {children}
           </div>
         </div>
