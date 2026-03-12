@@ -11,7 +11,7 @@ export function AuthShell({ children }: AuthShellProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#120907]">
       <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center">
-        <div className="relative aspect-[19/6] w-[min(100vw,calc(100vh*19/6))]">
+        <div className="relative aspect-video w-[min(100vw,calc(100vh*16/9))]">
           <Image
             src={authBackground}
             alt=""
