@@ -10,6 +10,7 @@ import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
+import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import { getDealerImage, getDeckBackImage, getTableImage } from '@/lib/table-assets'
 import { buildTableInvite, shareInvite } from '@/lib/invite'
@@ -252,6 +253,7 @@ export function PokerTable({
             </svg>
             {inviteLabel === 'done' ? 'Copied' : 'Invite'}
           </button>
+          <AudioControls />
           <button
             onClick={onLeave}
             className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 md:px-3 md:text-sm"

@@ -1,3 +1,7 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+
 const DEFAULT_MAIN_SITE_URL = 'https://arcanastudiolabs.com'
 
 function normalizeUrl(value: string | undefined) {
@@ -53,7 +57,12 @@ function FlameIcon() {
 }
 
 export function MainSiteLink() {
+  const pathname = usePathname()
   const href = normalizeUrl(process.env.NEXT_PUBLIC_MAIN_SITE_URL) || DEFAULT_MAIN_SITE_URL
+
+  if (pathname?.startsWith('/table/')) {
+    return null
+  }
 
   return (
     <a

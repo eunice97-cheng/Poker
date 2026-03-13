@@ -19,7 +19,7 @@ export function ChatEmojiTray({
     ? 'text-[10px] uppercase tracking-[0.22em] text-white/38'
     : 'text-[10px] uppercase tracking-[0.24em] text-[#f3d2a2]/42'
   const trayClassName = isTable
-    ? 'max-h-44 space-y-3 overflow-y-auto px-3 py-2'
+    ? 'max-h-32 space-y-3 overflow-y-auto px-3 py-2'
     : 'max-h-56 space-y-3 overflow-y-auto rounded-2xl border border-white/8 bg-black/18 px-3 py-3'
   const gridClassName = isTable ? 'grid grid-cols-5 gap-2' : 'grid grid-cols-5 gap-2 sm:grid-cols-7'
   const buttonClassName = isTable
