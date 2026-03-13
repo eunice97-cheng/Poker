@@ -7,9 +7,5 @@ export default async function RedeemPage() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/auth/login')
 
-  return (
-    <RedeemClient
-      serverUrl={process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:4000'}
-    />
-  )
+  return <RedeemClient />
 }

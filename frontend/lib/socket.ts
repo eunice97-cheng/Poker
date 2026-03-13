@@ -1,23 +1,10 @@
 import { io, Socket } from 'socket.io-client'
+import { getPublicSocketUrl } from '@/lib/site-url'
 
 let socket: Socket | null = null
-const DEFAULT_SOCKET_PORT = '4000'
-
-function resolveSocketUrl() {
-  const configuredUrl = process.env.NEXT_PUBLIC_SOCKET_URL?.trim()
-  if (configuredUrl) return configuredUrl
-
-  if (typeof window !== 'undefined') {
-    const fallbackUrl = new URL(window.location.origin)
-    fallbackUrl.port = DEFAULT_SOCKET_PORT
-    return fallbackUrl.toString()
-  }
-
-  return `http://localhost:${DEFAULT_SOCKET_PORT}`
-}
 
 export function getSocket(token: string): Socket {
-  const socketUrl = resolveSocketUrl()
+  const socketUrl = getPublicSocketUrl()
 
   // Return existing socket even if still connecting - do not create duplicates.
   if (socket) {

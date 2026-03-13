@@ -3,17 +3,15 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getPublicServerUrl } from '@/lib/site-url'
 
-interface RedeemClientProps {
-  serverUrl: string
-}
-
-export function RedeemClient({ serverUrl }: RedeemClientProps) {
+export function RedeemClient() {
   const [code, setCode] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [chipsAdded, setChipsAdded] = useState(0)
   const supabase = createClient()
+  const serverUrl = getPublicServerUrl()
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault()
