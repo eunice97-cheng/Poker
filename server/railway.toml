@@ -1,0 +1,14 @@
+# Set the Railway service root directory to `/server`
+# and the config-as-code path to `/server/railway.toml`.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["/server/**"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+sleepApplication = false
