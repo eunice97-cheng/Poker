@@ -8,13 +8,13 @@ const baseButtonClasses =
   'group relative flex items-center overflow-hidden rounded-full text-sm font-semibold text-white transition-all duration-300 hover:scale-105 active:scale-95'
 
 const compactButtonClasses =
-  'h-10 w-10 justify-center px-0 sm:h-11 sm:w-11 md:w-11 md:hover:w-[178px] md:justify-start md:px-3'
+  'h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[178px] md:hover:justify-start md:hover:px-3'
 
 const discordClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#7b2ff7,#f107a3)] shadow-lg shadow-[#b5179e]/30 hover:shadow-[#f72585]/45`
 
 const supportButtonClasses =
-  `${baseButtonClasses} h-10 w-10 justify-center px-0 sm:h-11 sm:w-11 md:w-11 md:hover:w-[154px] md:justify-start md:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
+  `${baseButtonClasses} h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[154px] md:hover:justify-start md:hover:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
 
 const redeemClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
