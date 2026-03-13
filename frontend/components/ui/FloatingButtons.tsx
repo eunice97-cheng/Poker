@@ -11,15 +11,18 @@ const compactButtonClasses =
   'h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[178px] md:hover:justify-start md:hover:px-3'
 
 const discordClasses =
-  `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#7b2ff7,#f107a3)] shadow-lg shadow-[#b5179e]/30 hover:shadow-[#f72585]/45`
+  `${baseButtonClasses} ${compactButtonClasses}`
 
 const supportButtonClasses =
-  `${baseButtonClasses} h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[168px] md:hover:justify-start md:hover:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
+  `${baseButtonClasses} h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[168px] md:hover:justify-start md:hover:px-3`
 
 const redeemClasses =
-  `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
+  `${baseButtonClasses} ${compactButtonClasses}`
 
-const buttonImageClasses = 'relative z-10 h-14 w-14 flex-shrink-0 object-contain'
+const buttonImageClasses = 'relative z-10 h-14 w-14 flex-shrink-0 object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.38)]'
+
+const buttonLabelClasses =
+  'relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 [text-shadow:0_2px_10px_rgba(0,0,0,0.55)] md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:translate-x-0 md:group-hover:opacity-100'
 
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
@@ -49,14 +52,7 @@ function ButtonIcon({ src }: { src: string }) {
 }
 
 function GoldRim() {
-  return (
-    <>
-      <span className="pointer-events-none absolute inset-0 rounded-full border border-[#f7d57a]/70" />
-      <span className="pointer-events-none absolute inset-[1px] rounded-full border border-[#fff2bf]/28" />
-      <span className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#fff1b3] to-transparent opacity-80" />
-      <span className="pointer-events-none absolute -inset-px rounded-full shadow-[0_0_18px_rgba(247,213,122,0.22)]" />
-    </>
-  )
+  return null
 }
 
 export function FloatingButtons() {
@@ -83,7 +79,7 @@ export function FloatingButtons() {
       >
         <GoldRim />
         <ButtonIcon src="/buttons/chip.png" />
-        <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[120px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
+        <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
           Redeem Code
         </span>
       </Link>
@@ -97,7 +93,7 @@ export function FloatingButtons() {
       >
         <GoldRim />
         <ButtonIcon src="/buttons/bell.png" />
-        <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[120px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
+        <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
           Ping the Host
         </span>
       </a>
@@ -116,7 +112,7 @@ export function FloatingButtons() {
         >
           <GoldRim />
           <ButtonIcon src="/buttons/drink.png" />
-          <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[124px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
+          <span className={`${buttonLabelClasses} md:group-hover:max-w-[124px]`}>
             Tip the Host
           </span>
         </button>
