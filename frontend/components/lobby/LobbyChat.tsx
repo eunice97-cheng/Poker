@@ -3,14 +3,18 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
+import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
+import { ChatMessageText } from '@/components/ui/ChatMessageText'
+import { appendChatEmojiCode } from '@/lib/chat-emojis'
 import { ChatMessage, Profile } from '@/types/poker'
 
 interface LobbyChatProps {
   socket: Socket
   profile: Profile | null
+  hasVipEmojis: boolean
 }
 
-const CHAT_EMOJIS = ['🍸', '🥂', '♠️', '🃏', '🔥', '😎', '😂', '😬']
+const MAX_LOBBY_CHAT_LENGTH = 240
 
 function formatTime(timestamp: string) {
   return new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -25,7 +29,7 @@ function FallbackAvatar({ username }: { username: string }) {
   )
 }
 
-export function LobbyChat({ socket, profile }: LobbyChatProps) {
+export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
@@ -76,8 +80,8 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
     })
   }
 
-  const appendEmoji = (emoji: string) => {
-    setDraft((prev) => (prev + emoji).slice(0, 240))
+  const appendEmoji = (emojiCode: string) => {
+    setDraft((prev) => appendChatEmojiCode(prev, emojiCode, MAX_LOBBY_CHAT_LENGTH))
   }
 
   return (
@@ -130,7 +134,9 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
                           <span className={`truncate text-sm font-semibold ${isSelf ? 'text-amber-200' : 'text-white'}`}>{message.username}</span>
                           <span className="text-[10px] uppercase tracking-[0.18em] text-white/35">{formatTime(message.timestamp)}</span>
                         </div>
-                        <p className="mt-1 break-words text-sm leading-6 text-white/72">{message.text}</p>
+                        <p className="mt-1 break-words whitespace-pre-wrap text-sm leading-6 text-white/72">
+                          <ChatMessageText text={message.text} />
+                        </p>
                       </div>
                     </div>
                   )
@@ -139,28 +145,16 @@ export function LobbyChat({ socket, profile }: LobbyChatProps) {
             </div>
 
             <form onSubmit={submit} className="mt-3 space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {CHAT_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => appendEmoji(emoji)}
-                    className="rounded-full border border-white/10 bg-black/24 px-3 py-1 text-sm transition-colors hover:border-[#f3d2a2]/30 hover:bg-black/40"
-                    aria-label={`Insert ${emoji}`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+              <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
               <textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value.slice(0, 240))}
+                onChange={(e) => setDraft(e.target.value.slice(0, MAX_LOBBY_CHAT_LENGTH))}
                 rows={2}
                 placeholder={placeholder}
                 className="w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
               />
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/240`}</div>
+                <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/${MAX_LOBBY_CHAT_LENGTH}`}</div>
                 <button
                   type="submit"
                   disabled={sending || !draft.trim()}

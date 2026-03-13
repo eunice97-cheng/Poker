@@ -13,11 +13,18 @@ interface TablePageClientProps {
   token: string
   userId: string
   chipBalance: number
+  hasVipEmojis: boolean
 }
 
 const AUTO_REBUY_KEY = 'poker_auto_rebuy'
 
-export function TablePageClient({ tableId, token, userId, chipBalance: initialBalance }: TablePageClientProps) {
+export function TablePageClient({
+  tableId,
+  token,
+  userId,
+  chipBalance: initialBalance,
+  hasVipEmojis,
+}: TablePageClientProps) {
   const router = useRouter()
   const { socket, connected, error: socketError } = useSocket(token)
   const { playSfx } = useAudio()
@@ -128,6 +135,7 @@ export function TablePageClient({ tableId, token, userId, chipBalance: initialBa
         onSitOut={handleSitOut}
         onSitIn={handleSitIn}
         clearHandResult={clearHandResult}
+        hasVipEmojis={hasVipEmojis}
       />
       {bustedInfo && (
         <RebuyModal

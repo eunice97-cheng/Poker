@@ -22,9 +22,10 @@ interface LobbyClientProps {
   profile: Profile | null
   token: string
   isAdmin: boolean
+  hasVipEmojis: boolean
 }
 
-export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyClientProps) {
+export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmojis }: LobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { playSfx } = useAudio()
@@ -326,7 +327,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin }: LobbyCli
             <TableList initialTables={initialTables} onJoin={handleJoinTable} onTablesChange={setLiveTables} />
           </section>
         
-          <LobbyChat socket={socket} profile={profile} />
+          <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />
         </main>
 
         <CreateTableModal

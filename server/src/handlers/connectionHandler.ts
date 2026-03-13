@@ -4,6 +4,7 @@ import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
 import { registerTableHandlers } from './tableHandler'
 import { registerGameHandlers } from './gameHandler'
+import { sanitizeChatText } from '../utils/chatEmojis'
 
 const LOBBY_ROOM = 'lobby'
 const MAX_LOBBY_MESSAGES = 60
@@ -43,7 +44,7 @@ export function registerConnectionHandler(io: Server) {
     registerGameHandlers(io, authed)
 
     socket.on('lobby_chat_message', (data: { text: string }, callback) => {
-      const text = data.text?.trim().slice(0, 240)
+      const text = sanitizeChatText(data.text?.trim().slice(0, 240) ?? '', authed.hasVipEmojis)
       if (!text) {
         callback?.({ error: 'Message cannot be empty' })
         return

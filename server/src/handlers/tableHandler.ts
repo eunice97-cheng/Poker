@@ -4,6 +4,7 @@ import { supabaseService } from '../services/supabaseService'
 import { ServerObserver, ServerPlayer } from '../types/game'
 import { Server } from 'socket.io'
 import { getHouseExitLine, releaseHousePlayer } from '../ai/housePlayers'
+import { sanitizeChatText } from '../utils/chatEmojis'
 
 export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   // Create a new table
@@ -267,7 +268,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   socket.on('chat_message', (data: { text: string }) => {
     const room = roomManager.getRoomBySocketId(socket.id)
     if (!room) return
-    const text = data.text?.trim().slice(0, 200)
+    const text = sanitizeChatText(data.text?.trim().slice(0, 200) ?? '', socket.hasVipEmojis)
     if (!text) return
     io.to(room.tableId).emit('chat_message', {
       playerId: socket.userId,

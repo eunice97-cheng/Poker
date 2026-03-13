@@ -10,6 +10,7 @@ export interface AuthenticatedSocket extends Socket {
   userId: string
   username: string
   avatar: string
+  hasVipEmojis: boolean
 }
 
 export async function authenticateSocket(
@@ -40,9 +41,22 @@ export async function authenticateSocket(
       return next(new Error('Profile not found'))
     }
 
+    const { data: vipUnlock, error: vipUnlockError } = await supabase
+      .from('transactions')
+      .select('id')
+      .eq('player_id', data.user.id)
+      .eq('type', 'kofi_redeem')
+      .limit(1)
+      .maybeSingle()
+
+    if (vipUnlockError) {
+      return next(new Error('Could not verify supporter access'))
+    }
+
     ;(socket as AuthenticatedSocket).userId = data.user.id
     ;(socket as AuthenticatedSocket).username = profile.username
     ;(socket as AuthenticatedSocket).avatar = profile.avatar ?? 'avatar_m1'
+    ;(socket as AuthenticatedSocket).hasVipEmojis = Boolean(vipUnlock)
     next()
   } catch {
     next(new Error('Authentication failed'))

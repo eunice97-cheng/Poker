@@ -78,6 +78,7 @@ interface PokerTableProps {
   onSitIn: () => void
   clearHandResult: () => void
   countdown: number | null
+  hasVipEmojis: boolean
 }
 
 export function PokerTable({
@@ -93,6 +94,7 @@ export function PokerTable({
   onSitIn,
   clearHandResult,
   countdown,
+  hasVipEmojis,
 }: PokerTableProps) {
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
   const observers: ClientObserver[] = gameState.observers ?? []
@@ -433,14 +435,14 @@ export function PokerTable({
 
       <div className="absolute bottom-24 right-4 z-10 hidden w-64 flex-col gap-2 lg:flex">
         <ActionLog logs={actionLogs} />
-        <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
+        <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
       </div>
 
       <div className="absolute bottom-24 right-3 z-20 lg:hidden">
         {showMobilePanel ? (
           <div className="w-[min(22rem,calc(100vw-1rem))] space-y-2">
             <ActionLog logs={actionLogs} />
-            <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} />
+            <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
           </div>
         ) : null}
         <button

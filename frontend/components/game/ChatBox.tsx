@@ -2,16 +2,20 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChatMessage } from '@/types/poker'
+import { appendChatEmojiCode } from '@/lib/chat-emojis'
+import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
+import { ChatMessageText } from '@/components/ui/ChatMessageText'
 
 interface ChatBoxProps {
   messages: ChatMessage[]
   onSend: (text: string) => void
   myPlayerId: string
+  hasVipEmojis: boolean
 }
 
-const CHAT_EMOJIS = ['🍸', '🥂', '♠️', '🃏', '🔥', '😎', '😂', '😬']
+const MAX_CHAT_LENGTH = 200
 
-export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
+export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis }: ChatBoxProps) {
   const [input, setInput] = useState('')
   const [collapsed, setCollapsed] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -26,8 +30,8 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
     setInput('')
   }
 
-  const appendEmoji = (emoji: string) => {
-    setInput((prev) => (prev + emoji).slice(0, 200))
+  const appendEmoji = (emojiCode: string) => {
+    setInput((prev) => appendChatEmojiCode(prev, emojiCode, MAX_CHAT_LENGTH))
   }
 
   return (
@@ -46,12 +50,12 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
             {messages.map((msg, i) => (
               msg.isSystem ? (
                 <div key={i} className="text-gray-500 italic text-xs py-0.5">
-                  {msg.text}
+                  <ChatMessageText text={msg.text} size="sm" />
                 </div>
               ) : (
                 <div key={i} className={msg.playerId === myPlayerId ? 'text-yellow-300' : 'text-gray-300'}>
                   <span className="font-semibold">{msg.username}: </span>
-                  <span>{msg.text}</span>
+                  <ChatMessageText text={msg.text} size="sm" />
                 </div>
               )
             ))}
@@ -59,19 +63,7 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
           </div>
 
           <div className="border-t border-gray-700/50">
-            <div className="flex flex-wrap gap-2 px-3 py-2">
-              {CHAT_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => appendEmoji(emoji)}
-                  className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-sm transition-colors hover:border-yellow-400/30 hover:bg-white/10"
-                  aria-label={`Insert ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+            <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} variant="table" />
             <div className="flex border-t border-gray-700/50">
               <input
                 className="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none placeholder-gray-600"
@@ -79,7 +71,7 @@ export function ChatBox({ messages, onSend, myPlayerId }: ChatBoxProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-                maxLength={200}
+                maxLength={MAX_CHAT_LENGTH}
               />
               <button
                 onClick={handleSend}
