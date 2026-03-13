@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
@@ -18,6 +19,8 @@ const supportButtonClasses =
 const redeemClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
 
+const buttonImageClasses = 'relative z-10 h-5 w-5 flex-shrink-0 object-contain'
+
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
   { amount: '$10', reward: '12,000 chips' },
@@ -32,76 +35,16 @@ const MEMBERSHIP_REWARDS = [
   { amount: '$25/mo', reward: '45,000 chips' },
 ]
 
-function BellIcon() {
+function ButtonIcon({ src }: { src: string }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="relative z-10 h-[18px] w-[18px] flex-shrink-0"
-    >
-      <path d="M9.8 20a2.5 2.5 0 0 0 4.4 0" />
-      <path d="M6.5 16.2h11l-1.3-1.3a2.7 2.7 0 0 1-.8-1.9v-2.3a4.4 4.4 0 1 0-8.8 0V13a2.7 2.7 0 0 1-.8 1.9l-1.3 1.3Z" />
-      <path d="M9.7 5.4a3 3 0 0 1 4.6 0" />
-      <path d="M4.7 9.2c.2-.8.6-1.6 1.2-2.2" />
-      <path d="M19.3 9.2c-.2-.8-.6-1.6-1.2-2.2" />
-    </svg>
-  )
-}
-
-function ChampagneIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="relative z-10 h-[18px] w-[18px] flex-shrink-0"
-    >
-      <path d="M8 3h8l-.8 4.6a3.3 3.3 0 0 1-6.4 0L8 3Z" />
-      <path d="M9.4 5.2h5.2" />
-      <path d="M12 11.1V18" />
-      <path d="M9.3 21h5.4" />
-      <path d="M10.1 18h3.8" />
-      <circle cx="17.5" cy="5.5" r="0.7" fill="currentColor" stroke="none" />
-      <circle cx="19.1" cy="3.7" r="0.55" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function ChipIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="relative z-10 h-[18px] w-[18px] flex-shrink-0"
-    >
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4.1" />
-      <path d="M12 3.5v2.9" />
-      <path d="M12 17.6v2.9" />
-      <path d="M3.5 12h2.9" />
-      <path d="M17.6 12h2.9" />
-      <path d="m6 6 2 2" />
-      <path d="m16 16 2 2" />
-      <path d="m18 6-2 2" />
-      <path d="m8 16-2 2" />
-    </svg>
+    <Image
+      src={src}
+      alt=""
+      aria-hidden="true"
+      width={20}
+      height={20}
+      className={buttonImageClasses}
+    />
   )
 }
 
@@ -139,7 +82,7 @@ export function FloatingButtons() {
         title="Redeem a chip code"
       >
         <GoldRim />
-        <ChipIcon />
+        <ButtonIcon src="/buttons/chip.png" />
         <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[120px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
           Redeem Code
         </span>
@@ -153,7 +96,7 @@ export function FloatingButtons() {
         title="Open Discord and ping the host"
       >
         <GoldRim />
-        <BellIcon />
+        <ButtonIcon src="/buttons/bell.png" />
         <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[120px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
           Ping the Host
         </span>
@@ -172,7 +115,7 @@ export function FloatingButtons() {
           aria-controls="support-pill"
         >
           <GoldRim />
-          <ChampagneIcon />
+          <ButtonIcon src="/buttons/drink.png" />
           <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[108px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
             Tip the Host
           </span>
