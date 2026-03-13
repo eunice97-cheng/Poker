@@ -72,35 +72,39 @@ export function FloatingButtons() {
 
   return (
     <div className="fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
-      <Link
-        href="/redeem"
-        className={redeemClasses}
-        title="Redeem a chip code"
-      >
-        <GoldRim />
-        <ButtonIcon src="/buttons/chip.png" />
-        <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
-          Redeem Code
-        </span>
-      </Link>
+      <div className="floating-attention-chip">
+        <Link
+          href="/redeem"
+          className={redeemClasses}
+          title="Redeem a chip code"
+        >
+          <GoldRim />
+          <ButtonIcon src="/buttons/chip.png" />
+          <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
+            Redeem Code
+          </span>
+        </Link>
+      </div>
 
-      <a
-        href="https://discord.com/users/909063517280296961"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={discordClasses}
-        title="Open Discord and ping the host"
-      >
-        <GoldRim />
-        <ButtonIcon src="/buttons/bell.png" />
-        <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
-          Ping the Host
-        </span>
-      </a>
+      <div className="floating-attention-bell">
+        <a
+          href="https://discord.com/users/909063517280296961"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={discordClasses}
+          title="Open Discord and ping the host"
+        >
+          <GoldRim />
+          <ButtonIcon src="/buttons/bell.png" />
+          <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
+            Ping the Host
+          </span>
+        </a>
+      </div>
 
       <div
         ref={supportRef}
-        className="relative flex flex-col items-end"
+        className="floating-attention-drink relative flex flex-col items-end"
       >
         <button
           type="button"
