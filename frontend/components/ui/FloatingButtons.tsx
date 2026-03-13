@@ -15,6 +15,9 @@ const discordClasses =
 const supportButtonClasses =
   `${baseButtonClasses} h-10 w-10 justify-center px-0 sm:h-11 sm:w-11 md:w-11 md:hover:w-[154px] md:justify-start md:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
 
+const redeemClasses =
+  `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
+
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
   { amount: '$10', reward: '12,000 chips' },
@@ -49,6 +52,15 @@ function ChampagneIcon() {
   )
 }
 
+function TicketIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="relative z-10 h-[18px] w-[18px] flex-shrink-0">
+      <path d="M4 9.5A2.5 2.5 0 0 1 6.5 7h11A2.5 2.5 0 0 1 20 9.5v1a1.5 1.5 0 0 0 0 3v1A2.5 2.5 0 0 1 17.5 17h-11A2.5 2.5 0 0 1 4 14.5v-1a1.5 1.5 0 0 0 0-3v-1Z" />
+      <path d="M9 7v10" strokeDasharray="2.5 2.5" />
+    </svg>
+  )
+}
+
 function GoldRim() {
   return (
     <>
@@ -77,6 +89,18 @@ export function FloatingButtons() {
 
   return (
     <div className="fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
+      <Link
+        href="/redeem"
+        className={redeemClasses}
+        title="Redeem a chip code"
+      >
+        <GoldRim />
+        <TicketIcon />
+        <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[120px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
+          Redeem Code
+        </span>
+      </Link>
+
       <a
         href="https://discord.com/users/909063517280296961"
         target="_blank"
