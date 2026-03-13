@@ -19,7 +19,7 @@ const supportButtonClasses =
 const redeemClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
 
-const buttonImageClasses = 'relative z-10 h-7 w-7 flex-shrink-0 object-contain'
+const buttonImageClasses = 'relative z-10 h-14 w-14 flex-shrink-0 object-contain'
 
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
@@ -41,8 +41,8 @@ function ButtonIcon({ src }: { src: string }) {
       src={src}
       alt=""
       aria-hidden="true"
-      width={28}
-      height={28}
+      width={56}
+      height={56}
       className={buttonImageClasses}
     />
   )
