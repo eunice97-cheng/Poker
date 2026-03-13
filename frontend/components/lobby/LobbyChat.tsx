@@ -9,7 +9,7 @@ import { appendChatEmojiCode } from '@/lib/chat-emojis'
 import { ChatMessage, Profile } from '@/types/poker'
 
 interface LobbyChatProps {
-  socket: Socket
+  socket: Socket | null
   profile: Profile | null
   hasVipEmojis: boolean
 }
@@ -38,6 +38,8 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!socket) return
+
     const onHistory = (history: ChatMessage[]) => setMessages(history)
     const onMessage = (message: ChatMessage) => {
       setMessages((prev) => [...prev.slice(-59), message])
@@ -65,6 +67,10 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (!socket) {
+      setError('Chat is still connecting')
+      return
+    }
     const text = draft.trim()
     if (!text) return
 

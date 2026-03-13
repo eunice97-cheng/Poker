@@ -15,10 +15,9 @@ function getCurrentOrigin() {
   return normalizeUrl(window.location.origin)
 }
 
-function toLocalServerOrigin(origin: string) {
+function withPort(origin: string, port: string) {
   const url = new URL(origin)
-  url.protocol = 'http:'
-  url.port = '4000'
+  url.port = port
   return normalizeUrl(url.toString())
 }
 
@@ -46,7 +45,10 @@ export function getPublicServerUrl() {
   if (currentOrigin) {
     const currentUrl = new URL(currentOrigin)
     if (isLocalHostname(currentUrl.hostname)) {
-      return toLocalServerOrigin(currentOrigin)
+      const localServerOrigin = withPort(currentOrigin, '4000')
+      if (currentUrl.protocol === 'http:' || currentUrl.protocol === 'https:') {
+        return localServerOrigin
+      }
     }
 
     return currentOrigin
@@ -57,4 +59,34 @@ export function getPublicServerUrl() {
 
 export function getPublicSocketUrl() {
   return normalizeUrl(process.env.NEXT_PUBLIC_SOCKET_URL) || getPublicServerUrl()
+}
+
+export function getPublicServerCandidates() {
+  const candidates: string[] = []
+  const seen = new Set<string>()
+
+  const addCandidate = (value: string | undefined) => {
+    const normalized = normalizeUrl(value)
+    if (!normalized || seen.has(normalized)) return
+    seen.add(normalized)
+    candidates.push(normalized)
+  }
+
+  const currentOrigin = getCurrentOrigin()
+  const configuredSocketUrl = normalizeUrl(process.env.NEXT_PUBLIC_SOCKET_URL)
+  const configuredServerUrl = normalizeUrl(process.env.NEXT_PUBLIC_SERVER_URL)
+
+  addCandidate(configuredSocketUrl)
+  addCandidate(configuredServerUrl)
+  addCandidate(currentOrigin)
+
+  if (currentOrigin) {
+    try {
+      addCandidate(withPort(currentOrigin, '4000'))
+    } catch {}
+  }
+
+  addCandidate(LOCAL_FALLBACK_SERVER_URL)
+
+  return candidates
 }

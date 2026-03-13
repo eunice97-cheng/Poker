@@ -2,9 +2,15 @@ import { io, Socket } from 'socket.io-client'
 import { getPublicSocketUrl } from '@/lib/site-url'
 
 let socket: Socket | null = null
+let socketUrl = ''
 
-export function getSocket(token: string): Socket {
-  const socketUrl = getPublicSocketUrl()
+export function getSocket(token: string, preferredUrl?: string): Socket {
+  const nextSocketUrl = preferredUrl || getPublicSocketUrl()
+
+  if (socket && socketUrl !== nextSocketUrl) {
+    socket.disconnect()
+    socket = null
+  }
 
   // Return existing socket even if still connecting - do not create duplicates.
   if (socket) {
@@ -13,7 +19,9 @@ export function getSocket(token: string): Socket {
     return socket
   }
 
-  socket = io(socketUrl, {
+  socketUrl = nextSocketUrl
+
+  socket = io(nextSocketUrl, {
     auth: { token },
     autoConnect: true,
     reconnection: true,
@@ -24,7 +32,7 @@ export function getSocket(token: string): Socket {
   })
 
   socket.on('connect_error', (err) => {
-    console.error(`[Socket] Connection error (${socketUrl}):`, err.message)
+    console.error(`[Socket] Connection error (${nextSocketUrl}):`, err.message)
   })
 
   return socket
@@ -35,8 +43,13 @@ export function disconnectSocket() {
     socket.disconnect()
     socket = null
   }
+  socketUrl = ''
 }
 
 export function getExistingSocket(): Socket | null {
   return socket
+}
+
+export function getExistingSocketUrl(): string {
+  return socketUrl
 }

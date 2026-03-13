@@ -26,7 +26,7 @@ export function TablePageClient({
   hasVipEmojis,
 }: TablePageClientProps) {
   const router = useRouter()
-  const { socket, connected, error: socketError } = useSocket(token)
+  const { socket, connected, error: socketError, socketUrl } = useSocket(token)
   const { playSfx } = useAudio()
   const [leaving, setLeaving] = useState(false)
   const [chipBalance, setChipBalance] = useState(initialBalance)
@@ -101,6 +101,7 @@ export function TablePageClient({
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-center">
         <div>
           <p className="text-red-400 text-xl mb-4">Connection error: {socketError}</p>
+          {socketUrl && <p className="text-gray-500 text-sm mb-4">Socket URL: {socketUrl}</p>}
           <button onClick={() => router.push('/lobby')} className="text-yellow-400 hover:underline">
             Back to Lobby
           </button>

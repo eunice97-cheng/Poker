@@ -8,7 +8,6 @@ import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { CreateTableModal } from '@/components/lobby/CreateTableModal'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { getSocket } from '@/lib/socket'
 import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
@@ -16,6 +15,7 @@ import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import { buildLobbyInvite, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
+import { useSocket } from '@/hooks/useSocket'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -36,40 +36,13 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
-  const [socketStatus, setSocketStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
-  const [socketError, setSocketError] = useState('')
-
-  const socket = getSocket(token)
+  const { socket, connected, error: socketError, socketUrl } = useSocket(token)
   const joinTheme = getTableTheme(joinModal?.big_blind ?? 10)
   const activeTables = liveTables.filter((table) => table.status !== 'finished')
   const playersSeated = liveTables.reduce((sum, table) => sum + table.player_count, 0)
   const openSeats = liveTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
   const featuredTable = [...liveTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
   const featuredStakes = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'House warming up'
-
-  useEffect(() => {
-    if (socket.connected) setSocketStatus('connected')
-
-    const onConnect = () => {
-      setSocketStatus('connected')
-      setSocketError('')
-    }
-    const onConnectError = (err: Error) => {
-      setSocketStatus('error')
-      setSocketError(err.message)
-    }
-    const onDisconnect = () => setSocketStatus('connecting')
-
-    socket.on('connect', onConnect)
-    socket.on('connect_error', onConnectError)
-    socket.on('disconnect', onDisconnect)
-
-    return () => {
-      socket.off('connect', onConnect)
-      socket.off('connect_error', onConnectError)
-      socket.off('disconnect', onDisconnect)
-    }
-  }, [socket])
 
   const handleCreateTable = (params: {
     name: string
@@ -81,6 +54,11 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
     buyIn: number
   }) => {
     return new Promise<void>((resolve, reject) => {
+      if (!socket) {
+        reject(new Error('Game server is still connecting'))
+        return
+      }
+
       const timeout = setTimeout(() => {
         reject(new Error('Server not responding. It may be waking up - wait 30s and try again.'))
       }, 60000)
@@ -106,6 +84,11 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
 
   const confirmJoin = async () => {
     if (!joinModal) return
+
+    if (!socket) {
+      setError('Game server is still connecting')
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -172,21 +155,26 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
               <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-white/62 md:text-xs">
                 <span
                   className={`h-2 w-2 rounded-full ${
-                    socketStatus === 'connected'
+                    connected
                       ? 'bg-emerald-400'
-                      : socketStatus === 'error'
+                      : socketError
                         ? 'bg-red-400'
                         : 'animate-pulse bg-amber-300'
                   }`}
                 />
                 <span>
-                  {socketStatus === 'connected'
+                  {connected
                     ? 'Bar open'
-                    : socketStatus === 'error'
-                      ? `Connection issue: ${socketError || 'offline'}`
+                    : socketError
+                      ? `Connection issue: ${socketError}`
                       : 'Pouring the room...' }
                 </span>
               </div>
+              {socketError && socketUrl && (
+                <div className="w-full text-[10px] uppercase tracking-[0.18em] text-white/35">
+                  Socket {socketUrl}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
