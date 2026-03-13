@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import type { Socket } from 'socket.io-client'
 import { TableList } from '@/components/lobby/TableList'
 import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { CreateTableModal } from '@/components/lobby/CreateTableModal'
@@ -23,6 +24,34 @@ interface LobbyClientProps {
   token: string
   isAdmin: boolean
   hasVipEmojis: boolean
+}
+
+type AckResponse = {
+  error?: string
+}
+
+function emitWithAck<T>(
+  socket: Socket,
+  event: string,
+  payload: unknown,
+  timeoutMessage: string,
+  timeoutMs: number = 60000
+) {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error(timeoutMessage))
+    }, timeoutMs)
+
+    socket.emit(event, payload, (res: T & AckResponse) => {
+      clearTimeout(timeout)
+      if (res?.error) {
+        reject(new Error(res.error))
+        return
+      }
+
+      resolve(res)
+    })
+  })
 }
 
 export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmojis }: LobbyClientProps) {
@@ -54,25 +83,23 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
     buyIn: number
   }) => {
     return new Promise<void>((resolve, reject) => {
-      if (!socket) {
-        reject(new Error('Game server is still connecting'))
+      if (!socket || !connected) {
+        reject(new Error('Game server is still waking up. Give it a few seconds and try again.'))
         return
       }
 
-      const timeout = setTimeout(() => {
-        reject(new Error('Server not responding. It may be waking up - wait 30s and try again.'))
-      }, 60000)
-
-      socket.emit('create_table', params, (res: { tableId?: string; error?: string }) => {
-        clearTimeout(timeout)
-        if (res.error) {
-          reject(new Error(res.error))
-        } else {
+      emitWithAck<{ tableId: string }>(
+        socket,
+        'create_table',
+        params,
+        'The game server is still waking up. Wait a moment, then try creating the table again.'
+      )
+        .then((res) => {
           playSfx('joinLeave')
           router.push(`/table/${res.tableId}`)
           resolve()
-        }
-      })
+        })
+        .catch(reject)
     })
   }
 
@@ -85,22 +112,33 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
   const confirmJoin = async () => {
     if (!joinModal) return
 
-    if (!socket) {
-      setError('Game server is still connecting')
+    if (!socket || !connected) {
+      setError('Game server is still waking up. Give it a few seconds and try again.')
       return
     }
 
     setLoading(true)
     setError('')
-    socket.emit('join_table', { tableId: joinModal.id, buyIn }, (res: { seat?: number; error?: string }) => {
+
+    try {
+      await emitWithAck<{ seat?: number; observer?: boolean }>(
+        socket,
+        'join_table',
+        { tableId: joinModal.id, buyIn },
+        'The table is not responding yet. Render may still be waking the server up.'
+      )
+      playSfx('joinLeave')
+      router.push(`/table/${joinModal.id}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to join table'
+      setError(
+        message === 'Table not found'
+          ? 'That table went cold while the server was waking up. Refresh the lobby or start a new one.'
+          : message
+      )
+    } finally {
       setLoading(false)
-      if (res.error) {
-        setError(res.error)
-      } else {
-        playSfx('joinLeave')
-        router.push(`/table/${joinModal.id}`)
-      }
-    })
+    }
   }
 
   const handleSignOut = async () => {
@@ -316,7 +354,13 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
               </div>
             </div>
 
-            <TableList initialTables={initialTables} onJoin={handleJoinTable} onTablesChange={setLiveTables} />
+            <TableList
+              initialTables={initialTables}
+              onJoin={handleJoinTable}
+              onTablesChange={setLiveTables}
+              connected={connected}
+              socketUrl={socketUrl}
+            />
           </section>
         
           <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />

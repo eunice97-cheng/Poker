@@ -106,7 +106,7 @@ app.get('/tables', (_, res) => {
     maxPlayers: room.state.maxPlayers,
     smallBlind: room.state.smallBlind,
     bigBlind: room.state.bigBlind,
-    status: room.state.phase,
+    status: room.state.phase === 'waiting' ? 'waiting' : 'playing',
   }))
   res.json(tables)
 })
@@ -122,15 +122,32 @@ async function reconcileLobbyTables() {
   }
 }
 
-httpServer.listen(PORT, () => {
-  console.log(`[Server] Poker game server running on port ${PORT}`)
-  // Clean up any dev tables left over from a previous server session
-  supabaseService.cleanupDevTables().catch(console.error)
-  supabaseService.cleanupOrphanedTables().catch(console.error)
-  reconcileLobbyTables().catch(console.error)
-  // Award daily chips on startup (catch any players who qualified while server was down)
-  supabaseService.awardDailyChips().catch(console.error)
-})
+async function initializeServerState() {
+  try {
+    const recovery = await supabaseService.recoverAbandonedTables()
+    if (recovery.recoveredTables > 0 || recovery.refundedPlayers > 0) {
+      console.log(
+        `[Recovery] Cleared ${recovery.recoveredTables} abandoned tables and refunded ${recovery.refundedPlayers} players (${recovery.refundedChips} chips)`
+      )
+    }
+  } catch (error) {
+    console.error('[Recovery] Failed to recover abandoned tables:', error)
+  }
+
+  await supabaseService.cleanupDevTables().catch(console.error)
+  await supabaseService.cleanupOrphanedTables().catch(console.error)
+  await reconcileLobbyTables().catch(console.error)
+  await supabaseService.awardDailyChips().catch(console.error)
+}
+
+async function startServer() {
+  await initializeServerState()
+  httpServer.listen(PORT, () => {
+    console.log(`[Server] Poker game server running on port ${PORT}`)
+  })
+}
+
+void startServer()
 
 // Check for daily chip awards every 10 minutes
 setInterval(() => {

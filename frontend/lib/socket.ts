@@ -25,8 +25,9 @@ export function getSocket(token: string, preferredUrl?: string): Socket {
     auth: { token },
     autoConnect: true,
     reconnection: true,
-    reconnectionAttempts: 10,
-    reconnectionDelay: 2000,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1500,
+    reconnectionDelayMax: 5000,
     timeout: 45000,
     transports: ['websocket', 'polling'],
   })

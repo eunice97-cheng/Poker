@@ -20,11 +20,24 @@ export function useGameState(socket: Socket | null, tableId: string) {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [bustedInfo, setBustedInfo] = useState<BustedInfo | null>(null)
+  const [tableError, setTableError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!socket) return
 
+    setTableError(null)
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const clearReconnectTimeout = () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout)
+        reconnectTimeout = null
+      }
+    }
+
     const onGameState = (state: GameState) => {
+      clearReconnectTimeout()
+      setTableError(null)
       setGameState(state)
       // Only clear hand result when a new hand is in progress (not showdown)
       if (state.phase !== 'showdown') setHandResult(null)
@@ -65,9 +78,24 @@ export function useGameState(socket: Socket | null, tableId: string) {
     socket.on('busted', onBusted)
 
     // Try to reconnect to table if already in it
-    socket.emit('reconnect_to_table', { tableId })
+    reconnectTimeout = setTimeout(() => {
+      setTableError('This table did not wake up in time. Please head back to the lobby and try again.')
+    }, 20000)
+
+    socket.emit('reconnect_to_table', { tableId }, (res?: { ok?: boolean; error?: string }) => {
+      clearReconnectTimeout()
+      if (res?.error) {
+        if (res.error === 'Table not found') {
+          setTableError('This table no longer exists. The server likely went to sleep and cleared the room.')
+          return
+        }
+
+        setTableError(res.error)
+      }
+    })
 
     return () => {
+      clearReconnectTimeout()
       socket.off('game_state', onGameState)
       socket.off('hand_result', onHandResult)
       socket.off('action_required', onActionRequired)
@@ -113,6 +141,7 @@ export function useGameState(socket: Socket | null, tableId: string) {
     countdown,
     timeLeft,
     bustedInfo,
+    tableError,
     clearBusted: () => setBustedInfo(null),
     sendAction,
     sendChat,

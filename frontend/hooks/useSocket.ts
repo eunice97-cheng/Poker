@@ -5,24 +5,48 @@ import { getSocket, getExistingSocketUrl } from '@/lib/socket'
 import { getPublicServerCandidates } from '@/lib/site-url'
 import type { Socket } from 'socket.io-client'
 
+const HEALTH_CHECK_TIMEOUT_MS = 8000
+
+async function fetchHealth(candidate: string, signal: AbortSignal) {
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS)
+
+  signal.addEventListener('abort', abort, { once: true })
+
+  try {
+    return await fetch(`${candidate}/health`, {
+      method: 'GET',
+      cache: 'no-store',
+      mode: 'cors',
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeout)
+    signal.removeEventListener('abort', abort)
+  }
+}
+
 async function resolveReachableServerUrl(signal: AbortSignal) {
   const candidates = getPublicServerCandidates()
   let lastError = ''
 
   for (const candidate of candidates) {
+    if (signal.aborted) break
+
     try {
-      const res = await fetch(`${candidate}/health`, {
-        method: 'GET',
-        cache: 'no-store',
-        mode: 'cors',
-        signal,
-      })
+      const res = await fetchHealth(candidate, signal)
 
       if (res.ok) return candidate
 
       lastError = `health ${res.status}`
     } catch (error) {
-      lastError = error instanceof Error ? error.message : 'health check failed'
+      lastError =
+        !signal.aborted && error instanceof DOMException && error.name === 'AbortError'
+          ? `health timed out after ${HEALTH_CHECK_TIMEOUT_MS / 1000}s`
+          : error instanceof Error
+            ? error.message
+            : 'health check failed'
     }
   }
 
@@ -39,7 +63,6 @@ export function useSocket(token: string | null) {
     if (!token) return
 
     const controller = new AbortController()
-    let activeSocket: Socket | null = null
 
     const setupSocket = async () => {
       const resolved = await resolveReachableServerUrl(controller.signal)
@@ -48,7 +71,6 @@ export function useSocket(token: string | null) {
       const resolvedUrl = typeof resolved === 'string' ? resolved : resolved.fallback
       const socket = getSocket(token, resolvedUrl)
       socketRef.current = socket
-      activeSocket = socket
       setSocketUrl(resolvedUrl || getExistingSocketUrl())
 
       if (typeof resolved !== 'string' && resolved.reason) {
@@ -88,11 +110,6 @@ export function useSocket(token: string | null) {
     return () => {
       controller.abort()
       cleanup?.()
-      if (activeSocket) {
-        activeSocket.off('connect')
-        activeSocket.off('disconnect')
-        activeSocket.off('connect_error')
-      }
     }
   }, [token])
 

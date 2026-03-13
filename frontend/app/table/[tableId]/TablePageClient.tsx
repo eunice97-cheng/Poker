@@ -43,6 +43,7 @@ export function TablePageClient({
     timeLeft,
     countdown,
     bustedInfo,
+    tableError,
     clearBusted,
     sendAction,
     sendChat,
@@ -96,11 +97,11 @@ export function TablePageClient({
     return () => { socket.off('leave_table', onLeaveAck) }
   }, [socket])
 
-  if (socketError) {
+  if (socketError || tableError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 text-center">
         <div>
-          <p className="text-red-400 text-xl mb-4">Connection error: {socketError}</p>
+          <p className="text-red-400 text-xl mb-4">{tableError ?? `Connection error: ${socketError}`}</p>
           {socketUrl && <p className="text-gray-500 text-sm mb-4">Socket URL: {socketUrl}</p>}
           <button onClick={() => router.push('/lobby')} className="text-yellow-400 hover:underline">
             Back to Lobby

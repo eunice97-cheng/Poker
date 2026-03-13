@@ -204,6 +204,18 @@ export const supabaseService = {
 
   // ─── Daily Chip Recovery ───────────────────────────────────────────────
 
+  async recoverAbandonedTables() {
+    const { data, error } = await supabase.rpc('recover_abandoned_tables')
+    if (error) throw new Error(`Failed to recover abandoned tables: ${error.message}`)
+
+    const result = Array.isArray(data) ? data[0] : data
+    return {
+      recoveredTables: Number(result?.recovered_tables ?? 0),
+      refundedPlayers: Number(result?.refunded_players ?? 0),
+      refundedChips: Number(result?.refunded_chips ?? 0),
+    }
+  },
+
   async markPlayerBroke(playerId: string) {
     // Sets broke_at = now() if the player has 0 chips and isn't already marked
     await supabase.rpc('mark_player_broke', { p_player_id: playerId })

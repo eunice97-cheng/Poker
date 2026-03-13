@@ -9,9 +9,23 @@ interface TableListProps {
   onJoin: (table: TableInfo) => void
   initialTables: TableInfo[]
   onTablesChange?: (tables: TableInfo[]) => void
+  connected?: boolean
+  socketUrl?: string
 }
 
-export function TableList({ onJoin, initialTables, onTablesChange }: TableListProps) {
+type LiveTableSnapshot = {
+  id: string
+  playerCount: number
+  status: TableInfo['status']
+}
+
+export function TableList({
+  onJoin,
+  initialTables,
+  onTablesChange,
+  connected = false,
+  socketUrl = '',
+}: TableListProps) {
   const [tables, setTables] = useState<TableInfo[]>(initialTables)
   const supabase = createClient()
 
@@ -45,6 +59,48 @@ export function TableList({ onJoin, initialTables, onTablesChange }: TableListPr
       supabase.removeChannel(channel)
     }
   }, [supabase])
+
+  useEffect(() => {
+    if (!connected || !socketUrl) return
+
+    const controller = new AbortController()
+
+    const syncWithLiveRooms = async () => {
+      try {
+        const res = await fetch(`${socketUrl}/tables`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!res.ok) return
+
+        const liveTables = (await res.json()) as LiveTableSnapshot[]
+        const liveById = new Map(liveTables.map((table) => [table.id, table]))
+
+        setTables((prev) =>
+          prev
+            .filter((table) => liveById.has(table.id))
+            .map((table) => {
+              const liveTable = liveById.get(table.id)!
+              return {
+                ...table,
+                player_count: liveTable.playerCount,
+                status: liveTable.status,
+              }
+            })
+        )
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.warn('Failed to sync live tables:', error)
+        }
+      }
+    }
+
+    void syncWithLiveRooms()
+
+    return () => {
+      controller.abort()
+    }
+  }, [connected, socketUrl])
 
   if (tables.length === 0) {
     return (
