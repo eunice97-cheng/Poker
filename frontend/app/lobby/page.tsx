@@ -15,7 +15,7 @@ export default async function LobbyPage() {
     supabase.auth.getSession(),
     supabase.from('tables').select('*').neq('status', 'finished').not('name', 'ilike', '%Dev Table%').order('created_at', { ascending: false }),
     supabase.from('profiles').select('*').eq('id', user?.id ?? '').single(),
-    hasVipEmojiAccess(supabase, user?.id),
+    hasVipEmojiAccess(supabase, user?.id, user?.email),
   ])
 
   if (!session) redirect('/auth/login')

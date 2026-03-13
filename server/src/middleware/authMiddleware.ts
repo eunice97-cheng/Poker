@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io'
 import { createClient } from '@supabase/supabase-js'
+import { isAdminEmail } from '../utils/admin'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -41,22 +42,28 @@ export async function authenticateSocket(
       return next(new Error('Profile not found'))
     }
 
-    const { data: vipUnlock, error: vipUnlockError } = await supabase
-      .from('transactions')
-      .select('id')
-      .eq('player_id', data.user.id)
-      .eq('type', 'kofi_redeem')
-      .limit(1)
-      .maybeSingle()
+    let hasVipEmojis = isAdminEmail(data.user.email)
 
-    if (vipUnlockError) {
-      return next(new Error('Could not verify supporter access'))
+    if (!hasVipEmojis) {
+      const { data: vipUnlock, error: vipUnlockError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('player_id', data.user.id)
+        .eq('type', 'kofi_redeem')
+        .limit(1)
+        .maybeSingle()
+
+      if (vipUnlockError) {
+        return next(new Error('Could not verify supporter access'))
+      }
+
+      hasVipEmojis = Boolean(vipUnlock)
     }
 
     ;(socket as AuthenticatedSocket).userId = data.user.id
     ;(socket as AuthenticatedSocket).username = profile.username
     ;(socket as AuthenticatedSocket).avatar = profile.avatar ?? 'avatar_m1'
-    ;(socket as AuthenticatedSocket).hasVipEmojis = Boolean(vipUnlock)
+    ;(socket as AuthenticatedSocket).hasVipEmojis = hasVipEmojis
     next()
   } catch {
     next(new Error('Authentication failed'))

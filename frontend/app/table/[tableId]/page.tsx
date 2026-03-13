@@ -15,7 +15,7 @@ export default async function TablePage({ params }: { params: { tableId: string 
       .select('chip_balance')
       .eq('id', session.user.id)
       .single(),
-    hasVipEmojiAccess(supabase, session.user.id),
+    hasVipEmojiAccess(supabase, session.user.id, session.user.email),
   ])
 
   return (

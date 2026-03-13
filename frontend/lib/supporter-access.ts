@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { isAdminEmail } from '@/lib/admin'
 
-export async function hasVipEmojiAccess(supabase: SupabaseClient, userId?: string | null) {
+export async function hasVipEmojiAccess(
+  supabase: SupabaseClient,
+  userId?: string | null,
+  email?: string | null
+) {
+  if (isAdminEmail(email)) return true
   if (!userId) return false
 
   const { count, error } = await supabase
