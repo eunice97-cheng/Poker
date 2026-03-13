@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 const DEFAULT_MAIN_SITE_URL = 'https://arcanastudiolabs.com'
 
 function normalizeUrl(value: string | undefined) {
@@ -15,8 +17,15 @@ export function MainSiteLink() {
       className="fixed left-3 top-3 z-[9998] inline-flex items-center gap-2 rounded-full border border-[#f7d57a]/30 bg-[linear-gradient(135deg,rgba(25,16,10,0.92),rgba(42,24,12,0.86))] px-3 py-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f7d57a]/55 hover:shadow-[0_22px_55px_rgba(0,0,0,0.42)] sm:left-5 sm:top-5"
       aria-label="Open the main Arcana Studio Labs site in a new tab"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#f7d57a]/35 bg-[radial-gradient(circle_at_top,#f6d98a,#9e651a)] text-sm font-bold text-[#1d1208] shadow-[inset_0_1px_0_rgba(255,245,201,0.55)]">
-        AS
+      <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#f7d57a]/35 bg-[radial-gradient(circle_at_top,rgba(246,217,138,0.22),rgba(158,101,26,0.12))] shadow-[inset_0_1px_0_rgba(255,245,201,0.35)]">
+        <Image
+          src="/buttons/asl.png"
+          alt=""
+          aria-hidden="true"
+          width={36}
+          height={36}
+          className="h-9 w-9 object-contain"
+        />
       </span>
       <span className="hidden min-w-0 sm:block">
         <span className="block text-[10px] uppercase tracking-[0.24em] text-[#f3d2a2]/72">Main site</span>
