@@ -14,7 +14,7 @@ const discordClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#7b2ff7,#f107a3)] shadow-lg shadow-[#b5179e]/30 hover:shadow-[#f72585]/45`
 
 const supportButtonClasses =
-  `${baseButtonClasses} h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[154px] md:hover:justify-start md:hover:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
+  `${baseButtonClasses} h-10 w-14 justify-center px-0 sm:h-11 sm:w-14 md:w-14 md:justify-center md:px-0 md:hover:w-[168px] md:hover:justify-start md:hover:px-3 bg-[linear-gradient(135deg,#6d28d9,#0f766e)] shadow-lg shadow-[#0f766e]/30 hover:shadow-[#14b8a6]/40`
 
 const redeemClasses =
   `${baseButtonClasses} ${compactButtonClasses} bg-[linear-gradient(135deg,#d97706,#b91c1c)] shadow-lg shadow-[#b45309]/30 hover:shadow-[#ef4444]/40`
@@ -116,7 +116,7 @@ export function FloatingButtons() {
         >
           <GoldRim />
           <ButtonIcon src="/buttons/drink.png" />
-          <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[108px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
+          <span className="relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:max-w-[124px] md:group-hover:translate-x-0 md:group-hover:opacity-100">
             Tip the Host
           </span>
         </button>

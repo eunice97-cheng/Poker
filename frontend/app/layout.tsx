@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import { FloatingButtons } from '@/components/ui/FloatingButtons'
+import { MainSiteLink } from '@/components/ui/MainSiteLink'
 import { AudioProvider } from '@/hooks/useAudio'
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })(window, document, "clarity", "script", "vuweiu6c8h");`}
         </Script>
         <AudioProvider>
+          <MainSiteLink />
           {children}
           <FloatingButtons />
         </AudioProvider>
