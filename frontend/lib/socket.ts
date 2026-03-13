@@ -1,23 +1,43 @@
 import { io, Socket } from 'socket.io-client'
 
 let socket: Socket | null = null
+const DEFAULT_SOCKET_PORT = '4000'
+
+function resolveSocketUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SOCKET_URL?.trim()
+  if (configuredUrl) return configuredUrl
+
+  if (typeof window !== 'undefined') {
+    const fallbackUrl = new URL(window.location.origin)
+    fallbackUrl.port = DEFAULT_SOCKET_PORT
+    return fallbackUrl.toString()
+  }
+
+  return `http://localhost:${DEFAULT_SOCKET_PORT}`
+}
 
 export function getSocket(token: string): Socket {
-  // Return existing socket even if still connecting - do not create duplicates.
-  if (socket) return socket
+  const socketUrl = resolveSocketUrl()
 
-  socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+  // Return existing socket even if still connecting - do not create duplicates.
+  if (socket) {
+    socket.auth = { token }
+    if (socket.disconnected) socket.connect()
+    return socket
+  }
+
+  socket = io(socketUrl, {
     auth: { token },
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 2000,
-    timeout: 20000,
+    timeout: 45000,
     transports: ['websocket', 'polling'],
   })
 
   socket.on('connect_error', (err) => {
-    console.error('[Socket] Connection error:', err.message)
+    console.error(`[Socket] Connection error (${socketUrl}):`, err.message)
   })
 
   return socket

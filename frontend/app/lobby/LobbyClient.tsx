@@ -50,20 +50,24 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
   useEffect(() => {
     if (socket.connected) setSocketStatus('connected')
 
-    socket.on('connect', () => {
+    const onConnect = () => {
       setSocketStatus('connected')
       setSocketError('')
-    })
-    socket.on('connect_error', (err) => {
+    }
+    const onConnectError = (err: Error) => {
       setSocketStatus('error')
       setSocketError(err.message)
-    })
-    socket.on('disconnect', () => setSocketStatus('connecting'))
+    }
+    const onDisconnect = () => setSocketStatus('connecting')
+
+    socket.on('connect', onConnect)
+    socket.on('connect_error', onConnectError)
+    socket.on('disconnect', onDisconnect)
 
     return () => {
-      socket.off('connect')
-      socket.off('connect_error')
-      socket.off('disconnect')
+      socket.off('connect', onConnect)
+      socket.off('connect_error', onConnectError)
+      socket.off('disconnect', onDisconnect)
     }
   }, [socket])
 
