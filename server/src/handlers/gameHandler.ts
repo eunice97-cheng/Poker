@@ -6,6 +6,8 @@ import { PlayerAction, ServerObserver, ServerPlayer } from '../types/game'
 import { supabaseService } from '../services/supabaseService'
 
 export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
+  const DEALER_TIP_AMOUNTS = new Set([100, 500, 1000])
+
   const movePlayerToObserver = (room: GameRoom, player: ServerPlayer) => {
     room.removePlayer(player.socketId)
 
@@ -34,6 +36,45 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
     } catch (err) {
       console.error('player_action error:', err)
       callback?.({ error: 'Action failed' })
+    }
+  })
+
+  socket.on('tip_dealer', async (data: { amount?: number }, callback) => {
+    try {
+      const room = roomManager.getRoomBySocketId(socket.id)
+      if (!room) return callback?.({ error: 'Not at a table' })
+
+      const player = room.getPlayerBySocketId(socket.id)
+      if (!player || player.isBot) {
+        return callback?.({ error: 'Only seated players can tip the dealer' })
+      }
+
+      if (room.state.phase !== 'waiting' && room.state.phase !== 'showdown') {
+        return callback?.({ error: 'Dealer tipping is only available between hands' })
+      }
+
+      const amount = Number(data?.amount ?? 0)
+      if (!Number.isInteger(amount) || !DEALER_TIP_AMOUNTS.has(amount)) {
+        return callback?.({ error: 'Invalid tip amount' })
+      }
+
+      if (player.stack < amount) {
+        return callback?.({ error: 'Not enough chips in your table stack' })
+      }
+
+      const nextStack = player.stack - amount
+      await supabaseService.updateTablePlayerStack(room.tableId, player.playerId, nextStack)
+      player.stack = nextStack
+
+      io.to(room.tableId).emit('action_log', {
+        message: `${player.username} tips the dealer ${amount.toLocaleString()}`,
+      })
+      room.engine.broadcastGameState()
+
+      callback?.({ ok: true, stack: player.stack })
+    } catch (err) {
+      console.error('tip_dealer error:', err)
+      callback?.({ error: 'Dealer tip failed' })
     }
   })
 

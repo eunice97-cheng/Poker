@@ -34,6 +34,7 @@ const DEALER_TOP = -8
 const PAD_X = 16
 const PAD_Y = 16
 const HOUSE_AI_NAMES = ['Alice', 'Bernice', 'Candice', 'Denice', 'Felice', 'Gillece'] as const
+const DEALER_TIP_AMOUNTS = [100, 500, 1000] as const
 
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
@@ -138,6 +139,7 @@ interface PokerTableProps {
   onSummonHousePlayer: (housePlayerId: string) => void
   onDismissHousePlayer: (housePlayerId: string) => void
   onRejuvenateHousePlayer: (housePlayerId: string) => void
+  onTipDealer: (amount: number) => Promise<{ ok?: boolean; error?: string; stack?: number }>
 }
 
 export function PokerTable({
@@ -166,12 +168,14 @@ export function PokerTable({
   onSummonHousePlayer,
   onDismissHousePlayer,
   onRejuvenateHousePlayer,
+  onTipDealer,
 }: PokerTableProps) {
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
   const observers: ClientObserver[] = gameState.observers ?? []
   const isObserver = !me && observers.some((o) => o.playerId === gameState.myPlayerId)
   const canSitInNow = gameState.phase === 'waiting' || gameState.phase === 'showdown'
   const isMyTurn = me?.isCurrentTurn ?? false
+  const canTipDealer = Boolean(me && !isObserver && !me.isBot && (gameState.phase === 'waiting' || gameState.phase === 'showdown'))
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
@@ -183,6 +187,9 @@ export function PokerTable({
   const [sceneScale, setSceneScale] = useState(1)
   const [showMobilePanel, setShowMobilePanel] = useState(false)
   const [showBuzzer, setShowBuzzer] = useState(false)
+  const [showDealerTipMenu, setShowDealerTipMenu] = useState(false)
+  const [dealerTipBusyAmount, setDealerTipBusyAmount] = useState<number | null>(null)
+  const [dealerTipError, setDealerTipError] = useState('')
   const lastShuffleKey = useRef('')
   const lastActionSfx = useRef('')
   const lastResultKey = useRef('')
@@ -270,6 +277,13 @@ export function PokerTable({
     playSfx(iWon ? 'win' : 'lose')
   }, [gameState.handNumber, gameState.myPlayerId, gameState.tableId, handResult, playSfx])
 
+  useEffect(() => {
+    if (canTipDealer) return
+    setShowDealerTipMenu(false)
+    setDealerTipError('')
+    setDealerTipBusyAmount(null)
+  }, [canTipDealer])
+
   const handleInvite = async () => {
     try {
       await shareInvite(
@@ -286,6 +300,22 @@ export function PokerTable({
   const handleOpenBuzzer = () => {
     setShowBuzzer(true)
     onOpenBuzzer()
+  }
+
+  const handleDealerTip = async (amount: number) => {
+    setDealerTipBusyAmount(amount)
+    setDealerTipError('')
+
+    const res = await onTipDealer(amount)
+    if (res?.error) {
+      setDealerTipError(res.error)
+      setDealerTipBusyAmount(null)
+      return
+    }
+
+    setDealerTipBusyAmount(null)
+    setDealerTipError('')
+    setShowDealerTipMenu(false)
   }
 
   return (
@@ -372,19 +402,31 @@ export function PokerTable({
             style={{ top: `${DEALER_TOP}px`, left: '50%', transform: 'translateX(-50%)' }}
           >
             <div className={`absolute top-5 h-20 w-20 rounded-full blur-2xl ${theme.dealerGlowClass}`} />
-            <Image
-              src={dealerImage}
-              alt="Dealer"
-              width={108}
-              height={144}
-              className="select-none object-contain object-top"
-              style={{
-                height: '144px',
-                width: 'auto',
-                filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.9))',
+            <button
+              type="button"
+              onClick={() => {
+                if (!canTipDealer) return
+                setShowDealerTipMenu((value) => !value)
+                setDealerTipError('')
               }}
-              priority
-            />
+              disabled={!canTipDealer}
+              className={canTipDealer ? 'cursor-pointer' : 'cursor-default'}
+              title={canTipDealer ? 'Tip dealer' : undefined}
+            >
+              <Image
+                src={dealerImage}
+                alt="Dealer"
+                width={108}
+                height={144}
+                className="select-none object-contain object-top"
+                style={{
+                  height: '144px',
+                  width: 'auto',
+                  filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.9))',
+                }}
+                priority
+              />
+            </button>
 
             {dealerSpeech && (
               <div className="relative mt-1 max-w-[220px] rounded-2xl bg-white px-3 py-1.5 text-center text-[11px] font-semibold leading-snug text-gray-900 shadow-xl">
@@ -397,6 +439,40 @@ export function PokerTable({
                   }}
                 />
                 {dealerSpeech}
+              </div>
+            )}
+
+            {canTipDealer && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDealerTipMenu((value) => !value)
+                  setDealerTipError('')
+                }}
+                className="mt-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100 transition-colors hover:border-cyan-300 hover:text-white"
+              >
+                Tip Dealer
+              </button>
+            )}
+
+            {showDealerTipMenu && canTipDealer && (
+              <div className="mt-2 w-[240px] rounded-2xl border border-cyan-400/25 bg-gray-950/95 p-3 text-center shadow-2xl backdrop-blur-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Dealer Tip</div>
+                <div className="mt-1 text-[11px] text-gray-400">Optional thanks from your table stack.</div>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  {DEALER_TIP_AMOUNTS.map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => handleDealerTip(amount)}
+                      disabled={!me || me.stack < amount || dealerTipBusyAmount !== null}
+                      className="rounded-lg border border-cyan-700 px-3 py-2 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-500 hover:text-white disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-600"
+                    >
+                      {dealerTipBusyAmount === amount ? 'Tipping...' : amount.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+                {dealerTipError && <p className="mt-3 text-xs text-red-400">{dealerTipError}</p>}
               </div>
             )}
           </div>
@@ -560,7 +636,16 @@ export function PokerTable({
         </button>
       </div>
 
-      {handResult && <HandResultModal result={handResult} onClose={clearHandResult} backImage={deckBackImage} />}
+      {handResult && (
+        <HandResultModal
+          result={handResult}
+          onClose={clearHandResult}
+          backImage={deckBackImage}
+          canTipDealer={canTipDealer}
+          dealerTipStack={me?.stack ?? 0}
+          onTipDealer={onTipDealer}
+        />
+      )}
       {isAdmin && (
         <TableBuzzer
           open={showBuzzer}

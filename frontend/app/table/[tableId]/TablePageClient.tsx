@@ -86,6 +86,22 @@ export function TablePageClient({
     })
   }, [socket, tableId, clearBusted, playSfx, router])
 
+  const handleTipDealer = useCallback((amount: number) => {
+    return new Promise<{ ok?: boolean; error?: string; stack?: number }>((resolve) => {
+      if (!socket) {
+        resolve({ error: 'Not connected' })
+        return
+      }
+
+      socket.emit('tip_dealer', { amount }, (res?: { ok?: boolean; error?: string; stack?: number }) => {
+        if (res?.ok) {
+          playSfx('click')
+        }
+        resolve(res ?? { error: 'Dealer tip failed' })
+      })
+    })
+  }, [socket, playSfx])
+
   const loadBuzzer = useCallback(async () => {
     if (!isAdmin) return
 
@@ -219,6 +235,7 @@ export function TablePageClient({
         onSummonHousePlayer={(housePlayerId) => handleBuzzerAction('summon', housePlayerId)}
         onDismissHousePlayer={(housePlayerId) => handleBuzzerAction('dismiss', housePlayerId)}
         onRejuvenateHousePlayer={(housePlayerId) => handleBuzzerAction('rejuvenate', housePlayerId)}
+        onTipDealer={handleTipDealer}
       />
       {bustedInfo && (
         <RebuyModal

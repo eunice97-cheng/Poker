@@ -144,6 +144,14 @@ export const supabaseService = {
       .eq('player_id', playerId)
   },
 
+  async updateTablePlayerStack(tableId: string, playerId: string, stack: number) {
+    await supabase
+      .from('table_players')
+      .update({ stack })
+      .eq('table_id', tableId)
+      .eq('player_id', playerId)
+  },
+
   // ─── Hand History ──────────────────────────────────────────────────────
 
   async recordHand(
