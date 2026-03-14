@@ -8,24 +8,31 @@ import { isAdminEmail } from '@/lib/admin'
 export default async function LobbyPage() {
   const supabase = createClient()
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const [{ data: { session } }, { data: tables }, { data: profile }, canUseVipEmojis] = await Promise.all([
-    supabase.auth.getSession(),
-    supabase.from('tables').select('*').neq('status', 'finished').not('name', 'ilike', '%Dev Table%').order('created_at', { ascending: false }),
-    supabase.from('profiles').select('*').eq('id', user?.id ?? '').single(),
-    hasVipEmojiAccess(supabase, user?.id, user?.email),
-  ])
+    data: { session },
+  } = await supabase.auth.getSession()
 
   if (!session) redirect('/auth/login')
+
+  const user = session.user
+
+  const [{ data: tables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] = await Promise.all([
+    supabase.from('tables').select('*').neq('status', 'finished').not('name', 'ilike', '%Dev Table%').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    hasVipEmojiAccess(supabase, user.id, user.email),
+    supabase
+      .from('player_mail')
+      .select('id', { count: 'exact', head: true })
+      .eq('player_id', user.id)
+      .eq('is_read', false),
+  ])
 
   return (
     <LobbyClient
       initialTables={(tables ?? []) as TableInfo[]}
       profile={profile}
       token={session.access_token}
-      isAdmin={isAdminEmail(user?.email)}
+      unreadMailCount={unreadMailCount ?? 0}
+      isAdmin={isAdminEmail(user.email)}
       hasVipEmojis={canUseVipEmojis}
     />
   )

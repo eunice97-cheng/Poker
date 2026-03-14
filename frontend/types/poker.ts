@@ -93,6 +93,7 @@ export interface Profile {
   games_won: number
   avatar: string
   created_at: string
+  last_weekend_loyalty_claim_at?: string | null
 }
 
 export interface ChatMessage {

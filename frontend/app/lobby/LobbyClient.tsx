@@ -22,6 +22,7 @@ interface LobbyClientProps {
   initialTables: TableInfo[]
   profile: Profile | null
   token: string
+  unreadMailCount: number
   isAdmin: boolean
   hasVipEmojis: boolean
 }
@@ -54,7 +55,7 @@ function emitWithAck<T>(
   })
 }
 
-export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmojis }: LobbyClientProps) {
+export function LobbyClient({ initialTables, profile, token, unreadMailCount, isAdmin, hasVipEmojis }: LobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { playSfx } = useAudio()
@@ -72,6 +73,7 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
   const openSeats = liveTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
   const featuredTable = [...liveTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
   const featuredStakes = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'House warming up'
+  const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
 
   const handleCreateTable = (params: {
     name: string
@@ -222,6 +224,18 @@ export function LobbyClient({ initialTables, profile, token, isAdmin, hasVipEmoj
                   <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">Tab {profile.chip_balance.toLocaleString()} chips</div>
                 </div>
               )}
+              <Link
+                href="/profile?tab=mail"
+                className="relative flex h-12 items-center justify-center rounded-full border border-white/15 bg-black/20 px-4 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                title="Open mailbox"
+              >
+                Mail
+                {unreadMailCount > 0 && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
+                    {unreadMailLabel}
+                  </span>
+                )}
+              </Link>
               <button
                 onClick={() => router.push('/profile')}
                 className="flex h-12 items-center justify-center justify-self-start transition-all hover:scale-105 sm:justify-self-auto"
