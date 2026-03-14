@@ -76,6 +76,7 @@ export function ProfileClient({
   const currentAvatar = isAvatarSelectable(profile?.avatar ?? 'avatar_m1', isAdmin)
     ? (profile?.avatar ?? 'avatar_m1')
     : 'avatar_m1'
+  const isUsingDefaultAvatar = currentAvatar === 'avatar_m1'
   const username = profile?.username ?? ''
   const winRate = profile && profile.games_played > 0
     ? Math.round((profile.games_won / profile.games_played) * 100)
@@ -276,6 +277,12 @@ export function ProfileClient({
                 <p className="mt-1 text-xs text-gray-600">{email}</p>
               </div>
             </div>
+
+            {isUsingDefaultAvatar && (
+              <div className="rounded-xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm text-sky-100">
+                You are still using the default avatar. Pick a different one below if you want your seat to stand out.
+              </div>
+            )}
 
             <div className="rounded-2xl border border-yellow-400/20 bg-[linear-gradient(180deg,rgba(234,179,8,0.14),rgba(24,24,27,0.45))] p-5">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

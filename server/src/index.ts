@@ -9,6 +9,7 @@ import { roomManager } from './rooms/RoomManager'
 import { supabaseService } from './services/supabaseService'
 import kofiWebhookRouter from './routes/kofiWebhook'
 import redeemCodeRouter from './routes/redeemCode'
+import adminBuzzerRouter from './routes/adminBuzzer'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
 
@@ -87,6 +88,7 @@ app.use('/webhook/kofi', express.urlencoded({ extended: true }), kofiWebhookRout
 
 // Chip code redemption
 app.use('/api/redeem-code', redeemCodeRouter)
+app.use('/api/admin/buzzer', adminBuzzerRouter)
 
 // Health check endpoint
 app.get('/health', (_, res) => {

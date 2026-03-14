@@ -56,6 +56,9 @@ export function RegisterForm() {
           Click the link in the email to activate your account.
         </p>
         <p className="text-gray-600 text-xs">After verifying, you will be redirected to the login page.</p>
+        <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-left text-sm text-yellow-100">
+          New accounts start on the default avatar. You can switch it any time later from My Profile.
+        </div>
       </div>
     )
   }

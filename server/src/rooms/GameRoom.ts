@@ -1,7 +1,7 @@
 import { Server } from 'socket.io'
 import { ServerGameState, ServerPlayer, ServerObserver, TableInfo } from '../types/game'
 import { GameEngine } from '../game/GameEngine'
-import { assignHousePlayer, getHouseIntroLine, releaseHousePlayersForTable } from '../ai/housePlayers'
+import { assignHousePlayer, getHouseExitLine, getHouseIntroLine, releaseHousePlayer, releaseHousePlayersForTable } from '../ai/housePlayers'
 
 const MIN_PLAYERS_TO_START = 2
 const HOUSE_AI_JOIN_DELAY_MS = 30_000
@@ -17,6 +17,7 @@ export class GameRoom {
   private preStartTimer: NodeJS.Timeout | null = null
   private startTimer: NodeJS.Timeout | null = null
   private pendingJoinPlayerIds: Set<string> = new Set()
+  private houseJoinSuppressedForRealPlayerCount: number | null = null
 
   constructor(io: Server, tableInfo: TableInfo) {
     this.io = io
@@ -101,6 +102,9 @@ export class GameRoom {
     this.state.players.set(player.seat, player)
     this.state.socketToSeat.set(player.socketId, player.seat)
     this.io.sockets.sockets.get(player.socketId)?.join(this.tableId)
+    if (!player.isBot) {
+      this.maybeClearHouseJoinSuppression()
+    }
     this.maybeScheduleStart()
   }
 
@@ -120,10 +124,129 @@ export class GameRoom {
     this.state.players.delete(seat)
     this.state.socketToSeat.delete(socketId)
     this.io.sockets.sockets.get(socketId)?.leave(this.tableId)
+    if (!player.isBot) {
+      this.maybeClearHouseJoinSuppression()
+    }
 
     this.maybeScheduleStart()
 
     return player
+  }
+
+  getHousePlayer(): ServerPlayer | null {
+    return Array.from(this.state.players.values()).find((player) => player.isBot) ?? null
+  }
+
+  isHouseJoinSuppressed(): boolean {
+    return this.houseJoinSuppressedForRealPlayerCount !== null
+      && this.getRealPlayerCount() === this.houseJoinSuppressedForRealPlayerCount
+  }
+
+  summonHousePlayerByBuzzer() {
+    if (this.state.phase !== 'waiting' && this.state.phase !== 'showdown') {
+      return { ok: false as const, error: 'The buzzer only works between hands.' }
+    }
+
+    if (this.getRealPlayerCount() !== 1) {
+      return { ok: false as const, error: 'The buzzer can only summon an AI when exactly one real player is seated.' }
+    }
+
+    if (this.getHousePlayer()) {
+      return { ok: false as const, error: 'A house AI is already at this table.' }
+    }
+
+    const seat = this.findEmptySeat()
+    if (seat === null) {
+      return { ok: false as const, error: 'No empty seat is available for a house AI.' }
+    }
+
+    this.clearHouseJoinTimer()
+    this.clearHouseJoinSuppression()
+
+    const bot = assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+    if (!bot) {
+      return { ok: false as const, error: 'No house AI is currently available to answer the buzzer.' }
+    }
+
+    this.addBotPlayer(bot)
+    this.io.to(this.tableId).emit('action_log', { message: getHouseIntroLine(bot.playerId) ?? `${bot.username} answers the buzzer` })
+    this.engine.broadcastGameState()
+
+    if (this.state.phase === 'waiting') {
+      this.maybeScheduleStart()
+    }
+
+    return {
+      ok: true as const,
+      mode: 'joined' as const,
+      message: `${bot.username} joined ${this.state.tableName}.`,
+      bot: {
+        playerId: bot.playerId,
+        username: bot.username,
+        botTitle: bot.botTitle ?? null,
+      },
+    }
+  }
+
+  dismissHousePlayerByBuzzer() {
+    const bot = this.getHousePlayer()
+    if (!bot) {
+      return { ok: false as const, error: 'There is no house AI at this table right now.' }
+    }
+
+    this.suppressHouseJoin()
+
+    if (this.state.phase === 'waiting' || this.state.phase === 'showdown') {
+      this.clearHouseJoinTimer()
+      this.state.players.delete(bot.seat)
+      this.state.socketToSeat.delete(bot.socketId)
+      releaseHousePlayer(bot, 'normal')
+      this.io.to(this.tableId).emit('action_log', { message: getHouseExitLine(bot.playerId, 'guest') ?? `${bot.username} leaves the table` })
+      this.engine.broadcastGameState()
+
+      if (this.state.phase === 'waiting') {
+        this.maybeScheduleStart()
+      }
+
+      return {
+        ok: true as const,
+        mode: 'removed' as const,
+        message: `${bot.username} left ${this.state.tableName}.`,
+        bot: {
+          playerId: bot.playerId,
+          username: bot.username,
+          botTitle: bot.botTitle ?? null,
+        },
+      }
+    }
+
+    if (bot.botLeaveAfterHand) {
+      return {
+        ok: true as const,
+        mode: 'queued' as const,
+        message: `${bot.username} is already set to leave after this hand.`,
+        bot: {
+          playerId: bot.playerId,
+          username: bot.username,
+          botTitle: bot.botTitle ?? null,
+        },
+      }
+    }
+
+    bot.botLeaveAfterHand = true
+    this.io.to(this.tableId).emit('action_log', { message: `${bot.username} will leave after this hand` })
+    this.engine.broadcastGameState()
+
+    return {
+      ok: true as const,
+      mode: 'queued' as const,
+      message: `${bot.username} will leave ${this.state.tableName} after this hand.`,
+      bot: {
+        playerId: bot.playerId,
+        username: bot.username,
+        botTitle: bot.botTitle ?? null,
+      },
+    }
   }
 
   getPlayerBySocketId(socketId: string): ServerPlayer | null {
@@ -269,6 +392,11 @@ export class GameRoom {
       return
     }
 
+    if (this.isHouseJoinSuppressed()) {
+      this.clearHouseJoinTimer()
+      return
+    }
+
     if (this.getRealPlayerCount() !== 1 || this.getBotPlayerCount() > 0) {
       this.clearHouseJoinTimer()
       return
@@ -292,5 +420,22 @@ export class GameRoom {
       this.engine.broadcastGameState()
       this.maybeScheduleStart()
     }, HOUSE_AI_JOIN_DELAY_MS)
+  }
+
+  private suppressHouseJoin() {
+    this.houseJoinSuppressedForRealPlayerCount = this.getRealPlayerCount()
+  }
+
+  private clearHouseJoinSuppression() {
+    this.houseJoinSuppressedForRealPlayerCount = null
+  }
+
+  private maybeClearHouseJoinSuppression() {
+    if (
+      this.houseJoinSuppressedForRealPlayerCount !== null
+      && this.getRealPlayerCount() !== this.houseJoinSuppressedForRealPlayerCount
+    ) {
+      this.houseJoinSuppressedForRealPlayerCount = null
+    }
   }
 }

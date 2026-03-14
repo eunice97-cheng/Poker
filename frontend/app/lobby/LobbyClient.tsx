@@ -75,6 +75,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
   const featuredTable = [...liveTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
   const featuredStakes = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'House warming up'
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
+  const isUsingDefaultAvatar = profile?.avatar === 'avatar_m1'
 
   const handleCreateTable = (params: {
     name: string
@@ -224,6 +225,14 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   <div className="text-sm font-semibold text-[#fff3e2]">{profile.username}</div>
                   <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">Tab {profile.chip_balance.toLocaleString()} chips</div>
                 </div>
+              )}
+              {isUsingDefaultAvatar && (
+                <Link
+                  href="/profile"
+                  className="col-span-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-left text-sm text-sky-100 transition-colors hover:border-sky-300/35 hover:bg-sky-400/15 sm:col-span-1"
+                >
+                  Using the default avatar. Open Profile to change it.
+                </Link>
               )}
               <Link
                 href="/profile?tab=mail"

@@ -100,6 +100,7 @@ export function PokerTable({
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
   const observers: ClientObserver[] = gameState.observers ?? []
   const isObserver = !me && observers.some((o) => o.playerId === gameState.myPlayerId)
+  const canSitInNow = gameState.phase === 'waiting' || gameState.phase === 'showdown'
   const isMyTurn = me?.isCurrentTurn ?? false
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
@@ -238,7 +239,8 @@ export function PokerTable({
           {isObserver && (
             <button
               onClick={onSitIn}
-              className="rounded-lg border border-yellow-600 px-2.5 py-1 text-xs text-yellow-400 transition-colors hover:text-white md:px-3 md:text-sm"
+              disabled={!canSitInNow}
+              className="rounded-lg border border-yellow-600 px-2.5 py-1 text-xs text-yellow-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-600 md:px-3 md:text-sm"
             >
               Sit Down
             </button>
@@ -417,7 +419,7 @@ export function PokerTable({
         ) : isObserver ? (
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">Watching the game</span>
-            {gameState.phase === 'waiting' && (
+            {canSitInNow && (
               <button
                 onClick={onSitIn}
                 className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-yellow-400"
@@ -435,7 +437,15 @@ export function PokerTable({
         )}
       </div>
 
-      <div className="absolute bottom-24 right-4 z-10 hidden w-64 flex-col gap-2 lg:flex">
+      <div className="absolute bottom-24 left-4 z-10 hidden w-72 2xl:block">
+        <ActionLog logs={actionLogs} />
+      </div>
+
+      <div className="absolute bottom-24 right-4 z-10 hidden w-80 2xl:block">
+        <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
+      </div>
+
+      <div className="absolute bottom-24 right-4 z-10 hidden w-64 flex-col gap-2 lg:flex 2xl:hidden">
         <ActionLog logs={actionLogs} />
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
       </div>

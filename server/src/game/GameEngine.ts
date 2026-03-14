@@ -326,21 +326,28 @@ export class GameEngine {
       console.error('Failed to persist hand result:', err)
     }
 
+    let removedBustedPlayers = false
+
     // Remove busted players (stack = 0)
     for (const [seat, player] of this.state.players.entries()) {
       if (player.stack <= 0 && !player.isBot) {
+        this.state.players.delete(seat)
+        this.state.socketToSeat.delete(player.socketId)
+        removedBustedPlayers = true
+        await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
         this.io.to(player.socketId).emit('busted', {
           message: 'You ran out of chips!',
           minBuyin: this.state.minBuyin,
           maxBuyin: this.state.maxBuyin,
           tableId: this.state.tableId,
         })
-        this.state.players.delete(seat)
-        this.state.socketToSeat.delete(player.socketId)
-        await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
         // Mark as broke so they receive 2,000 free chips after 24 hours
         await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
       }
+    }
+
+    if (removedBustedPlayers) {
+      this.broadcastGameState()
     }
 
     await this.processPostHandSeatTransitions()

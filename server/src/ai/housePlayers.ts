@@ -306,9 +306,12 @@ export function getHouseRestingSummary() {
   ensureDailyReset()
   return Array.from(houseStates.values()).map((state) => ({
     id: state.profile.id,
+    name: state.profile.name,
+    title: state.profile.title,
     bankroll: state.bankroll,
     availableAt: state.availableAt,
     assignedTableId: state.assignedTableId,
+    isReady: !state.assignedTableId && state.availableAt <= Date.now(),
   }))
 }
 

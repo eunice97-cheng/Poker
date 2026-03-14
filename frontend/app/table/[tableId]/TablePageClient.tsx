@@ -84,7 +84,11 @@ export function TablePageClient({
 
   const handleSitIn = () => {
     playSfx('sitStand')
-    socket?.emit('sit_in', {})
+    socket?.emit('sit_in', {}, (res?: { ok?: boolean; error?: string }) => {
+      if (res?.error) {
+        console.error('Sit in failed:', res.error)
+      }
+    })
   }
 
   // Update chip balance after any cashout/join callback
