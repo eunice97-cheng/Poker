@@ -29,6 +29,7 @@ const TABLE_W = 706
 const TABLE_H = 338
 const TABLE_LEFT = Math.round(OCX - TABLE_W / 2)
 const TABLE_TOP = 136
+const DEALER_TOP = -16
 
 const PAD_X = 16
 const PAD_Y = 16
@@ -93,6 +94,7 @@ interface PokerTableProps {
   onRefreshBuzzer: () => void
   onSummonHousePlayer: (housePlayerId: string) => void
   onDismissHousePlayer: (housePlayerId: string) => void
+  onRejuvenateHousePlayer: (housePlayerId: string) => void
 }
 
 export function PokerTable({
@@ -120,6 +122,7 @@ export function PokerTable({
   onRefreshBuzzer,
   onSummonHousePlayer,
   onDismissHousePlayer,
+  onRejuvenateHousePlayer,
 }: PokerTableProps) {
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
   const observers: ClientObserver[] = gameState.observers ?? []
@@ -316,7 +319,10 @@ export function PokerTable({
               transform: `scale(${sceneScale})`,
             }}
           >
-          <div className="absolute z-30 flex flex-col items-center" style={{ top: 0, left: '50%', transform: 'translateX(-50%)' }}>
+          <div
+            className="absolute z-30 flex flex-col items-center"
+            style={{ top: `${DEALER_TOP}px`, left: '50%', transform: 'translateX(-50%)' }}
+          >
             <div className={`absolute top-5 h-20 w-20 rounded-full blur-2xl ${theme.dealerGlowClass}`} />
             <Image
               src={dealerImage}
@@ -520,6 +526,7 @@ export function PokerTable({
           onRefresh={onRefreshBuzzer}
           onSummon={onSummonHousePlayer}
           onDismiss={onDismissHousePlayer}
+          onRejuvenate={onRejuvenateHousePlayer}
         />
       )}
     </div>

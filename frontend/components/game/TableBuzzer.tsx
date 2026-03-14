@@ -16,6 +16,7 @@ interface TableBuzzerProps {
   onRefresh: () => void
   onSummon: (housePlayerId: string) => void
   onDismiss: (housePlayerId: string) => void
+  onRejuvenate: (housePlayerId: string) => void
 }
 
 function formatAvailability(player: BuzzerHousePlayer, room: BuzzerRoom | null) {
@@ -45,6 +46,7 @@ export function TableBuzzer({
   onRefresh,
   onSummon,
   onDismiss,
+  onRejuvenate,
 }: TableBuzzerProps) {
   const currentHousePlayers = room?.currentHousePlayers ?? []
   const minBuyin = room?.minBuyin ?? 0
@@ -58,6 +60,13 @@ export function TableBuzzer({
   const busyElsewherePlayers = housePlayers.filter(
     (player) => player.assignedTableId && player.assignedTableId !== room?.tableId
   )
+
+  const getRestingReason = (player: BuzzerHousePlayer) => {
+    const reasons: string[] = []
+    if (!player.isReady) reasons.push(formatAvailability(player, room))
+    if (player.bankroll < minBuyin) reasons.push('Below this table minimum')
+    return reasons.join(' - ')
+  }
 
   return (
     <Modal open={open} onClose={onClose} title="GM Buzzer" maxWidth="max-w-5xl">
@@ -221,15 +230,29 @@ export function TableBuzzer({
                   <p className="text-sm text-gray-500">Everyone else is either ready or already working.</p>
                 ) : (
                   restingHousePlayers.map((player) => (
-                    <div key={player.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2">
-                      <AvatarDisplay avatarId={player.avatar} size="sm" />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-white">{player.name}</div>
-                        <div className="truncate text-[11px] text-gray-500">{player.title}</div>
-                        <div className="mt-0.5 text-[11px] text-gray-400">
-                          {player.bankroll < minBuyin ? 'Below this table minimum' : formatAvailability(player, room)}
+                    <div
+                      key={player.id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-3"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <AvatarDisplay avatarId={player.avatar} size="sm" />
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-white">{player.name}</div>
+                          <div className="truncate text-[11px] text-gray-500">{player.title}</div>
+                          <div className="mt-1 text-[11px] text-yellow-400">{player.bankroll.toLocaleString()} bankroll</div>
+                          <div className="mt-0.5 text-[11px] text-gray-400">
+                            {getRestingReason(player)}
+                          </div>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => onRejuvenate(player.id)}
+                        disabled={actionPlayerId === player.id}
+                        className="shrink-0 rounded-lg border border-cyan-700 px-3 py-2 text-sm font-semibold text-cyan-300 transition-colors hover:border-cyan-500 hover:text-white disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-600"
+                      >
+                        {actionPlayerId === player.id ? 'Working...' : 'Rejuvenate'}
+                      </button>
                     </div>
                   ))
                 )}

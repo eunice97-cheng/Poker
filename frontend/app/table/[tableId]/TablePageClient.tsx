@@ -113,7 +113,7 @@ export function TablePageClient({
     }
   }, [isAdmin, tableId])
 
-  const handleBuzzerAction = useCallback(async (action: 'summon' | 'dismiss', housePlayerId: string) => {
+  const handleBuzzerAction = useCallback(async (action: 'summon' | 'dismiss' | 'rejuvenate', housePlayerId: string) => {
     if (!isAdmin) return
 
     setBuzzerActionPlayerId(housePlayerId)
@@ -218,6 +218,7 @@ export function TablePageClient({
         onRefreshBuzzer={loadBuzzer}
         onSummonHousePlayer={(housePlayerId) => handleBuzzerAction('summon', housePlayerId)}
         onDismissHousePlayer={(housePlayerId) => handleBuzzerAction('dismiss', housePlayerId)}
+        onRejuvenateHousePlayer={(housePlayerId) => handleBuzzerAction('rejuvenate', housePlayerId)}
       />
       {bustedInfo && (
         <RebuyModal

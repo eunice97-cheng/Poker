@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { createClient } from '@supabase/supabase-js'
 import { isAdminEmail } from '../utils/admin'
 import { roomManager } from '../rooms/RoomManager'
-import { getHouseRestingSummary } from '../ai/housePlayers'
+import { getHouseRestingSummary, rejuvenateHousePlayer } from '../ai/housePlayers'
 
 const router = Router()
 
@@ -115,8 +115,8 @@ router.post('/', async (req, res) => {
     return
   }
 
-  if (action !== 'summon' && action !== 'dismiss') {
-    res.status(400).json({ error: 'action must be summon or dismiss' })
+  if (action !== 'summon' && action !== 'dismiss' && action !== 'rejuvenate') {
+    res.status(400).json({ error: 'action must be summon, dismiss, or rejuvenate' })
     return
   }
 
@@ -128,10 +128,14 @@ router.post('/', async (req, res) => {
 
   const result = action === 'summon'
     ? room.summonHousePlayerByBuzzer(housePlayerId)
-    : room.dismissHousePlayerByBuzzer(housePlayerId)
+    : action === 'dismiss'
+      ? room.dismissHousePlayerByBuzzer(housePlayerId)
+      : housePlayerId
+        ? rejuvenateHousePlayer(housePlayerId, room.state.minBuyin)
+        : { ok: false as const, message: 'housePlayerId is required for rejuvenate.' }
 
   if (!result.ok) {
-    res.status(400).json(result)
+    res.status(400).json({ error: result.message })
     return
   }
 

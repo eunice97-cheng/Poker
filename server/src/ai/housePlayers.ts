@@ -251,6 +251,42 @@ export function getHouseProfileSummary(housePlayerId: string) {
   }
 }
 
+export function rejuvenateHousePlayer(housePlayerId: string, minBankroll: number) {
+  ensureDailyReset()
+  const state = houseStates.get(housePlayerId)
+  if (!state) {
+    return { ok: false as const, message: 'House player not found.' }
+  }
+
+  if (state.assignedTableId) {
+    return { ok: false as const, message: `${state.profile.name} is already working another table.` }
+  }
+
+  const bankrollFloor = Math.max(0, minBankroll)
+  const chipsAdded = Math.max(0, bankrollFloor - state.bankroll)
+
+  state.bankroll += chipsAdded
+  state.availableAt = 0
+  state.joinedStack = 0
+  state.reserveStack = 0
+
+  if (chipsAdded > 0) {
+    return {
+      ok: true as const,
+      message: `${state.profile.name} is rejuvenated and topped up with ${chipsAdded.toLocaleString()} chips.`,
+      chipsAdded,
+      bankroll: state.bankroll,
+    }
+  }
+
+  return {
+    ok: true as const,
+    message: `${state.profile.name} is rejuvenated and ready for your buzzer.`,
+    chipsAdded: 0,
+    bankroll: state.bankroll,
+  }
+}
+
 export function releaseHousePlayer(player: ServerPlayer, reason: 'table_closed' | 'rest' | 'normal' = 'normal') {
   ensureDailyReset()
   const state = houseStates.get(player.playerId)
