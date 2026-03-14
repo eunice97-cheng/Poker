@@ -18,6 +18,7 @@ import { getTableTheme } from '@/lib/table-theme'
 import { buildLobbyInvite, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
 import { useSocket } from '@/hooks/useSocket'
+import { clearIntentionalTableExit } from '@/lib/table-exit'
 
 interface LobbyClientProps {
   initialTables: TableInfo[]
@@ -99,6 +100,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
         'The game server is still waking up. Wait a moment, then try creating the table again.'
       )
         .then((res) => {
+          clearIntentionalTableExit(res.tableId)
           playSfx('joinLeave')
           router.push(`/table/${res.tableId}`)
           resolve()
@@ -131,6 +133,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
         { tableId: joinModal.id, buyIn },
         'The table is not responding yet. Render may still be waking the server up.'
       )
+      clearIntentionalTableExit(joinModal.id)
       playSfx('joinLeave')
       router.push(`/table/${joinModal.id}`)
     } catch (err) {

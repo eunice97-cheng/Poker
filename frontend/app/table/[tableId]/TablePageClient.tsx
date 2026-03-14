@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSocket } from '@/hooks/useSocket'
 import { useGameState } from '@/hooks/useGameState'
@@ -8,6 +8,7 @@ import { useAudio } from '@/hooks/useAudio'
 import { PokerTable } from '@/components/game/PokerTable'
 import { RebuyModal } from '@/components/game/RebuyModal'
 import type { BuzzerHousePlayer, BuzzerRoom } from '@/lib/buzzer'
+import { clearIntentionalTableExit, markIntentionalTableExit } from '@/lib/table-exit'
 
 interface TablePageClientProps {
   tableId: string
@@ -32,6 +33,7 @@ export function TablePageClient({
   const { socket, connected, error: socketError, socketUrl } = useSocket(token)
   const { playSfx } = useAudio()
   const [leaving, setLeaving] = useState(false)
+  const leavingRef = useRef(false)
   const [chipBalance, setChipBalance] = useState(initialBalance)
   const [buzzerRoom, setBuzzerRoom] = useState<BuzzerRoom | null>(null)
   const [housePlayers, setHousePlayers] = useState<BuzzerHousePlayer[]>([])
@@ -59,14 +61,34 @@ export function TablePageClient({
     clearHandResult,
   } = useGameState(socket, tableId)
 
-  const handleLeave = useCallback(() => {
-    if (!socket || leaving) return
+  const leaveTable = useCallback((navigateToLobby: boolean) => {
+    if (!socket || leavingRef.current) return
+
+    markIntentionalTableExit(tableId)
+    leavingRef.current = true
     setLeaving(true)
     playSfx('joinLeave')
-    socket.emit('leave_table', {}, () => {
-      router.push('/lobby')
+    socket.emit('leave_table', {}, (res?: { balance?: number; error?: string }) => {
+      if (res?.error) {
+        clearIntentionalTableExit(tableId)
+        leavingRef.current = false
+        setLeaving(false)
+        return
+      }
+
+      if (res?.balance !== undefined) {
+        setChipBalance(res.balance)
+      }
+
+      if (navigateToLobby) {
+        router.push('/lobby')
+      }
     })
-  }, [socket, leaving, playSfx, router])
+  }, [socket, tableId, playSfx, router])
+
+  const handleLeave = useCallback(() => {
+    leaveTable(true)
+  }, [leaveTable])
 
   const handleRebuy = useCallback((amount: number, newAutoRebuy: boolean) => {
     if (!socket) return
@@ -171,6 +193,28 @@ export function TablePageClient({
       }
     })
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const onPopState = () => {
+      if (window.location.pathname.startsWith('/table/')) return
+      if (leavingRef.current) return
+
+      const confirmed = window.confirm('Leave this table? You can join it again from the lobby.')
+      if (!confirmed) {
+        window.history.go(1)
+        return
+      }
+
+      leaveTable(false)
+    }
+
+    window.addEventListener('popstate', onPopState)
+    return () => {
+      window.removeEventListener('popstate', onPopState)
+    }
+  }, [leaveTable])
 
   // Update chip balance after any cashout/join callback
   useEffect(() => {

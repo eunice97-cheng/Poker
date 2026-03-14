@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Socket } from 'socket.io-client'
 import { GameState, HandResult, ChatMessage, ActionRequired } from '@/types/poker'
+import { hasIntentionalTableExit } from '@/lib/table-exit'
 
 export interface BustedInfo {
   message: string
@@ -24,6 +25,11 @@ export function useGameState(socket: Socket | null, tableId: string) {
 
   useEffect(() => {
     if (!socket) return
+
+    if (hasIntentionalTableExit(tableId)) {
+      setTableError('You already left this table. Rejoin it from the lobby if you want back in.')
+      return
+    }
 
     setTableError(null)
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
