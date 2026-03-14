@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { MailIcon } from '@/components/ui/MailIcon'
 import { getTableTheme } from '@/lib/table-theme'
 import { buildLobbyInvite, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
@@ -226,10 +227,12 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               )}
               <Link
                 href="/profile?tab=mail"
-                className="relative flex h-12 items-center justify-center rounded-full border border-white/15 bg-black/20 px-4 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
                 title="Open mailbox"
+                aria-label="Open mailbox"
               >
-                Mail
+                <MailIcon className="h-5 w-5" />
+                <span className="sr-only">Mailbox</span>
                 {unreadMailCount > 0 && (
                   <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
                     {unreadMailLabel}

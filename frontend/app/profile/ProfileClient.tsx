@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { Button } from '@/components/ui/Button'
+import { MailIcon } from '@/components/ui/MailIcon'
 import { getSelectableAvatars, isAvatarSelectable } from '@/lib/avatars'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -229,9 +230,17 @@ export function ProfileClient({
           <h1 className="text-lg font-bold text-white">My Profile</h1>
           <Link
             href="/profile?tab=mail"
-            className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-gray-300 transition-colors hover:border-yellow-400/40 hover:text-white"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-gray-300 transition-colors hover:border-yellow-400/40 hover:text-white"
+            title="Open mailbox"
+            aria-label="Open mailbox"
           >
-            Mail{unreadMailCount > 0 ? ` ${unreadMailCount}` : ''}
+            <MailIcon className="h-4.5 w-4.5" />
+            <span className="sr-only">Mailbox</span>
+            {unreadMailCount > 0 && (
+              <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-1.5 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
+                {unreadMailCount > 99 ? '99+' : unreadMailCount}
+              </span>
+            )}
           </Link>
         </div>
       </header>

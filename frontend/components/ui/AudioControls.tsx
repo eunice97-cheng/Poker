@@ -3,6 +3,34 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAudio } from '@/hooks/useAudio'
 
+function AudioIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+    >
+      <path d="M5.25 9.75h3.5l4.75-4.5v13.5l-4.75-4.5h-3.5a1.5 1.5 0 0 1-1.5-1.5v-1.5a1.5 1.5 0 0 1 1.5-1.5Z" />
+      {muted ? (
+        <>
+          <path d="m16.5 9.5 4 5" />
+          <path d="m20.5 9.5-4 5" />
+        </>
+      ) : (
+        <>
+          <path d="M17.25 9.25a4.5 4.5 0 0 1 0 5.5" />
+          <path d="M19.75 7a8 8 0 0 1 0 10" />
+        </>
+      )}
+    </svg>
+  )
+}
+
 export function AudioControls() {
   const {
     musicVol,
@@ -34,11 +62,12 @@ export function AudioControls() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white md:text-xs md:tracking-[0.22em]"
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white"
         title="Audio settings"
         aria-label="Audio settings"
       >
-        {allMuted ? 'Muted' : 'Audio'}
+        <AudioIcon muted={allMuted} />
+        <span className="sr-only">{allMuted ? 'Audio muted' : 'Audio settings'}</span>
       </button>
 
       {open && (
