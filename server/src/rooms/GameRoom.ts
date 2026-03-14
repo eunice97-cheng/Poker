@@ -48,7 +48,7 @@ export class GameRoom {
       actionTimer: null,
     }
 
-    this.engine = new GameEngine(io, this.state)
+    this.engine = new GameEngine(io, this.state, () => this.tryStart())
   }
 
   getPlayerCount(): number {

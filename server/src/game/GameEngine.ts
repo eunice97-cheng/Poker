@@ -13,10 +13,12 @@ const BETWEEN_HAND_DELAY = Math.max(parseInt(process.env.BETWEEN_HAND_DELAY_SECO
 export class GameEngine {
   private io: Server
   private state: ServerGameState
+  private onWaitingForPlayers: (() => void) | null
 
-  constructor(io: Server, state: ServerGameState) {
+  constructor(io: Server, state: ServerGameState, onWaitingForPlayers?: () => void) {
     this.io = io
     this.state = state
+    this.onWaitingForPlayers = onWaitingForPlayers ?? null
   }
 
   // ─── Hand Lifecycle ───────────────────────────────────────────────────────
@@ -27,6 +29,7 @@ export class GameEngine {
       this.state.phase = 'waiting'
       this.state.status = 'waiting'
       this.broadcastGameState()
+      this.onWaitingForPlayers?.()
       return
     }
 

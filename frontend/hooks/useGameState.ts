@@ -39,6 +39,9 @@ export function useGameState(socket: Socket | null, tableId: string) {
       clearReconnectTimeout()
       setTableError(null)
       setGameState(state)
+      if (state.phase !== 'waiting' || state.players.length < 2) {
+        setCountdown(null)
+      }
       // Only clear hand result when a new hand is in progress (not showdown)
       if (state.phase !== 'showdown') setHandResult(null)
     }
@@ -114,6 +117,18 @@ export function useGameState(socket: Socket | null, tableId: string) {
     }, 1000)
     return () => clearInterval(interval)
   }, [actionRequired])
+
+  useEffect(() => {
+    if (countdown === null) return
+    const timeout = setTimeout(() => {
+      setCountdown((current) => {
+        if (current === null) return null
+        return current > 1 ? current - 1 : 1
+      })
+    }, 1000)
+
+    return () => clearTimeout(timeout)
+  }, [countdown])
 
   const sendAction = useCallback(
     (action: string, amount?: number) => {
