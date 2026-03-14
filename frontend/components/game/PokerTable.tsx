@@ -9,12 +9,14 @@ import { ActionPanel } from './ActionPanel'
 import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
+import { TableBuzzer } from './TableBuzzer'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import { getDealerImage, getDeckBackImage, getTableImage } from '@/lib/table-assets'
 import { buildTableInvite, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
+import type { BuzzerHousePlayer, BuzzerRoom } from '@/lib/buzzer'
 
 const SCENE_W = 800
 const SCENE_H = 520
@@ -80,6 +82,17 @@ interface PokerTableProps {
   clearHandResult: () => void
   countdown: number | null
   hasVipEmojis: boolean
+  isAdmin: boolean
+  buzzerRoom: BuzzerRoom | null
+  housePlayers: BuzzerHousePlayer[]
+  buzzerLoading: boolean
+  buzzerError: string
+  buzzerMessage: string
+  buzzerActionPlayerId: string
+  onOpenBuzzer: () => void
+  onRefreshBuzzer: () => void
+  onSummonHousePlayer: (housePlayerId: string) => void
+  onDismissHousePlayer: (housePlayerId: string) => void
 }
 
 export function PokerTable({
@@ -96,6 +109,17 @@ export function PokerTable({
   clearHandResult,
   countdown,
   hasVipEmojis,
+  isAdmin,
+  buzzerRoom,
+  housePlayers,
+  buzzerLoading,
+  buzzerError,
+  buzzerMessage,
+  buzzerActionPlayerId,
+  onOpenBuzzer,
+  onRefreshBuzzer,
+  onSummonHousePlayer,
+  onDismissHousePlayer,
 }: PokerTableProps) {
   const me = gameState.players.find((p) => p.playerId === gameState.myPlayerId)
   const observers: ClientObserver[] = gameState.observers ?? []
@@ -112,6 +136,7 @@ export function PokerTable({
   const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
   const [sceneScale, setSceneScale] = useState(1)
   const [showMobilePanel, setShowMobilePanel] = useState(false)
+  const [showBuzzer, setShowBuzzer] = useState(false)
   const lastShuffleKey = useRef('')
   const lastActionSfx = useRef('')
   const lastResultKey = useRef('')
@@ -207,6 +232,11 @@ export function PokerTable({
     }
   }
 
+  const handleOpenBuzzer = () => {
+    setShowBuzzer(true)
+    onOpenBuzzer()
+  }
+
   return (
     <div className={`relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
       <div className={`z-10 flex shrink-0 flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:justify-between md:px-4 md:py-3 ${theme.topBarClass}`}>
@@ -255,6 +285,14 @@ export function PokerTable({
             </svg>
             {inviteLabel === 'done' ? 'Copied' : 'Invite'}
           </button>
+          {isAdmin && (
+            <button
+              onClick={handleOpenBuzzer}
+              className="rounded-lg border border-pink-500/60 bg-pink-500/10 px-2.5 py-1 text-xs font-semibold text-pink-200 transition-colors hover:border-pink-400 hover:text-white md:px-3 md:text-sm"
+            >
+              Buzzer
+            </button>
+          )}
           <AudioControls />
           <button
             onClick={onLeave}
@@ -469,6 +507,21 @@ export function PokerTable({
       </div>
 
       {handResult && <HandResultModal result={handResult} onClose={clearHandResult} backImage={deckBackImage} />}
+      {isAdmin && (
+        <TableBuzzer
+          open={showBuzzer}
+          onClose={() => setShowBuzzer(false)}
+          room={buzzerRoom}
+          housePlayers={housePlayers}
+          loading={buzzerLoading}
+          error={buzzerError}
+          message={buzzerMessage}
+          actionPlayerId={buzzerActionPlayerId}
+          onRefresh={onRefreshBuzzer}
+          onSummon={onSummonHousePlayer}
+          onDismiss={onDismissHousePlayer}
+        />
+      )}
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { useGameState } from '@/hooks/useGameState'
 import { useAudio } from '@/hooks/useAudio'
 import { PokerTable } from '@/components/game/PokerTable'
 import { RebuyModal } from '@/components/game/RebuyModal'
+import type { BuzzerHousePlayer, BuzzerRoom } from '@/lib/buzzer'
 
 interface TablePageClientProps {
   tableId: string
@@ -14,6 +15,7 @@ interface TablePageClientProps {
   userId: string
   chipBalance: number
   hasVipEmojis: boolean
+  isAdmin: boolean
 }
 
 const AUTO_REBUY_KEY = 'poker_auto_rebuy'
@@ -24,12 +26,19 @@ export function TablePageClient({
   userId,
   chipBalance: initialBalance,
   hasVipEmojis,
+  isAdmin,
 }: TablePageClientProps) {
   const router = useRouter()
   const { socket, connected, error: socketError, socketUrl } = useSocket(token)
   const { playSfx } = useAudio()
   const [leaving, setLeaving] = useState(false)
   const [chipBalance, setChipBalance] = useState(initialBalance)
+  const [buzzerRoom, setBuzzerRoom] = useState<BuzzerRoom | null>(null)
+  const [housePlayers, setHousePlayers] = useState<BuzzerHousePlayer[]>([])
+  const [buzzerLoading, setBuzzerLoading] = useState(false)
+  const [buzzerError, setBuzzerError] = useState('')
+  const [buzzerMessage, setBuzzerMessage] = useState('')
+  const [buzzerActionPlayerId, setBuzzerActionPlayerId] = useState('')
   const [autoRebuy, setAutoRebuy] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem(AUTO_REBUY_KEY) === 'true'
@@ -76,6 +85,62 @@ export function TablePageClient({
       if (res.balance !== undefined) setChipBalance(res.balance)
     })
   }, [socket, tableId, clearBusted, playSfx, router])
+
+  const loadBuzzer = useCallback(async () => {
+    if (!isAdmin) return
+
+    setBuzzerLoading(true)
+    setBuzzerError('')
+
+    try {
+      const res = await fetch('/api/admin/buzzer', { cache: 'no-store' })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Failed to load buzzer state')
+      }
+
+      const matchedRoom = Array.isArray(data.rooms)
+        ? (data.rooms.find((room: BuzzerRoom) => room.tableId === tableId) ?? null)
+        : null
+
+      setBuzzerRoom(matchedRoom)
+      setHousePlayers(Array.isArray(data.housePlayers) ? (data.housePlayers as BuzzerHousePlayer[]) : [])
+    } catch (err) {
+      setBuzzerError(err instanceof Error ? err.message : 'Failed to load buzzer state')
+    } finally {
+      setBuzzerLoading(false)
+    }
+  }, [isAdmin, tableId])
+
+  const handleBuzzerAction = useCallback(async (action: 'summon' | 'dismiss', housePlayerId: string) => {
+    if (!isAdmin) return
+
+    setBuzzerActionPlayerId(housePlayerId)
+    setBuzzerError('')
+    setBuzzerMessage('')
+
+    try {
+      const res = await fetch('/api/admin/buzzer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableId, action, housePlayerId }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Buzzer action failed')
+      }
+
+      setBuzzerMessage(data.message ?? 'Buzzer action completed')
+      setHousePlayers(Array.isArray(data.housePlayers) ? (data.housePlayers as BuzzerHousePlayer[]) : [])
+      setBuzzerRoom((data.room as BuzzerRoom | undefined) ?? null)
+    } catch (err) {
+      setBuzzerError(err instanceof Error ? err.message : 'Buzzer action failed')
+    } finally {
+      setBuzzerActionPlayerId('')
+    }
+  }, [isAdmin, tableId])
 
   const handleSitOut = () => {
     playSfx('sitStand')
@@ -142,6 +207,17 @@ export function TablePageClient({
         onSitIn={handleSitIn}
         clearHandResult={clearHandResult}
         hasVipEmojis={hasVipEmojis}
+        isAdmin={isAdmin}
+        buzzerRoom={buzzerRoom}
+        housePlayers={housePlayers}
+        buzzerLoading={buzzerLoading}
+        buzzerError={buzzerError}
+        buzzerMessage={buzzerMessage}
+        buzzerActionPlayerId={buzzerActionPlayerId}
+        onOpenBuzzer={loadBuzzer}
+        onRefreshBuzzer={loadBuzzer}
+        onSummonHousePlayer={(housePlayerId) => handleBuzzerAction('summon', housePlayerId)}
+        onDismissHousePlayer={(housePlayerId) => handleBuzzerAction('dismiss', housePlayerId)}
       />
       {bustedInfo && (
         <RebuyModal

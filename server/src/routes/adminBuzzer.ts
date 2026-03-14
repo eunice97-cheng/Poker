@@ -33,7 +33,7 @@ async function verifyAdminToken(authorizationHeader?: string | null) {
 }
 
 function serializeRoom(room: ReturnType<typeof roomManager.getAllRooms>[number]) {
-  const currentBot = room.getHousePlayer()
+  const currentBots = room.getHousePlayers()
   const liveHousePlayers = getHouseRestingSummary()
   const canAnswerBuzzer = liveHousePlayers.some(
     (player) => player.assignedTableId === null && player.isReady && player.bankroll >= room.state.minBuyin
@@ -54,20 +54,29 @@ function serializeRoom(room: ReturnType<typeof roomManager.getAllRooms>[number])
     minBuyin: room.state.minBuyin,
     maxBuyin: room.state.maxBuyin,
     houseJoinSuppressed: room.isHouseJoinSuppressed(),
-    currentHousePlayer: currentBot
+    currentHousePlayers: currentBots.map((bot) => ({
+      playerId: bot.playerId,
+      username: bot.username,
+      avatar: bot.avatar,
+      botTitle: bot.botTitle ?? null,
+      leaveAfterHand: Boolean(bot.botLeaveAfterHand),
+      botMode: bot.botMode ?? 'auto',
+    })),
+    currentHousePlayer: currentBots[0]
       ? {
-          playerId: currentBot.playerId,
-          username: currentBot.username,
-          botTitle: currentBot.botTitle ?? null,
-          leaveAfterHand: Boolean(currentBot.botLeaveAfterHand),
+          playerId: currentBots[0].playerId,
+          username: currentBots[0].username,
+          avatar: currentBots[0].avatar,
+          botTitle: currentBots[0].botTitle ?? null,
+          leaveAfterHand: Boolean(currentBots[0].botLeaveAfterHand),
+          botMode: currentBots[0].botMode ?? 'auto',
         }
       : null,
     canSummon: isBetweenHands
-      && room.getRealPlayerCount() === 1
-      && !currentBot
+      && room.getRealPlayerCount() >= 1
       && room.findEmptySeat() !== null
       && canAnswerBuzzer,
-    canDismiss: Boolean(currentBot),
+    canDismiss: currentBots.length > 0,
   }
 }
 
@@ -99,6 +108,7 @@ router.post('/', async (req, res) => {
 
   const tableId = String(req.body?.tableId ?? '').trim()
   const action = String(req.body?.action ?? '').trim()
+  const housePlayerId = String(req.body?.housePlayerId ?? '').trim() || undefined
 
   if (!tableId) {
     res.status(400).json({ error: 'tableId is required' })
@@ -117,8 +127,8 @@ router.post('/', async (req, res) => {
   }
 
   const result = action === 'summon'
-    ? room.summonHousePlayerByBuzzer()
-    : room.dismissHousePlayerByBuzzer()
+    ? room.summonHousePlayerByBuzzer(housePlayerId)
+    : room.dismissHousePlayerByBuzzer(housePlayerId)
 
   if (!result.ok) {
     res.status(400).json(result)

@@ -29,6 +29,7 @@ export interface ServerPlayer {
   isBot: boolean
   botTitle?: string
   botStyle?: string
+  botMode?: 'auto' | 'manual'
   botJoinStack?: number
   botLeaveAfterHand?: boolean
   standUpAfterHand?: boolean

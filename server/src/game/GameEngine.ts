@@ -719,7 +719,12 @@ export class GameEngine {
       }
 
       if (player.isBot) {
-        const shouldExitForGuests = player.botLeaveAfterHand || moreThanOneRealPlayer || queuedHumanObservers > 0
+        const shouldExitForGuests =
+          Boolean(player.botLeaveAfterHand)
+          || (
+            player.botMode !== 'manual'
+            && (moreThanOneRealPlayer || queuedHumanObservers > 0)
+          )
         if (player.stack <= 0) {
           releaseHousePlayer(player, 'rest')
           this.state.players.delete(seat)

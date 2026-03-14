@@ -142,6 +142,48 @@ function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function buildAssignedHousePlayer(
+  state: HousePlayerState,
+  tableId: string,
+  seat: number,
+  minBuyin: number,
+  maxBuyin: number,
+  botMode: 'auto' | 'manual'
+): ServerPlayer | null {
+  const now = Date.now()
+  if (state.assignedTableId) return null
+  if (state.availableAt > now) return null
+  if (state.bankroll < minBuyin) return null
+
+  const joinStack = clamp(state.bankroll, minBuyin, maxBuyin)
+  const reserveStack = state.bankroll - joinStack
+  state.assignedTableId = tableId
+  state.joinedStack = joinStack
+  state.reserveStack = reserveStack
+
+  return {
+    socketId: `bot:${state.profile.id}`,
+    playerId: state.profile.id,
+    username: state.profile.name,
+    avatar: state.profile.avatar,
+    seat,
+    stack: joinStack,
+    holeCards: [],
+    currentBet: 0,
+    totalBetThisHand: 0,
+    folded: false,
+    allIn: false,
+    sittingOut: false,
+    hasActed: false,
+    isConnected: true,
+    isBot: true,
+    botTitle: state.profile.title,
+    botStyle: state.profile.style,
+    botMode,
+    botJoinStack: joinStack,
+  }
+}
+
 export function assignHousePlayer(
   tableId: string,
   seat: number,
@@ -149,45 +191,64 @@ export function assignHousePlayer(
   maxBuyin: number
 ): ServerPlayer | null {
   ensureDailyReset()
-  const now = Date.now()
 
   for (let i = 0; i < HOUSE_ROSTER.length; i++) {
     const profile = HOUSE_ROSTER[(rosterIndex + i) % HOUSE_ROSTER.length]
     const state = houseStates.get(profile.id)!
-    if (state.assignedTableId) continue
-    if (state.availableAt > now) continue
-    if (state.bankroll < minBuyin) continue
+    const player = buildAssignedHousePlayer(state, tableId, seat, minBuyin, maxBuyin, 'auto')
+    if (!player) continue
 
-    const joinStack = clamp(state.bankroll, minBuyin, maxBuyin)
-    const reserveStack = state.bankroll - joinStack
-    state.assignedTableId = tableId
-    state.joinedStack = joinStack
-    state.reserveStack = reserveStack
     rosterIndex = (rosterIndex + i + 1) % HOUSE_ROSTER.length
-
-    return {
-      socketId: `bot:${profile.id}`,
-      playerId: profile.id,
-      username: profile.name,
-      avatar: profile.avatar,
-      seat,
-      stack: joinStack,
-      holeCards: [],
-      currentBet: 0,
-      totalBetThisHand: 0,
-      folded: false,
-      allIn: false,
-      sittingOut: false,
-      hasActed: false,
-      isConnected: true,
-      isBot: true,
-      botTitle: profile.title,
-      botStyle: profile.style,
-      botJoinStack: joinStack,
-    }
+    return player
   }
 
   return null
+}
+
+export function assignSpecificHousePlayer(
+  housePlayerId: string,
+  tableId: string,
+  seat: number,
+  minBuyin: number,
+  maxBuyin: number
+): ServerPlayer | null {
+  ensureDailyReset()
+  const state = houseStates.get(housePlayerId)
+  if (!state) return null
+
+  return buildAssignedHousePlayer(state, tableId, seat, minBuyin, maxBuyin, 'manual')
+}
+
+export function isHousePlayerAvailable(housePlayerId: string, minBuyin: number) {
+  ensureDailyReset()
+  const state = houseStates.get(housePlayerId)
+  if (!state) return false
+
+  return !state.assignedTableId && state.availableAt <= Date.now() && state.bankroll >= minBuyin
+}
+
+export function getAvailableHousePlayers(minBuyin: number) {
+  ensureDailyReset()
+  return Array.from(houseStates.values())
+    .filter((state) => !state.assignedTableId && state.availableAt <= Date.now() && state.bankroll >= minBuyin)
+    .map((state) => state.profile.id)
+}
+
+export function getHouseProfileSummary(housePlayerId: string) {
+  ensureDailyReset()
+  const state = houseStates.get(housePlayerId)
+  if (!state) return null
+
+  return {
+    id: state.profile.id,
+    name: state.profile.name,
+    title: state.profile.title,
+    avatar: state.profile.avatar,
+    bankroll: state.bankroll,
+    availableAt: state.availableAt,
+    assignedTableId: state.assignedTableId,
+    isReady: !state.assignedTableId && state.availableAt <= Date.now(),
+  }
 }
 
 export function releaseHousePlayer(player: ServerPlayer, reason: 'table_closed' | 'rest' | 'normal' = 'normal') {
@@ -308,6 +369,7 @@ export function getHouseRestingSummary() {
     id: state.profile.id,
     name: state.profile.name,
     title: state.profile.title,
+    avatar: state.profile.avatar,
     bankroll: state.bankroll,
     availableAt: state.availableAt,
     assignedTableId: state.assignedTableId,

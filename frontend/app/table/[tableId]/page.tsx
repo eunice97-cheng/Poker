@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/admin'
 import { hasVipEmojiAccess } from '@/lib/supporter-access'
 import { TablePageClient } from './TablePageClient'
 
@@ -25,6 +26,7 @@ export default async function TablePage({ params }: { params: { tableId: string 
       userId={session.user.id}
       chipBalance={profile?.chip_balance ?? 0}
       hasVipEmojis={canUseVipEmojis}
+      isAdmin={isAdminEmail(session.user.email)}
     />
   )
 }

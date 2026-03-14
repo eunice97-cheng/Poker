@@ -1,7 +1,14 @@
 import { Server } from 'socket.io'
 import { ServerGameState, ServerPlayer, ServerObserver, TableInfo } from '../types/game'
 import { GameEngine } from '../game/GameEngine'
-import { assignHousePlayer, getHouseExitLine, getHouseIntroLine, releaseHousePlayer, releaseHousePlayersForTable } from '../ai/housePlayers'
+import {
+  assignHousePlayer,
+  assignSpecificHousePlayer,
+  getHouseExitLine,
+  getHouseIntroLine,
+  releaseHousePlayer,
+  releaseHousePlayersForTable,
+} from '../ai/housePlayers'
 
 const MIN_PLAYERS_TO_START = 2
 const HOUSE_AI_JOIN_DELAY_MS = 30_000
@@ -137,22 +144,26 @@ export class GameRoom {
     return Array.from(this.state.players.values()).find((player) => player.isBot) ?? null
   }
 
+  getHousePlayers(): ServerPlayer[] {
+    return Array.from(this.state.players.values()).filter((player) => player.isBot)
+  }
+
+  getAutoHousePlayer(): ServerPlayer | null {
+    return this.getHousePlayers().find((player) => player.botMode !== 'manual') ?? null
+  }
+
   isHouseJoinSuppressed(): boolean {
     return this.houseJoinSuppressedForRealPlayerCount !== null
       && this.getRealPlayerCount() === this.houseJoinSuppressedForRealPlayerCount
   }
 
-  summonHousePlayerByBuzzer() {
+  summonHousePlayerByBuzzer(housePlayerId?: string) {
     if (this.state.phase !== 'waiting' && this.state.phase !== 'showdown') {
       return { ok: false as const, error: 'The buzzer only works between hands.' }
     }
 
-    if (this.getRealPlayerCount() !== 1) {
-      return { ok: false as const, error: 'The buzzer can only summon an AI when exactly one real player is seated.' }
-    }
-
-    if (this.getHousePlayer()) {
-      return { ok: false as const, error: 'A house AI is already at this table.' }
+    if (this.getRealPlayerCount() < 1) {
+      return { ok: false as const, error: 'At least one real player must be seated before you buzz in an AI.' }
     }
 
     const seat = this.findEmptySeat()
@@ -163,9 +174,16 @@ export class GameRoom {
     this.clearHouseJoinTimer()
     this.clearHouseJoinSuppression()
 
-    const bot = assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+    const bot = housePlayerId
+      ? assignSpecificHousePlayer(housePlayerId, this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
+      : assignHousePlayer(this.tableId, seat, this.state.minBuyin, this.state.maxBuyin)
     if (!bot) {
-      return { ok: false as const, error: 'No house AI is currently available to answer the buzzer.' }
+      return {
+        ok: false as const,
+        error: housePlayerId
+          ? 'That AI is unavailable right now or is already at another table.'
+          : 'No house AI is currently available to answer the buzzer.',
+      }
     }
 
     this.addBotPlayer(bot)
@@ -183,13 +201,16 @@ export class GameRoom {
       bot: {
         playerId: bot.playerId,
         username: bot.username,
+        avatar: bot.avatar,
         botTitle: bot.botTitle ?? null,
       },
     }
   }
 
-  dismissHousePlayerByBuzzer() {
-    const bot = this.getHousePlayer()
+  dismissHousePlayerByBuzzer(housePlayerId?: string) {
+    const bot = housePlayerId
+      ? this.getHousePlayers().find((player) => player.playerId === housePlayerId) ?? null
+      : this.getHousePlayer()
     if (!bot) {
       return { ok: false as const, error: 'There is no house AI at this table right now.' }
     }
@@ -215,6 +236,7 @@ export class GameRoom {
         bot: {
           playerId: bot.playerId,
           username: bot.username,
+          avatar: bot.avatar,
           botTitle: bot.botTitle ?? null,
         },
       }
@@ -228,6 +250,7 @@ export class GameRoom {
         bot: {
           playerId: bot.playerId,
           username: bot.username,
+          avatar: bot.avatar,
           botTitle: bot.botTitle ?? null,
         },
       }
@@ -244,6 +267,7 @@ export class GameRoom {
       bot: {
         playerId: bot.playerId,
         username: bot.username,
+        avatar: bot.avatar,
         botTitle: bot.botTitle ?? null,
       },
     }

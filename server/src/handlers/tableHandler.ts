@@ -85,13 +85,13 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       if (!room) return callback?.({ error: 'Table not found' })
       if (room.hasPendingJoin(socket.userId)) return callback?.({ error: 'Join already in progress' })
       room.beginPendingJoin(socket.userId)
-      const aiOpponent = Array.from(room.state.players.values()).find((player) => player.isBot)
+      const aiOpponent = room.getAutoHousePlayer()
       const handInProgress = room.state.phase !== 'waiting'
       const shouldQueueBehindAi = !!aiOpponent && room.getRealPlayerCount() === 1 && handInProgress
 
       if (room.isFull() && !shouldQueueBehindAi) {
         const waitingBot = room.state.phase === 'waiting'
-          ? Array.from(room.state.players.values()).find((player) => player.isBot)
+          ? room.getAutoHousePlayer()
           : null
         if (waitingBot) {
           room.removePlayer(waitingBot.socketId)
@@ -163,7 +163,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       room.addPlayer(player)
       io.to(tableId).emit('action_log', { message: `${socket.username} joined the game` })
 
-      const houseAi = Array.from(room.state.players.values()).find((tablePlayer) => tablePlayer.isBot)
+      const houseAi = room.getAutoHousePlayer()
       if (houseAi && room.getRealPlayerCount() > 1) {
         if (room.state.phase === 'waiting') {
           room.removePlayer(houseAi.socketId)
