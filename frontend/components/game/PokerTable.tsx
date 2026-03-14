@@ -29,7 +29,7 @@ const TABLE_W = 706
 const TABLE_H = 338
 const TABLE_LEFT = Math.round(OCX - TABLE_W / 2)
 const TABLE_TOP = 136
-const DEALER_TOP = -8
+const DEALER_TOP = 0
 
 const PAD_X = 16
 const PAD_Y = 16

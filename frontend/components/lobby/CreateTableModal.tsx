@@ -22,7 +22,7 @@ interface CreateTableModalProps {
 export function CreateTableModal({ open, onClose, chipBalance, onCreate }: CreateTableModalProps) {
   const [name, setName] = useState('')
   const [maxPlayers, setMaxPlayers] = useState(6)
-  const [bigBlind, setBigBlind] = useState(20)
+  const [bigBlind, setBigBlind] = useState(50)
   const [buyIn, setBuyIn] = useState(1000)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

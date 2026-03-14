@@ -19,7 +19,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   }, callback) => {
     try {
       const profile = await supabaseService.getProfile(socket.userId)
-      const bigBlind = params.bigBlind ?? 20
+      const bigBlind = params.bigBlind ?? 50
       const smallBlind = params.smallBlind ?? bigBlind / 2
       const minBuyin = params.minBuyin ?? bigBlind * 20
       const maxBuyin = params.maxBuyin ?? bigBlind * 100
