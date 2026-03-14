@@ -29,10 +29,11 @@ const TABLE_W = 706
 const TABLE_H = 338
 const TABLE_LEFT = Math.round(OCX - TABLE_W / 2)
 const TABLE_TOP = 136
-const DEALER_TOP = -16
+const DEALER_TOP = -8
 
 const PAD_X = 16
 const PAD_Y = 16
+const HOUSE_AI_NAMES = ['Alice', 'Bernice', 'Candice', 'Denice', 'Felice', 'Gillece'] as const
 
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
@@ -67,6 +68,48 @@ const SEAT_POSITIONS: Record<number, React.CSSProperties> = {
   3: ellipsePt(28),
   4: ellipsePt(320),
   5: ellipsePt(195),
+}
+
+function getDealerSpeechForLog(message: string) {
+  const trimmed = message.trim()
+  const speakingBot = HOUSE_AI_NAMES.find((name) => trimmed.startsWith(`${name} `))
+  if (speakingBot) {
+    const remainder = trimmed.slice(speakingBot.length + 1).toLowerCase()
+    const isPlayerAction =
+      remainder.startsWith('folds')
+      || remainder.startsWith('checks')
+      || remainder.startsWith('calls')
+      || remainder.startsWith('raises')
+      || remainder.startsWith('goes all in')
+
+    return isPlayerAction ? trimmed : ''
+  }
+
+  const lifecycleLines: Array<{ suffix: string; speech: (name: string) => string }> = [
+    { suffix: ' joined the game', speech: (name) => `Welcome to the table, ${name}.` },
+    { suffix: ' takes a seat', speech: (name) => `Welcome in, ${name}.` },
+    {
+      suffix: ' takes a rail seat until this hand finishes',
+      speech: (name) => `Hang tight, ${name}. I will seat you after this hand.`,
+    },
+    { suffix: ' stands up', speech: (name) => `Good game, ${name}.` },
+    { suffix: ' will stand up after this hand', speech: (name) => `All right, ${name}. One more hand for you.` },
+    { suffix: ' left the room', speech: (name) => `Take care, ${name}.` },
+  ]
+
+  for (const line of lifecycleLines) {
+    if (!trimmed.endsWith(line.suffix)) continue
+    const name = trimmed.slice(0, -line.suffix.length).trim()
+    if (!name) return trimmed
+    return line.speech(name)
+  }
+
+  const tipMatch = trimmed.match(/^(.+?) tips the dealer(?:\s+\d[\d,]*)?$/i)
+  if (tipMatch?.[1]) {
+    return `Thank you for the tip, ${tipMatch[1].trim()}.`
+  }
+
+  return trimmed
 }
 
 interface PokerTableProps {
@@ -147,7 +190,12 @@ export function PokerTable({
   useEffect(() => {
     if (actionLogs.length === 0) return
     const latest = actionLogs[actionLogs.length - 1]
-    setDealerSpeech(latest)
+    const speech = getDealerSpeechForLog(latest)
+    if (!speech) {
+      setDealerSpeech('')
+      return
+    }
+    setDealerSpeech(speech)
     const timeout = setTimeout(() => setDealerSpeech(''), 3500)
     return () => clearTimeout(timeout)
   }, [actionLogs])
