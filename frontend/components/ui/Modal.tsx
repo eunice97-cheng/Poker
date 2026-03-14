@@ -22,20 +22,22 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }:
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className={`bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full ${maxWidth} mx-4`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors text-2xl leading-none"
-          >
-            ×
-          </button>
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className={`mx-auto flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl ${maxWidth}`}>
+          <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
+            <h2 className="text-xl font-bold text-white">{title}</h2>
+            <button
+              onClick={onClose}
+              className="text-sm font-semibold text-gray-400 transition-colors hover:text-white"
+            >
+              Close
+            </button>
+          </div>
+          <div className="overflow-y-auto px-6 py-5">{children}</div>
         </div>
-        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   )
