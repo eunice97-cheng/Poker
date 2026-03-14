@@ -21,7 +21,8 @@ export default function LoginPage({ searchParams }: { searchParams: { verified?:
         )}
         {searchParams.verified === 'false' && (
           <div className="mb-4 bg-red-900/40 border border-red-700 rounded-xl px-4 py-3 text-red-400 text-sm text-center">
-            Verification failed or link expired. Please register again.
+            Verification failed or the link expired. Sign in below and we&apos;ll help you resend a fresh
+            confirmation email.
           </div>
         )}
 
