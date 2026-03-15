@@ -15,7 +15,7 @@ import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
 import { MailIcon } from '@/components/ui/MailIcon'
 import { getTableTheme } from '@/lib/table-theme'
-import { buildLobbyInvite, shareInvite } from '@/lib/invite'
+import { buildLobbyInvite, getDiscordUrl, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
 import { useSocket } from '@/hooks/useSocket'
 import { clearIntentionalTableExit } from '@/lib/table-exit'
@@ -156,7 +156,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
 
   const handleInvite = async () => {
     try {
-      await shareInvite(buildLobbyInvite(), process.env.NEXT_PUBLIC_DISCORD_URL)
+      await shareInvite(buildLobbyInvite(), getDiscordUrl())
       setInviteLabel('done')
       setTimeout(() => setInviteLabel('idle'), 2000)
     } catch {

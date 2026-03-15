@@ -14,7 +14,7 @@ import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
 import { getTableTheme } from '@/lib/table-theme'
 import { getDealerImage, getDeckBackImage, getTableImage } from '@/lib/table-assets'
-import { buildTableInvite, shareInvite } from '@/lib/invite'
+import { buildTableInvite, getDiscordUrl, shareInvite } from '@/lib/invite'
 import { useAudio } from '@/hooks/useAudio'
 import type { BuzzerHousePlayer, BuzzerRoom } from '@/lib/buzzer'
 
@@ -292,7 +292,7 @@ export function PokerTable({
     try {
       await shareInvite(
         buildTableInvite(gameState.tableName, gameState.tableId, gameState.bigBlind),
-        process.env.NEXT_PUBLIC_DISCORD_URL
+        getDiscordUrl()
       )
       setInviteLabel('done')
       setTimeout(() => setInviteLabel('idle'), 2000)

@@ -1,4 +1,5 @@
 const SITE_URL_FALLBACK = 'http://localhost:3000'
+const DISCORD_URL_FALLBACK = 'https://discord.gg/sypZjUwPav'
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') {
@@ -6,6 +7,11 @@ function getBaseUrl() {
   }
 
   return process.env.NEXT_PUBLIC_SITE_URL ?? SITE_URL_FALLBACK
+}
+
+export function getDiscordUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_DISCORD_URL?.trim()
+  return configuredUrl ? configuredUrl : DISCORD_URL_FALLBACK
 }
 
 export function buildLobbyInvite() {

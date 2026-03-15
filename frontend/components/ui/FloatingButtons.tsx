@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { getDiscordUrl } from '@/lib/invite'
 
 const baseButtonClasses =
   'group relative flex items-center overflow-hidden rounded-full text-sm font-semibold text-white transition-all duration-300 hover:scale-105 active:scale-95'
@@ -88,16 +89,16 @@ export function FloatingButtons() {
 
       <div className="floating-attention-bell">
         <a
-          href="https://discord.com/users/909063517280296961"
+          href={getDiscordUrl()}
           target="_blank"
           rel="noopener noreferrer"
           className={discordClasses}
-          title="Open Discord and ping the host"
+          title="Join the Discord server"
         >
           <GoldRim />
           <ButtonIcon src="/buttons/bell.png" />
           <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
-            Ping the Host
+            Join Discord
           </span>
         </a>
       </div>
