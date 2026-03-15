@@ -8,24 +8,14 @@ interface HandResultModalProps {
   result: HandResult
   onClose: () => void
   backImage?: string
-  canTipDealer?: boolean
-  dealerTipStack?: number
-  onTipDealer?: (amount: number) => Promise<{ ok?: boolean; error?: string; stack?: number }>
 }
-
-const DEALER_TIP_AMOUNTS = [100, 500, 1000]
 
 export function HandResultModal({
   result,
   onClose,
   backImage,
-  canTipDealer = false,
-  dealerTipStack = 0,
-  onTipDealer,
 }: HandResultModalProps) {
   const [countdown, setCountdown] = useState(8)
-  const [tipBusyAmount, setTipBusyAmount] = useState<number | null>(null)
-  const [tipError, setTipError] = useState('')
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -36,22 +26,6 @@ export function HandResultModal({
     }, 1000)
     return () => clearInterval(interval)
   }, [onClose])
-
-  const handleTip = async (amount: number) => {
-    if (!onTipDealer) return
-
-    setTipBusyAmount(amount)
-    setTipError('')
-
-    const res = await onTipDealer(amount)
-    if (res?.error) {
-      setTipError(res.error)
-      setTipBusyAmount(null)
-      return
-    }
-
-    setTipBusyAmount(null)
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -112,33 +86,6 @@ export function HandResultModal({
                   </div>
                 ))}
             </div>
-          </div>
-        )}
-
-        {canTipDealer && (
-          <div className="mb-5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-semibold text-cyan-200">Thank the dealer</div>
-                <div className="mt-1 text-xs text-cyan-50/75">
-                  Optional tip from your live table stack.
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {DEALER_TIP_AMOUNTS.map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => handleTip(amount)}
-                    disabled={!onTipDealer || dealerTipStack < amount || tipBusyAmount !== null}
-                    className="rounded-lg border border-cyan-700 px-3 py-2 text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-500 hover:text-white disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-600"
-                  >
-                    {tipBusyAmount === amount ? 'Tipping...' : `Tip ${amount.toLocaleString()}`}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {tipError && <p className="mt-3 text-xs text-red-400">{tipError}</p>}
           </div>
         )}
 

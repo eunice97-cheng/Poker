@@ -653,9 +653,6 @@ export function PokerTable({
           result={handResult}
           onClose={clearHandResult}
           backImage={deckBackImage}
-          canTipDealer={canTipDealer}
-          dealerTipStack={me?.stack ?? 0}
-          onTipDealer={onTipDealer}
         />
       )}
       {isAdmin && (
