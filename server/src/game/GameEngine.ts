@@ -28,6 +28,7 @@ export class GameEngine {
     if (activePlayers.length < 2) {
       this.state.phase = 'waiting'
       this.state.status = 'waiting'
+      this.state.currentSeat = -1
       this.broadcastGameState()
       this.onWaitingForPlayers?.()
       return
@@ -251,6 +252,7 @@ export class GameEngine {
 
   private async showdown() {
     this.state.phase = 'showdown'
+    this.state.currentSeat = -1
     this.collectBets()
 
     const pots = calculatePots(
@@ -350,8 +352,11 @@ export class GameEngine {
       this.broadcastGameState()
     }
 
-    await this.processPostHandSeatTransitions()
-    await this.seatQueuedObservers()
+    const seatsChangedAfterHand = await this.processPostHandSeatTransitions()
+    const seatedQueuedObservers = await this.seatQueuedObservers()
+    if (seatsChangedAfterHand && !seatedQueuedObservers) {
+      this.broadcastGameState()
+    }
 
     // If no real players remain after busts, delete the table — no next hand needed
     const realPlayersLeft = Array.from(this.state.players.values()).filter(p => !p.isBot)
@@ -380,6 +385,7 @@ export class GameEngine {
 
     this.io.to(this.state.tableId).emit('hand_result', result)
     this.state.phase = 'showdown'
+    this.state.currentSeat = -1
     this.broadcastGameState()
 
     try {
@@ -388,8 +394,11 @@ export class GameEngine {
       console.error('Failed to update chip balances:', err)
     }
 
-    await this.processPostHandSeatTransitions()
-    await this.seatQueuedObservers()
+    const seatsChangedAfterHand = await this.processPostHandSeatTransitions()
+    const seatedQueuedObservers = await this.seatQueuedObservers()
+    if (seatsChangedAfterHand && !seatedQueuedObservers) {
+      this.broadcastGameState()
+    }
 
     setTimeout(() => {
       this.startHand().catch(console.error)
@@ -562,10 +571,10 @@ export class GameEngine {
         isDealer: s === this.state.dealerSeat,
         isSB: s === sbSeat,
         isBB: s === bbSeat,
-        isCurrentTurn: s === this.state.currentSeat,
+        isCurrentTurn: this.state.phase !== 'waiting' && this.state.phase !== 'showdown' && s === this.state.currentSeat,
       }))
 
-      const validActions = seat === this.state.currentSeat
+      const validActions = this.state.phase !== 'waiting' && this.state.phase !== 'showdown' && seat === this.state.currentSeat
         ? getValidActions(player, this.state)
         : []
 
@@ -581,8 +590,8 @@ export class GameEngine {
         currentSeat: this.state.currentSeat,
         smallBlind: this.state.smallBlind,
         bigBlind: this.state.bigBlind,
-        minRaise: getMinRaise(this.state),
-        callAmount: getCallAmount(player, this.state),
+        minRaise: this.state.phase !== 'waiting' && this.state.phase !== 'showdown' ? getMinRaise(this.state) : 0,
+        callAmount: this.state.phase !== 'waiting' && this.state.phase !== 'showdown' ? getCallAmount(player, this.state) : 0,
         handNumber: this.state.handNumber,
         myPlayerId: player.playerId,
         validActions,
@@ -621,7 +630,7 @@ export class GameEngine {
           isDealer: s === this.state.dealerSeat,
           isSB: s === this.getSBSeat(),
           isBB: s === this.getBBSeat(),
-          isCurrentTurn: s === this.state.currentSeat,
+          isCurrentTurn: this.state.phase !== 'waiting' && this.state.phase !== 'showdown' && s === this.state.currentSeat,
         })),
         dealerSeat: this.state.dealerSeat,
         currentSeat: this.state.currentSeat,
@@ -656,7 +665,7 @@ export class GameEngine {
 
   private async seatQueuedObservers() {
     const queuedObservers = Array.from(this.state.observers.values()).filter((observer) => !observer.hasTableEntry)
-    if (queuedObservers.length === 0) return
+    if (queuedObservers.length === 0) return false
 
     for (const observer of queuedObservers) {
       const seat = this.findEmptySeat()
@@ -698,6 +707,7 @@ export class GameEngine {
 
     this.state.status = 'waiting'
     this.broadcastGameState()
+    return true
   }
 
   private findEmptySeat(): number | null {
@@ -708,6 +718,7 @@ export class GameEngine {
   }
 
   private async processPostHandSeatTransitions() {
+    let seatsChanged = false
     const moreThanOneRealPlayer = Array.from(this.state.players.values()).filter((player) => !player.isBot).length > 1
     const queuedHumanObservers = Array.from(this.state.observers.values()).filter(
       (observer) => !observer.hasTableEntry && !observer.playerId.startsWith('ai_')
@@ -729,12 +740,14 @@ export class GameEngine {
           releaseHousePlayer(player, 'rest')
           this.state.players.delete(seat)
           this.state.socketToSeat.delete(player.socketId)
+          seatsChanged = true
           continue
         }
         if (shouldHousePlayerRest(player)) {
           releaseHousePlayer(player, 'rest')
           this.state.players.delete(seat)
           this.state.socketToSeat.delete(player.socketId)
+          seatsChanged = true
           this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'rest') ?? `${player.username} leaves to rest for a while` })
           continue
         }
@@ -742,6 +755,7 @@ export class GameEngine {
           releaseHousePlayer(player, 'normal')
           this.state.players.delete(seat)
           this.state.socketToSeat.delete(player.socketId)
+          seatsChanged = true
           this.io.to(this.state.tableId).emit('action_log', { message: getHouseExitLine(player.playerId, 'guest') ?? `${player.username} leaves the table` })
         }
         continue
@@ -752,6 +766,7 @@ export class GameEngine {
       player.standUpAfterHand = false
       this.state.players.delete(seat)
       this.state.socketToSeat.delete(player.socketId)
+      seatsChanged = true
       const observer: ServerObserver = {
         socketId: player.socketId,
         playerId: player.playerId,
@@ -763,5 +778,7 @@ export class GameEngine {
       this.state.observers.set(player.playerId, observer)
       this.io.to(this.state.tableId).emit('action_log', { message: `${player.username} stands up` })
     }
+
+    return seatsChanged
   }
 }

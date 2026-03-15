@@ -122,6 +122,8 @@ interface PokerTableProps {
   onAction: (action: string, amount?: number) => void
   onChat: (text: string) => void
   onLeave: () => void
+  isLeaving: boolean
+  leaveError: string
   onSitOut: () => void
   onSitIn: () => void
   clearHandResult: () => void
@@ -151,6 +153,8 @@ export function PokerTable({
   onAction,
   onChat,
   onLeave,
+  isLeaving,
+  leaveError,
   onSitOut,
   onSitIn,
   clearHandResult,
@@ -377,10 +381,12 @@ export function PokerTable({
           <AudioControls />
           <button
             onClick={onLeave}
-            className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 md:px-3 md:text-sm"
+            disabled={isLeaving}
+            className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 disabled:cursor-not-allowed disabled:border-gray-800 disabled:text-gray-600 md:px-3 md:text-sm"
           >
-            Leave Room
+            {isLeaving ? 'Leaving...' : 'Leave Room'}
           </button>
+          {leaveError && <span className="text-xs text-red-400">{leaveError}</span>}
         </div>
       </div>
 

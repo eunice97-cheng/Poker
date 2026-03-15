@@ -20,6 +20,7 @@ interface TablePageClientProps {
 }
 
 const AUTO_REBUY_KEY = 'poker_auto_rebuy'
+const LEAVE_TABLE_TIMEOUT_MS = 15000
 
 export function TablePageClient({
   tableId,
@@ -34,6 +35,7 @@ export function TablePageClient({
   const { playSfx } = useAudio()
   const [leaving, setLeaving] = useState(false)
   const leavingRef = useRef(false)
+  const [leaveError, setLeaveError] = useState('')
   const [chipBalance, setChipBalance] = useState(initialBalance)
   const [buzzerRoom, setBuzzerRoom] = useState<BuzzerRoom | null>(null)
   const [housePlayers, setHousePlayers] = useState<BuzzerHousePlayer[]>([])
@@ -62,17 +64,30 @@ export function TablePageClient({
   } = useGameState(socket, tableId)
 
   const leaveTable = useCallback((navigateToLobby: boolean) => {
-    if (!socket || leavingRef.current) return
+    if (leavingRef.current) return
+    if (!socket) {
+      setLeaveError('Leave failed. Please try again.')
+      return
+    }
 
+    setLeaveError('')
     markIntentionalTableExit(tableId)
     leavingRef.current = true
     setLeaving(true)
     playSfx('joinLeave')
+    const timeout = window.setTimeout(() => {
+      clearIntentionalTableExit(tableId)
+      leavingRef.current = false
+      setLeaving(false)
+      setLeaveError('Leave timed out. Please try again.')
+    }, LEAVE_TABLE_TIMEOUT_MS)
     socket.emit('leave_table', {}, (res?: { balance?: number; error?: string }) => {
+      window.clearTimeout(timeout)
       if (res?.error) {
         clearIntentionalTableExit(tableId)
         leavingRef.current = false
         setLeaving(false)
+        setLeaveError(res.error)
         return
       }
 
@@ -87,6 +102,10 @@ export function TablePageClient({
   }, [socket, tableId, playSfx, router])
 
   const handleLeave = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm('Leave this room and cash out your table stack?')
+      if (!confirmed) return
+    }
     leaveTable(true)
   }, [leaveTable])
 
@@ -263,6 +282,8 @@ export function TablePageClient({
         onAction={sendAction}
         onChat={sendChat}
         onLeave={handleLeave}
+        isLeaving={leaving}
+        leaveError={leaveError}
         onSitOut={handleSitOut}
         onSitIn={handleSitIn}
         clearHandResult={clearHandResult}
