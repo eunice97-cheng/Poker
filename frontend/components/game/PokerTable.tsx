@@ -457,7 +457,19 @@ export function PokerTable({
 
             {showDealerTipMenu && canTipDealer && (
               <div className="mt-2 w-[240px] rounded-2xl border border-cyan-400/25 bg-gray-950/95 p-3 text-center shadow-2xl backdrop-blur-sm">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Dealer Tip</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">Dealer Tip</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDealerTipMenu(false)
+                      setDealerTipError('')
+                    }}
+                    className="rounded-full border border-cyan-500/25 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/85 transition-colors hover:border-cyan-300 hover:text-white"
+                  >
+                    Close
+                  </button>
+                </div>
                 <div className="mt-1 text-[11px] text-gray-400">Optional thanks from your table stack.</div>
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
                   {DEALER_TIP_AMOUNTS.map((amount) => (
