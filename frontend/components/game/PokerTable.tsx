@@ -113,6 +113,42 @@ function getDealerSpeechForLog(message: string) {
   return trimmed
 }
 
+interface ObserverPanelProps {
+  observers: ClientObserver[]
+  panelClassName: string
+  bodyMaxHeightClass?: string
+}
+
+function ObserverPanel({ observers, panelClassName, bodyMaxHeightClass = 'max-h-36' }: ObserverPanelProps) {
+  if (observers.length === 0) return null
+
+  return (
+    <div className={`flex flex-col rounded-xl border shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-sm ${panelClassName}`}>
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-sm text-gray-300">
+        <span>Observers</span>
+        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/80">
+          {observers.length}
+        </span>
+      </div>
+
+      <div className={`${bodyMaxHeightClass} space-y-2 overflow-y-auto px-3 py-2`}>
+        {observers.map((obs) => (
+          <div
+            key={obs.playerId}
+            className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5"
+          >
+            <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-white">{obs.username}</div>
+              <div className="text-xs text-yellow-400">{obs.stack.toLocaleString()} chips</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 interface PokerTableProps {
   gameState: GameState
   handResult: HandResult | null
@@ -548,39 +584,6 @@ export function PokerTable({
             )
           })}
 
-          {observers.length > 0 && (
-            <div className="absolute right-1 top-1/2 z-20 hidden min-w-[110px] -translate-y-1/2 flex-col gap-1 sm:flex">
-              <div className="mb-0.5 text-center text-[10px] uppercase tracking-wide text-gray-600">Watching</div>
-              {observers.map((obs) => (
-                <div
-                  key={obs.playerId}
-                  className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 ${theme.sidePanelClass}`}
-                >
-                  <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
-                  <div>
-                    <div className="max-w-[72px] truncate text-[11px] font-semibold text-white">{obs.username}</div>
-                    <div className="text-[10px] text-yellow-500">{obs.stack.toLocaleString()}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {observers.length > 0 && (
-            <div className="absolute inset-x-3 bottom-2 z-20 flex gap-2 overflow-x-auto pb-1 sm:hidden">
-              {observers.map((obs) => (
-                <div
-                  key={obs.playerId}
-                  className={`flex min-w-[116px] items-center gap-2 rounded-xl border px-2 py-1.5 ${theme.sidePanelClass}`}
-                >
-                  <AvatarDisplay avatarId={obs.avatar ?? 'avatar_m1'} size="sm" />
-                  <div className="min-w-0">
-                    <div className="truncate text-[11px] font-semibold text-white">{obs.username}</div>
-                    <div className="text-[10px] text-yellow-500">{obs.stack.toLocaleString()}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
           </div>
         </div>
       </div>
@@ -598,6 +601,7 @@ export function PokerTable({
             callAmount={gameState.callAmount}
             minRaise={gameState.minRaise}
             myStack={me?.stack ?? 0}
+            myCurrentBet={me?.currentBet ?? 0}
             bigBlind={gameState.bigBlind}
             onAction={(action, amount) => onAction(action, amount)}
             timeLeft={timeLeft}
@@ -623,7 +627,8 @@ export function PokerTable({
         )}
       </div>
 
-      <div className="absolute bottom-24 left-4 z-10 hidden w-72 2xl:block">
+      <div className="absolute bottom-24 left-4 z-10 hidden w-72 space-y-2 2xl:block">
+        <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-40" />
         <ActionLog logs={actionLogs} />
       </div>
 
@@ -632,6 +637,7 @@ export function PokerTable({
       </div>
 
       <div className="absolute bottom-24 right-4 z-10 hidden w-64 flex-col gap-2 lg:flex 2xl:hidden">
+        <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-32" />
         <ActionLog logs={actionLogs} />
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
       </div>
@@ -639,6 +645,7 @@ export function PokerTable({
       <div className="absolute bottom-24 right-3 z-20 lg:hidden">
         {showMobilePanel ? (
           <div className="w-[min(22rem,calc(100vw-1rem))] space-y-2">
+            <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-32" />
             <ActionLog logs={actionLogs} />
             <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
           </div>

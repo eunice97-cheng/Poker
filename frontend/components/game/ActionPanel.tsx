@@ -10,17 +10,18 @@ interface ActionPanelProps {
   callAmount: number
   minRaise: number
   myStack: number
+  myCurrentBet: number
   bigBlind: number
   onAction: (action: PlayerAction, amount?: number) => void
   timeLeft: number
 }
 
-export function ActionPanel({ validActions, callAmount, minRaise, myStack, bigBlind, onAction, timeLeft }: ActionPanelProps) {
+export function ActionPanel({ validActions, callAmount, minRaise, myStack, myCurrentBet, bigBlind, onAction, timeLeft }: ActionPanelProps) {
   const [showRaiseSlider, setShowRaiseSlider] = useState(false)
 
   if (validActions.length === 0) return null
 
-  const maxRaise = myStack
+  const maxRaise = myStack + myCurrentBet
 
   return (
     <div className="relative">
