@@ -20,7 +20,8 @@ interface HandRecord {
   hand_number: number
   community: string[]
   pot_total: number
-  winners: { playerId: string; username: string; amount: number; handRank: string }[]
+  winners: { playerId: string; username: string; amount: number; handRank: string; potCount?: number }[]
+  my_hole_cards: string[]
   ended_at: string
 }
 
@@ -220,6 +221,7 @@ export function ProfileClient({
     { id: 'hands', label: 'Recent Hands' },
     { id: 'mail', label: unreadMailCount > 0 ? `Mail (${unreadMailCount})` : 'Mail' },
   ]
+  const formatCards = (cards: string[]) => cards.length > 0 ? cards.join(' ') : 'Not shown'
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -377,31 +379,56 @@ export function ProfileClient({
             {handHistory.length === 0 ? (
               <p className="py-12 text-center text-gray-600">No hands played yet - go join a table.</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {handHistory.map((hand) => {
                   const isWinner = hand.winners?.some((winner) => winner.playerId === userId)
                   const myWin = hand.winners?.find((winner) => winner.playerId === userId)
+                  const winnerSummary = hand.winners.length > 0
+                    ? hand.winners
+                      .map((winner) => {
+                        const potLabel = winner.potCount && winner.potCount > 1
+                          ? `, ${winner.potCount} pots`
+                          : ''
+                        return `${winner.username} +${winner.amount.toLocaleString()} (${winner.handRank}${potLabel})`
+                      })
+                      .join(' • ')
+                    : 'No winner log recorded'
 
                   return (
-                    <div key={hand.id} className="flex items-center justify-between rounded-xl bg-gray-800/40 px-4 py-3 text-sm">
-                      <div className="flex items-center gap-4">
-                        <span className={`h-2 w-2 flex-shrink-0 rounded-full ${isWinner ? 'bg-green-400' : 'bg-gray-600'}`} />
-                        <div>
-                          <span className="text-gray-400">Hand #{hand.hand_number}</span>
-                          <span className="mx-2 text-gray-600">-</span>
-                          <span className="text-xs text-gray-500">{new Date(hand.ended_at).toLocaleDateString()}</span>
+                    <article key={hand.id} className="rounded-2xl border border-gray-800 bg-gray-800/40 p-4 text-sm">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className={`h-2 w-2 flex-shrink-0 rounded-full ${isWinner ? 'bg-green-400' : 'bg-gray-600'}`} />
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-gray-300">Hand #{hand.hand_number}</span>
+                              <span className="text-xs text-gray-500">{new Date(hand.ended_at).toLocaleString()}</span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-4 text-xs">
+                              <span>
+                                <span className="text-gray-500">Your cards</span>{' '}
+                                <span className="font-mono tracking-[0.18em] text-white">{formatCards(hand.my_hole_cards)}</span>
+                              </span>
+                              <span>
+                                <span className="text-gray-500">Board</span>{' '}
+                                <span className="font-mono tracking-[0.18em] text-gray-300">{formatCards(hand.community)}</span>
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        {hand.community?.length > 0 && (
-                          <span className="hidden text-xs text-gray-600 md:block">{hand.community.join(' ')}</span>
-                        )}
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="text-xs text-gray-500">Pot: {hand.pot_total?.toLocaleString()}</span>
+                          <span className={`font-bold ${isWinner ? 'text-green-400' : 'text-gray-500'}`}>
+                            {isWinner ? `+${myWin?.amount?.toLocaleString()}` : 'Lost'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500">Pot: {hand.pot_total?.toLocaleString()}</span>
-                        <span className={`font-bold ${isWinner ? 'text-green-400' : 'text-gray-600'}`}>
-                          {isWinner ? `+${myWin?.amount?.toLocaleString()}` : 'Lost'}
-                        </span>
+
+                      <div className="mt-3 border-t border-gray-800 pt-3 text-xs leading-5 text-gray-400">
+                        <span className="text-gray-500">Winners</span>{' '}
+                        <span className="text-gray-300">{winnerSummary}</span>
                       </div>
-                    </div>
+                    </article>
                   )
                 })}
               </div>

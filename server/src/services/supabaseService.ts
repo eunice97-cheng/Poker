@@ -163,7 +163,10 @@ export const supabaseService = {
       player_id: p.playerId,
       username: p.username,
       hole_cards: p.holeCards,
-      stack: p.stack,
+      total_bet: p.totalBetThisHand,
+      folded: p.folded,
+      all_in: p.allIn,
+      stack_after: p.stack,
       is_bot: p.isBot,
     }))
 

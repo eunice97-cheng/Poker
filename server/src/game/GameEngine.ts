@@ -264,8 +264,8 @@ export class GameEngine {
       }))
     )
 
-    const totalDistributed = { amount: 0 }
-    const winnerSummary: HandResult['winners'] = []
+    this.state.sidePots = pots
+    const winnerSummaryByPlayer = new Map<string, HandResult['winners'][number]>()
 
     for (const pot of pots) {
       const eligible = Array.from(this.state.players.values()).filter(
@@ -290,17 +290,28 @@ export class GameEngine {
         const player = Array.from(this.state.players.values()).find(
           (p) => p.playerId === w.playerId
         )!
-        player.stack += share + (idx === 0 ? remainder : 0)
-        totalDistributed.amount += share + (idx === 0 ? remainder : 0)
-        winnerSummary.push({
+        const payout = share + (idx === 0 ? remainder : 0)
+        player.stack += payout
+
+        const existingWinner = winnerSummaryByPlayer.get(w.playerId)
+        if (existingWinner) {
+          existingWinner.amount += payout
+          existingWinner.potCount = (existingWinner.potCount ?? 1) + 1
+          return
+        }
+
+        winnerSummaryByPlayer.set(w.playerId, {
           playerId: w.playerId,
           username: w.username,
-          amount: share + (idx === 0 ? remainder : 0),
+          amount: payout,
           handRank: w.rank,
           holeCards: w.holeCards,
+          potCount: 1,
         })
       })
     }
+
+    const winnerSummary = Array.from(winnerSummaryByPlayer.values())
 
     const allHoleCards = Array.from(this.state.players.values())
       .filter((p) => !p.folded)

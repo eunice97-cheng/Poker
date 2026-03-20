@@ -55,7 +55,14 @@ export function calculatePots(players: PlayerContribution[]): SidePot[] {
     if (mainAmount > 0) {
       pots.push({
         amount: mainAmount,
-        eligiblePlayerIds: [...mainEligible.map((p) => p.playerId), ...remaining.filter(p => p.allIn && p.totalBet >= previousCap && !p.folded).map(p => p.playerId)],
+        eligiblePlayerIds: Array.from(
+          new Set([
+            ...mainEligible.map((p) => p.playerId),
+            ...remaining
+              .filter((p) => p.allIn && p.totalBet > previousCap && !p.folded)
+              .map((p) => p.playerId),
+          ])
+        ),
       })
     }
   }

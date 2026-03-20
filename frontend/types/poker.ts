@@ -64,6 +64,7 @@ export interface HandResult {
     amount: number
     handRank: string
     holeCards: string[]
+    potCount?: number
   }[]
   allHoleCards: { playerId: string; username: string; holeCards: string[] }[]
   pot: number

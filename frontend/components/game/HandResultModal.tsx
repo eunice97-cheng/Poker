@@ -62,7 +62,10 @@ export function HandResultModal({
                     ))}
                   </div>
                 ) : null}
-                <span className="text-yellow-300 text-sm font-semibold">{winner.handRank}</span>
+                <span className="text-yellow-300 text-sm font-semibold">
+                  {winner.handRank}
+                  {winner.potCount && winner.potCount > 1 ? ` · ${winner.potCount} pots` : ''}
+                </span>
               </div>
             </div>
           ))}
