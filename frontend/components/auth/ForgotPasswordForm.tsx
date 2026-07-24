@@ -50,7 +50,7 @@ export function ForgotPasswordForm() {
 
       {success && (
         <div className="rounded-xl border border-green-500/25 bg-green-500/10 px-4 py-3 text-sm text-green-200">
-          Check your email for the password reset link. Open it on this same local app.
+          Check your email for the password reset link. Open it in the same Poker or Blackjack site you requested it from.
         </div>
       )}
 

@@ -10,6 +10,18 @@ export function getAuthErrorMessage(error: unknown, fallback: string) {
     return 'Invalid email or password.'
   }
 
+  if (normalized.includes('same password')) {
+    return 'New password must be different from your current password.'
+  }
+
+  if (normalized.includes('password should be') || normalized.includes('weak password')) {
+    return 'Password is too weak. Use at least 6 characters and avoid simple passwords.'
+  }
+
+  if (normalized.includes('expired') && normalized.includes('token')) {
+    return 'This password reset link has expired. Request a new reset link.'
+  }
+
   if (normalized.includes('email not confirmed')) {
     return 'Please verify your email before signing in.'
   }

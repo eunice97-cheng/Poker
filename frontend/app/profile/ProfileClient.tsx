@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { Button } from '@/components/ui/Button'
 import { MailIcon } from '@/components/ui/MailIcon'
 import { getSelectableAvatars, isAvatarSelectable } from '@/lib/avatars'
+import { getAuthErrorMessage } from '@/lib/auth-errors'
 import { createClient } from '@/lib/supabase/client'
 import {
   WEEKEND_LOYALTY_CHIPS,
@@ -45,7 +46,7 @@ interface ProfileRecord {
   last_weekend_loyalty_claim_at: string | null
 }
 
-type Tab = 'profile' | 'stats' | 'hands' | 'mail'
+type Tab = 'profile' | 'stats' | 'hands' | 'mail' | 'security'
 
 interface ProfileClientProps {
   initialProfile: ProfileRecord | null
@@ -96,6 +97,12 @@ export function ProfileClient({
   const [mailItems, setMailItems] = useState(initialMail)
   const [unreadMailCount, setUnreadMailCount] = useState(initialUnreadMailCount)
   const [markingMailRead, setMarkingMailRead] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   const isDirty = !profile || selectedAvatar !== currentAvatar
   const loyaltySummary = loyaltyStatus.canClaim
@@ -180,6 +187,60 @@ export function ProfileClient({
     }
   }
 
+  const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordMessage('')
+
+    if (!email) {
+      setPasswordError('This account does not have an email address attached.')
+      return
+    }
+
+    if (!currentPassword) {
+      setPasswordError('Enter your current password first.')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.')
+      return
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('New passwords do not match.')
+      return
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from your current password.')
+      return
+    }
+
+    setChangingPassword(true)
+
+    try {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      })
+
+      if (verifyError) throw verifyError
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+      if (updateError) throw updateError
+
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmNewPassword('')
+      setPasswordMessage('Password updated. Use the new password next time you sign in to Poker or Blackjack.')
+    } catch (err) {
+      setPasswordError(getAuthErrorMessage(err, 'Unable to change password.'))
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   const handleClaimLoyalty = async () => {
     setClaimingLoyalty(true)
     setLoyaltyError('')
@@ -217,6 +278,7 @@ export function ProfileClient({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'profile', label: 'Profile Settings' },
+    { id: 'security', label: 'Security' },
     { id: 'stats', label: 'Stats' },
     { id: 'hands', label: 'Recent Hands' },
     { id: 'mail', label: unreadMailCount > 0 ? `Mail (${unreadMailCount})` : 'Mail' },
@@ -249,7 +311,7 @@ export function ProfileClient({
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6 flex gap-1 rounded-xl border border-gray-700 bg-gray-900 p-1">
+        <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-gray-700 bg-gray-900 p-1 sm:grid-cols-5">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -342,6 +404,81 @@ export function ProfileClient({
               {saveMsg && <span className="text-sm text-green-400">{saveMsg}</span>}
               {error && <span className="text-sm text-red-400">{error}</span>}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="rounded-2xl border border-gray-700 bg-gray-900 p-6">
+            <div className="mb-6">
+              <div className="text-[11px] uppercase tracking-[0.28em] text-yellow-200/70">Account Security</div>
+              <h2 className="mt-2 text-2xl font-bold text-white">Change Password</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-400">
+                This updates the same login used for ASL Basement Poker and ASL BlackJack Lounge.
+              </p>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">Current Password</label>
+                <input
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-800/70 px-4 py-3 text-white outline-none transition-colors focus:border-yellow-500"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm text-gray-400">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800/70 px-4 py-3 text-white outline-none transition-colors focus:border-yellow-500"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm text-gray-400">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800/70 px-4 py-3 text-white outline-none transition-colors focus:border-yellow-500"
+                    value={confirmNewPassword}
+                    onChange={(event) => setConfirmNewPassword(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              {passwordMessage && (
+                <div className="rounded-xl border border-green-500/25 bg-green-500/10 px-4 py-3 text-sm text-green-200">
+                  {passwordMessage}
+                </div>
+              )}
+
+              {passwordError && (
+                <div className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {passwordError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+                <Button type="submit" variant="primary" loading={changingPassword}>
+                  Update Password
+                </Button>
+                <Link href="/auth/forgot-password" className="text-sm text-yellow-400 transition-colors hover:text-yellow-300">
+                  Forgot current password?
+                </Link>
+              </div>
+            </form>
           </div>
         )}
 

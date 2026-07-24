@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       })
 
       if (type === 'recovery') {
-        return NextResponse.redirect(`${siteUrl}/auth/reset-password`)
+        return NextResponse.redirect(`${siteUrl}/auth/reset-password?recovery=1`)
       }
 
       return NextResponse.redirect(`${siteUrl}/auth/login?${params.toString()}`)

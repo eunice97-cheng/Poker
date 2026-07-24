@@ -17,7 +17,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   const requestedTab = Array.isArray(searchParams?.tab) ? searchParams?.tab[0] : searchParams?.tab
   const initialTab =
-    requestedTab === 'stats' || requestedTab === 'hands' || requestedTab === 'mail'
+    requestedTab === 'stats' || requestedTab === 'hands' || requestedTab === 'mail' || requestedTab === 'security'
       ? requestedTab
       : 'profile'
 

@@ -30,7 +30,18 @@ export function getPublicSiteUrl() {
 }
 
 export function getClientSiteUrl() {
-  return getPublicSiteUrl() || getCurrentOrigin() || LOCAL_FALLBACK_SITE_URL
+  const currentOrigin = getCurrentOrigin()
+
+  if (currentOrigin) {
+    try {
+      const currentUrl = new URL(currentOrigin)
+      if (isLocalHostname(currentUrl.hostname)) {
+        return currentOrigin
+      }
+    } catch {}
+  }
+
+  return getPublicSiteUrl() || currentOrigin || LOCAL_FALLBACK_SITE_URL
 }
 
 export function getServerSiteUrl(origin?: string) {

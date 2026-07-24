@@ -7,6 +7,26 @@ import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
 import { getAuthErrorMessage } from '@/lib/auth-errors'
 
+const RECOVERY_SESSION_KEY = 'poker_password_recovery_ready'
+const RECOVERY_SESSION_MAX_AGE_MS = 30 * 60 * 1000
+
+function readRecoverySessionFlag() {
+  if (typeof window === 'undefined') return false
+
+  const storedAt = Number(sessionStorage.getItem(RECOVERY_SESSION_KEY))
+  if (!Number.isFinite(storedAt) || Date.now() - storedAt > RECOVERY_SESSION_MAX_AGE_MS) {
+    sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+    return false
+  }
+
+  return true
+}
+
+function writeRecoverySessionFlag() {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(RECOVERY_SESSION_KEY, String(Date.now()))
+}
+
 export function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,11 +47,45 @@ export function ResetPasswordForm() {
       setError('')
 
       try {
+        let recoveryReady = readRecoverySessionFlag()
+        const recoveryMarker = searchParams.get('recovery') === '1'
+
+        if (recoveryMarker && typeof window !== 'undefined') {
+          recoveryReady = true
+          writeRecoverySessionFlag()
+          router.replace('/auth/reset-password')
+        }
+
+        if (typeof window !== 'undefined' && window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+          const hashError = hashParams.get('error_description') || hashParams.get('error')
+          const accessToken = hashParams.get('access_token')
+          const refreshToken = hashParams.get('refresh_token')
+
+          if (hashError) {
+            throw new Error(hashError)
+          }
+
+          if (accessToken && refreshToken) {
+            const { error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+
+            if (setSessionError) throw setSessionError
+            recoveryReady = true
+            writeRecoverySessionFlag()
+            window.history.replaceState(null, '', '/auth/reset-password')
+          }
+        }
+
         const code = searchParams.get('code')
 
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           if (exchangeError) throw exchangeError
+          recoveryReady = true
+          writeRecoverySessionFlag()
           router.replace('/auth/reset-password')
         }
 
@@ -41,10 +95,13 @@ export function ResetPasswordForm() {
         } = await supabase.auth.getSession()
 
         if (sessionError) throw sessionError
-        if (!cancelled) setHasRecoverySession(Boolean(session))
+        if (!cancelled) setHasRecoverySession(Boolean(session) && recoveryReady)
       } catch (err) {
         if (!cancelled) {
           setHasRecoverySession(false)
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+          }
           setError(getAuthErrorMessage(err, 'The reset link is invalid or expired.'))
         }
       } finally {
@@ -78,6 +135,9 @@ export function ResetPasswordForm() {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+      }
       await supabase.auth.signOut()
       setSuccess(true)
     } catch (err) {
