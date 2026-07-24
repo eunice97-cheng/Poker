@@ -1236,6 +1236,272 @@ button { font: inherit; }
   }
 }
 
+.blackjack-celebration {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  z-index: 12;
+  width: 520px;
+  max-width: calc(100% - 40px);
+  height: 280px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: blackjack-celebration-shell 2.35s ease both;
+}
+
+.blackjack-celebration.is-dealer {
+  top: 30%;
+}
+
+.blackjack-celebration.is-self {
+  top: 58%;
+}
+
+.blackjack-celebration-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,.44));
+}
+
+.blackjack-celebration-stage::before,
+.blackjack-celebration-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.blackjack-celebration-stage::before {
+  width: 420px;
+  height: 168px;
+  background:
+    radial-gradient(ellipse at center, rgba(243,212,125,.34), rgba(214,173,72,.14) 42%, rgba(214,173,72,0) 72%);
+  animation: blackjack-halo-pulse 2.35s ease both;
+}
+
+.blackjack-celebration-stage::after {
+  width: 310px;
+  height: 310px;
+  border: 1px solid rgba(243,212,125,.45);
+  box-shadow:
+    inset 0 0 24px rgba(214,173,72,.18),
+    0 0 34px rgba(214,173,72,.2);
+  opacity: 0;
+  animation: blackjack-ring-flare 1.55s ease-out .16s both;
+}
+
+.blackjack-celebration-cards {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  z-index: 2;
+  width: 210px;
+  height: 142px;
+  transform: translate(-50%, -50%);
+}
+
+.blackjack-celebration-card {
+  position: absolute;
+  top: 50%;
+  width: 84px;
+  height: 124px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #d2caba;
+  border-radius: 9px;
+  background:
+    linear-gradient(145deg, rgba(255,254,248,.98), rgba(232,224,207,.98));
+  color: #111;
+  font-family: var(--font-card);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.65),
+    0 16px 24px rgba(0,0,0,.38);
+}
+
+.blackjack-celebration-card span {
+  font-size: 1.12rem;
+}
+
+.blackjack-celebration-card span:last-child {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.blackjack-celebration-card strong {
+  align-self: center;
+  font-size: 2.4rem;
+}
+
+.blackjack-celebration-card.is-ace {
+  left: 24px;
+  color: #111;
+  animation: blackjack-card-left 2.35s cubic-bezier(.19,.9,.2,1) both;
+}
+
+.blackjack-celebration-card.is-face {
+  right: 24px;
+  color: #b71924;
+  animation: blackjack-card-right 2.35s cubic-bezier(.19,.9,.2,1) both;
+}
+
+.blackjack-celebration-copy {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  min-width: 300px;
+  max-width: 470px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 18px 12px;
+  border-top: 1px solid rgba(243,212,125,.64);
+  border-bottom: 1px solid rgba(243,212,125,.64);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0), rgba(4,10,7,.82) 18%, rgba(4,10,7,.9) 50%, rgba(4,10,7,.82) 82%, rgba(0,0,0,0));
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(0,0,0,.76), 0 0 18px rgba(214,173,72,.45);
+  transform: translateY(26px);
+  animation: blackjack-copy-pop 2.35s ease both;
+}
+
+.blackjack-celebration-copy span {
+  width: 100%;
+  overflow: hidden;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.blackjack-celebration-copy strong {
+  color: var(--gold-light);
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  line-height: .92;
+  text-transform: uppercase;
+}
+
+.blackjack-celebration-spark,
+.blackjack-celebration-chip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.blackjack-celebration-spark {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #fff 0 18%, var(--gold-light) 19% 48%, rgba(214,173,72,0) 70%);
+  box-shadow: 0 0 16px rgba(243,212,125,.88);
+  opacity: 0;
+  animation: blackjack-spark-flight 1.25s ease-out var(--spark-delay) both;
+}
+
+.blackjack-celebration-chip {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--celebration-chip-image) center / contain no-repeat;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.5));
+  opacity: 0;
+  animation: blackjack-chip-flight 1.55s cubic-bezier(.2,.78,.22,1) var(--celebration-chip-delay) both;
+}
+
+@keyframes blackjack-celebration-shell {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.72); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  74% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -54%) scale(.9); }
+}
+
+@keyframes blackjack-halo-pulse {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.5); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  56% { opacity: .88; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.32); }
+}
+
+@keyframes blackjack-ring-flare {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.46) rotate(0); }
+  20% { opacity: .9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18) rotate(32deg); }
+}
+
+@keyframes blackjack-card-left {
+  0% { opacity: 0; transform: translate(-114px, 42px) rotate(-34deg) scale(.62); }
+  18% { opacity: 1; transform: translate(-30px, -50%) rotate(-14deg) scale(1.06); }
+  70% { opacity: 1; transform: translate(-30px, -50%) rotate(-10deg) scale(1); }
+  100% { opacity: 0; transform: translate(-72px, -62%) rotate(-18deg) scale(.9); }
+}
+
+@keyframes blackjack-card-right {
+  0% { opacity: 0; transform: translate(114px, 42px) rotate(34deg) scale(.62); }
+  18% { opacity: 1; transform: translate(30px, -50%) rotate(14deg) scale(1.06); }
+  70% { opacity: 1; transform: translate(30px, -50%) rotate(10deg) scale(1); }
+  100% { opacity: 0; transform: translate(72px, -62%) rotate(18deg) scale(.9); }
+}
+
+@keyframes blackjack-copy-pop {
+  0% { opacity: 0; transform: translateY(38px) scale(.82); filter: blur(2px); }
+  21% { opacity: 1; transform: translateY(26px) scale(1.04); filter: blur(0); }
+  68% { opacity: 1; transform: translateY(26px) scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(12px) scale(.92); filter: blur(1px); }
+}
+
+@keyframes blackjack-spark-flight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.2) rotate(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(.08) rotate(300deg);
+  }
+}
+
+@keyframes blackjack-chip-flight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.38) rotate(0);
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--celebration-chip-x)), calc(-50% + var(--celebration-chip-y)))
+      scale(.82)
+      rotate(var(--celebration-chip-rotation));
+  }
+}
+
 .spot-label {
   position: absolute;
   left: 50%;

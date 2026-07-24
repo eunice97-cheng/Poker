@@ -10,7 +10,7 @@ import { useSocket } from '@/hooks/useSocket'
 import { useBlackjackState } from '@/hooks/useBlackjackState'
 import { appendChatEmojiCode } from '@/lib/chat-emojis'
 import { useAudio } from '@/hooks/useAudio'
-import type { BlackjackAction, BlackjackCard, ClientBlackjackHand, ClientBlackjackPlayer } from '@/types/blackjack'
+import type { BlackjackAction, BlackjackCard, BlackjackState, ClientBlackjackHand, ClientBlackjackPlayer } from '@/types/blackjack'
 import type { ChatMessage } from '@/types/poker'
 
 interface BlackjackTableClientProps {
@@ -30,6 +30,15 @@ type SessionHistoryItem = {
 type ChipAnimation = {
   id: number
   value: number
+}
+
+type BlackjackCelebrationTarget = 'dealer' | 'self' | 'table'
+
+type BlackjackCelebration = {
+  id: number
+  key: string
+  target: BlackjackCelebrationTarget
+  name: string
 }
 
 type DealerPortraitKey = 'normal' | 'smiling' | 'blinking'
@@ -86,14 +95,33 @@ const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
 const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
 const TRANSIENT_DEALER_LINE_MS = 4500
+const BLACKJACK_CELEBRATION_MS = 2350
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-9'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-10'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',
   D: '\u2666',
   C: '\u2663',
 }
+
+const BLACKJACK_CELEBRATION_SPARKS = [
+  ['-172px', '-72px', '0ms'],
+  ['-126px', '82px', '70ms'],
+  ['-68px', '-118px', '120ms'],
+  ['18px', '124px', '30ms'],
+  ['72px', '-104px', '95ms'],
+  ['138px', '74px', '150ms'],
+  ['178px', '-34px', '55ms'],
+  ['-14px', '-148px', '180ms'],
+] as const
+
+const BLACKJACK_CELEBRATION_CHIPS = [
+  { value: 10, x: '-128px', y: '74px', rotation: '-42deg', delay: '70ms' },
+  { value: 50, x: '138px', y: '-66px', rotation: '38deg', delay: '120ms' },
+  { value: 100, x: '-154px', y: '-44px', rotation: '58deg', delay: '170ms' },
+  { value: 500, x: '118px', y: '88px', rotation: '-64deg', delay: '210ms' },
+] as const
 
 const ACTION_LABELS: Record<BlackjackAction, string> = {
   hit: 'HIT',
@@ -157,6 +185,37 @@ function handScore(hand: ClientBlackjackHand) {
   return hand.score ?? scoreCards(hand.cards)
 }
 
+function isBlackjackHand(hand: ClientBlackjackHand) {
+  return hand.status === 'blackjack' || hand.result === 'Blackjack'
+}
+
+function blackjackCelebrationForState(state: BlackjackState): Omit<BlackjackCelebration, 'id'> | null {
+  const dealerHasNatural = state.phase === 'settled'
+    && state.dealerCards.length === 2
+    && state.dealerCards.every((card) => card !== null)
+    && state.dealerScore === 21
+
+  if (dealerHasNatural) {
+    return {
+      key: `${state.tableId}:${state.roundNumber}:dealer-blackjack`,
+      target: 'dealer',
+      name: 'Dealer',
+    }
+  }
+
+  const playersWithBlackjack = state.players.filter((player) => player.hands.some(isBlackjackHand))
+  if (playersWithBlackjack.length === 0) return null
+
+  const focusPlayer = playersWithBlackjack.find((player) => player.playerId === state.myPlayerId) ?? playersWithBlackjack[0]
+  const playerIds = playersWithBlackjack.map((player) => player.playerId).sort().join('|')
+
+  return {
+    key: `${state.tableId}:${state.roundNumber}:player-blackjack:${playerIds}`,
+    target: focusPlayer.playerId === state.myPlayerId ? 'self' : 'table',
+    name: playersWithBlackjack.length > 1 ? `${playersWithBlackjack.length} Players` : focusPlayer.username,
+  }
+}
+
 function otherPlayerScoreLabel(player: ClientBlackjackPlayer) {
   const hands = player.hands.filter(handHasCards)
   if (hands.length === 0) return ''
@@ -208,7 +267,10 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const [now, setNow] = useState(() => Date.now())
   const [showDealerLine, setShowDealerLine] = useState(true)
   const [chipAnimation, setChipAnimation] = useState<ChipAnimation | null>(null)
+  const [blackjackCelebration, setBlackjackCelebration] = useState<BlackjackCelebration | null>(null)
   const chipAnimationTimeoutRef = useRef<number | null>(null)
+  const blackjackCelebrationTimeoutRef = useRef<number | null>(null)
+  const seenBlackjackCelebrationsRef = useRef<Set<string>>(new Set())
   const tipTimeoutsRef = useRef<number[]>([])
 
   const {
@@ -295,6 +357,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   useEffect(() => {
     setSessionHistory([])
     recordedRoundRef.current = null
+    seenBlackjackCelebrationsRef.current.clear()
   }, [tableId])
 
   useEffect(() => {
@@ -316,10 +379,27 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   useEffect(() => {
     return () => {
       if (chipAnimationTimeoutRef.current) window.clearTimeout(chipAnimationTimeoutRef.current)
+      if (blackjackCelebrationTimeoutRef.current) window.clearTimeout(blackjackCelebrationTimeoutRef.current)
       tipTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout))
       tipTimeoutsRef.current = []
     }
   }, [])
+
+  useEffect(() => {
+    if (!blackjackState) return
+
+    const nextCelebration = blackjackCelebrationForState(blackjackState)
+    if (!nextCelebration || seenBlackjackCelebrationsRef.current.has(nextCelebration.key)) return
+
+    seenBlackjackCelebrationsRef.current.add(nextCelebration.key)
+    if (blackjackCelebrationTimeoutRef.current) window.clearTimeout(blackjackCelebrationTimeoutRef.current)
+
+    setBlackjackCelebration({ ...nextCelebration, id: Date.now() })
+    blackjackCelebrationTimeoutRef.current = window.setTimeout(() => {
+      setBlackjackCelebration(null)
+      blackjackCelebrationTimeoutRef.current = null
+    }, BLACKJACK_CELEBRATION_MS)
+  }, [blackjackState])
 
   useEffect(() => {
     if (!blackjackState) return
@@ -590,6 +670,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
       <link rel="stylesheet" href={BLACKJACK_STYLESHEET} />
 
       <main className="game-shell">
+        {blackjackCelebration && <BlackjackCelebrationEffect celebration={blackjackCelebration} />}
+
         <header className="topbar">
           <section className="balance-panel">
             <span>BALANCE</span>
@@ -1019,6 +1101,65 @@ function SplitHand({ hand, index, active }: { hand: ClientBlackjackHand; index: 
         {hand.cards.map((card, cardIndex) => <Card key={cardIndex} card={card} />)}
       </div>
       <div className="split-hand-score">{handScore(hand)}</div>
+    </div>
+  )
+}
+
+function BlackjackCelebrationEffect({ celebration }: { celebration: BlackjackCelebration }) {
+  const ownerLabel = celebration.target === 'dealer' ? 'Dealer' : celebration.name
+
+  return (
+    <div
+      key={celebration.id}
+      className={classNames('blackjack-celebration', `is-${celebration.target}`)}
+      aria-live="polite"
+      aria-label={`${ownerLabel} blackjack`}
+    >
+      <div className="blackjack-celebration-stage">
+        <div className="blackjack-celebration-cards" aria-hidden="true">
+          <div className="blackjack-celebration-card is-ace">
+            <span>A</span>
+            <strong>{SUIT_SYMBOLS.S}</strong>
+            <span>A</span>
+          </div>
+          <div className="blackjack-celebration-card is-face">
+            <span>K</span>
+            <strong>{SUIT_SYMBOLS.H}</strong>
+            <span>K</span>
+          </div>
+        </div>
+
+        <div className="blackjack-celebration-copy">
+          <span>{ownerLabel}</span>
+          <strong>BLACKJACK</strong>
+        </div>
+
+        {BLACKJACK_CELEBRATION_SPARKS.map(([x, y, delay], index) => (
+          <span
+            key={`spark-${index}`}
+            className="blackjack-celebration-spark"
+            style={{
+              '--spark-x': x,
+              '--spark-y': y,
+              '--spark-delay': delay,
+            } as CSSProperties}
+          />
+        ))}
+
+        {BLACKJACK_CELEBRATION_CHIPS.map((chip, index) => (
+          <span
+            key={`chip-${chip.value}-${index}`}
+            className="blackjack-celebration-chip"
+            style={{
+              '--celebration-chip-image': `url("/blackjack/Images/Chips/${chip.value}.png")`,
+              '--celebration-chip-x': chip.x,
+              '--celebration-chip-y': chip.y,
+              '--celebration-chip-rotation': chip.rotation,
+              '--celebration-chip-delay': chip.delay,
+            } as CSSProperties}
+          />
+        ))}
+      </div>
     </div>
   )
 }

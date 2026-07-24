@@ -41,6 +41,7 @@ const BETTING_WINDOW_MS = 10_000
 const TURN_WINDOW_MS = 10_000
 const NEXT_ROUND_DELAY_MS = 5_000
 const BET_CLOSED_PAUSE_MS = 1_300
+const PLAYER_BLACKJACK_PAUSE_MS = 1_850
 const DEALER_TURN_PAUSE_MS = 1_600
 const DEALER_CARD_PAUSE_MS = 700
 const DEALER_RESULT_HOLD_MS = 3_500
@@ -465,14 +466,23 @@ export class BlackjackRoom {
       this.state.dealerCards.push(this.drawCard())
     }
 
+    const naturalBlackjackPlayers: BlackjackServerPlayer[] = []
     for (const player of activePlayers) {
       const hand = player.hands[0]
       if (isNaturalBlackjack(hand)) {
         hand.status = 'blackjack'
+        naturalBlackjackPlayers.push(player)
       }
     }
 
-    if (scoreHand(this.state.dealerCards) === 21) {
+    const dealerNatural = scoreHand(this.state.dealerCards) === 21
+    if (!dealerNatural && naturalBlackjackPlayers.length > 0) {
+      this.setDealerMessage(randomChoice(['Natural twenty-one.', 'Blackjack! Congratulations.']))
+      this.broadcastState()
+      await delay(PLAYER_BLACKJACK_PAUSE_MS)
+    }
+
+    if (dealerNatural) {
       await this.settleRound()
       return { ok: true }
     }
@@ -807,7 +817,9 @@ export class BlackjackRoom {
           && resultLabels.length > 0
           && resultLabels.every((label) => label === 'Win' || label === 'Lose' || label === 'Push')
 
-        if (hasOnlyNormalCompareResults) {
+        if (!dealerNatural && resultLabels.includes('Blackjack')) {
+          personalResultMessages.set(player.playerId, randomChoice(['Natural twenty-one.', 'Blackjack! Congratulations.']))
+        } else if (hasOnlyNormalCompareResults) {
           personalResultMessages.set(
             player.playerId,
             net > 0
