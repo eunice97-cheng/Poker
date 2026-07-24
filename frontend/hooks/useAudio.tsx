@@ -46,6 +46,8 @@ const SFX_MAP = {
   win: '/sounds/sfx/win.mp3',
 } as const
 
+const SFX_COOLDOWN_MS = 360
+
 type SfxName = keyof typeof SFX_MAP
 
 interface AudioContextValue {
@@ -60,6 +62,7 @@ interface AudioContextValue {
   toggleSfx: () => void
   nextTrack: () => void
   playSfx: (name: SfxName) => void
+  playDealerVoice: (src: string) => void
 }
 
 const AudioContext = createContext<AudioContextValue | null>(null)
@@ -109,6 +112,25 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const pathnameRef = useRef(pathname)
   const musicVolRef = useRef(musicVol)
   const musicMuteRef = useRef(musicMute)
+  const sfxVolRef = useRef(sfxVol)
+  const sfxMuteRef = useRef(sfxMute)
+  const dealerVoiceRef = useRef<HTMLAudioElement | null>(null)
+  const dealerVoiceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sfxCooldownUntilRef = useRef(0)
+
+  const stopDealerVoice = useCallback(() => {
+    if (dealerVoiceTimerRef.current) {
+      clearTimeout(dealerVoiceTimerRef.current)
+      dealerVoiceTimerRef.current = null
+    }
+
+    const audio = dealerVoiceRef.current
+    if (!audio) return
+
+    audio.pause()
+    audio.src = ''
+    dealerVoiceRef.current = null
+  }, [])
 
   const syncPlayback = useCallback(() => {
     const audio = bgAudio.current
@@ -183,6 +205,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [musicMute, musicVol, syncPlayback])
 
   useEffect(() => {
+    sfxVolRef.current = sfxVol
+    sfxMuteRef.current = sfxMute
+
+    if (sfxMute) {
+      stopDealerVoice()
+      return
+    }
+
+    if (dealerVoiceRef.current) {
+      dealerVoiceRef.current.volume = Math.max(0, Math.min(1, sfxVol))
+    }
+  }, [sfxMute, sfxVol, stopDealerVoice])
+
+  useEffect(() => () => stopDealerVoice(), [stopDealerVoice])
+
+  useEffect(() => {
     if (musicMute) return
 
     const unlock = () => {
@@ -227,10 +265,62 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const playSfx = useCallback(
     (name: SfxName) => {
       if (sfxMute) return
+      const dealerVoice = dealerVoiceRef.current
+      if (dealerVoice && !dealerVoice.paused && !dealerVoice.ended) return
+      sfxCooldownUntilRef.current = Date.now() + SFX_COOLDOWN_MS
       playOnce(SFX_MAP[name], sfxVol)
     },
     [sfxMute, sfxVol]
   )
+
+  const playDealerVoice = useCallback((src: string) => {
+    if (sfxMuteRef.current || sfxVolRef.current <= 0) return
+
+    if (dealerVoiceTimerRef.current) {
+      clearTimeout(dealerVoiceTimerRef.current)
+      dealerVoiceTimerRef.current = null
+    }
+
+    const startVoice = () => {
+      if (sfxMuteRef.current || sfxVolRef.current <= 0) return
+
+      const waitForSfx = sfxCooldownUntilRef.current - Date.now()
+      if (waitForSfx > 0) {
+        dealerVoiceTimerRef.current = setTimeout(() => {
+          dealerVoiceTimerRef.current = null
+          startVoice()
+        }, waitForSfx)
+        return
+      }
+
+      const currentVoice = dealerVoiceRef.current
+      if (currentVoice) {
+        currentVoice.pause()
+        currentVoice.src = ''
+      }
+
+      try {
+        const audio = new Audio(src)
+        audio.preload = 'auto'
+        audio.volume = Math.max(0, Math.min(1, sfxVolRef.current))
+        dealerVoiceRef.current = audio
+
+        const clearVoice = () => {
+          if (dealerVoiceRef.current === audio) dealerVoiceRef.current = null
+        }
+
+        audio.addEventListener('ended', clearVoice, { once: true })
+        audio.addEventListener('error', clearVoice, { once: true })
+        audio.play().catch(clearVoice)
+      } catch {}
+    }
+
+    const waitMs = Math.max(120, sfxCooldownUntilRef.current - Date.now())
+    dealerVoiceTimerRef.current = setTimeout(() => {
+      dealerVoiceTimerRef.current = null
+      startVoice()
+    }, waitMs)
+  }, [])
 
   const value = useMemo<AudioContextValue>(
     () => ({
@@ -245,8 +335,9 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       toggleSfx,
       nextTrack: advanceTrack,
       playSfx,
+      playDealerVoice,
     }),
-    [advanceTrack, currentTrackLabel, musicMute, musicVol, playSfx, setMusicVol, setSfxVol, sfxMute, sfxVol, toggleMusic, toggleSfx]
+    [advanceTrack, currentTrackLabel, musicMute, musicVol, playDealerVoice, playSfx, setMusicVol, setSfxVol, sfxMute, sfxVol, toggleMusic, toggleSfx]
   )
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>

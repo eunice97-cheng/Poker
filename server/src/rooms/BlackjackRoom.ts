@@ -1037,6 +1037,7 @@ export class BlackjackRoom {
     this.state.status = 'playing'
     this.state.currentSeat = -1
     this.state.insuranceEndsAt = Date.now() + INSURANCE_WINDOW_MS
+    this.setDealerMessage('Dealer shows an Ace. Would you like to buy insurance?')
     this.syncTableStatus()
     this.broadcastState()
     this.emitTableUpdated()

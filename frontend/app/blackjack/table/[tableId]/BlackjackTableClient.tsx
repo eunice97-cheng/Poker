@@ -117,7 +117,8 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-18'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-19'
+const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',
@@ -151,6 +152,23 @@ const ACTION_LABELS: Record<BlackjackAction, string> = {
   surrender: 'SURRENDER',
 }
 
+const DEALER_AUDIO_FILES: Record<string, string> = {
+  'Place your bets, please.': 'Place your bets, please.mp3',
+  'Betting is now open.': 'Betting is now open.mp3',
+  'No more bets.': 'No more bets.mp3',
+  'Bets are closed.': 'Bets are closed.mp3',
+  'Feel free to join the next round.': 'Feel free to join the next round.mp3',
+  "Dealer's turn.": "Dealer's turn.mp3",
+  'Better luck next hand.': 'Better luck next hand.mp3',
+  'Natural twenty-one.': 'Natural twenty-one.mp3',
+  'Blackjack! Congratulations.': 'Blackjack! Congratulations.mp3',
+  'Natural blackjack for the dealer.': 'Natural blackjack for the dealer.mp3',
+  "That's a dealer blackjack.": "That's a dealer blackjack.mp3",
+  'All remaining hands win.': 'All remaining hands win.mp3',
+  'A tie this round.': 'A tie this round.mp3',
+  'Dealer shows an Ace. Would you like to buy insurance?': 'Dealer shows an Ace. Would you like to buy insurance.mp3',
+}
+
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
@@ -162,6 +180,43 @@ function randomMs([min, max]: readonly [number, number]) {
 function secondsLeft(target: number | null | undefined, now: number) {
   if (!target) return 0
   return Math.max(0, Math.ceil((target - now) / 1000))
+}
+
+function dealerAudioSrc(fileName: string) {
+  return `${DEALER_AUDIO_BASE}${fileName.split('/').map(encodeURIComponent).join('/')}`
+}
+
+function dealerAudioForLine(line: string) {
+  const trimmed = line.trim()
+  if (!trimmed) return null
+
+  const exactFile = DEALER_AUDIO_FILES[trimmed]
+  if (exactFile) return dealerAudioSrc(exactFile)
+
+  if (/^Welcome, .+\.$/.test(trimmed)) return dealerAudioSrc('Welcome.mp3')
+  if (/^Glad you can join us, .+\.$/.test(trimmed)) return dealerAudioSrc('Glad you can join us.mp3')
+  if (/^Thanks for playing, .+\.$/.test(trimmed)) return dealerAudioSrc('Thanks for playing.mp3')
+  if (/^See you next time, .+\.$/.test(trimmed)) return dealerAudioSrc('See you next time.mp3')
+  if (/^Well played, .+\.$/.test(trimmed)) return dealerAudioSrc('Well played.mp3')
+  if (/^Close one, .+\.$/.test(trimmed)) return dealerAudioSrc('Close one.mp3')
+  if (/^.+'s turn\.$/.test(trimmed)) return dealerAudioSrc('Your turn.mp3')
+
+  const introMatch = trimmed.match(/^Good evening, I'm Dealer (.+)\. Place your bets when you're ready\.$/)
+  if (introMatch?.[1]) {
+    return dealerAudioSrc(`Good evening, I'm Dealer ${introMatch[1]}. Place your bets when you're ready..mp3`)
+  }
+
+  const tippedSignoffMatch = trimmed.match(/^Thank you for the tips and support\. Dealer (.+) is signing off\.$/)
+  if (tippedSignoffMatch?.[1]) {
+    return dealerAudioSrc(`Thank you for the tips and support. Dealer ${tippedSignoffMatch[1]} is signing off..mp3`)
+  }
+
+  const signoffMatch = trimmed.match(/^Thank you for playing\. Dealer (.+) is signing off\.$/)
+  if (signoffMatch?.[1]) {
+    return dealerAudioSrc(`Thank you for playing. Dealer ${signoffMatch[1]} is signing off..mp3`)
+  }
+
+  return null
 }
 
 function dealerForTime(time: number) {
@@ -281,6 +336,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     toggleMusic,
     toggleSfx,
     playSfx,
+    playDealerVoice,
   } = useAudio()
   const [accountBalance, setAccountBalance] = useState(initialChipBalance)
   const [selectedChip, setSelectedChip] = useState(10)
@@ -312,6 +368,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const dealerSwitchTimeoutsRef = useRef<number[]>([])
   const activeDealerRef = useRef(activeDealer)
   const blackjackSfxRef = useRef({ roundKey: '', cardCount: 0, resultKey: '' })
+  const dealerVoiceKeyRef = useRef('')
 
   const {
     blackjackState,
@@ -524,6 +581,19 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     const timeout = window.setTimeout(() => setShowDealerLine(false), TRANSIENT_DEALER_LINE_MS)
     return () => window.clearTimeout(timeout)
   }, [blackjackState?.message, blackjackState?.messageUpdatedAt])
+
+  useEffect(() => {
+    const src = dealerAudioForLine(displayedDealerLine)
+    if (!src) return
+
+    const voiceKey = dealerSwitchLine
+      ? `switch:${dealerTransitionState}:${dealerSwitchLine}`
+      : `table:${blackjackState?.messageUpdatedAt ?? 0}:${displayedDealerLine}`
+
+    if (dealerVoiceKeyRef.current === voiceKey) return
+    dealerVoiceKeyRef.current = voiceKey
+    playDealerVoice(src)
+  }, [blackjackState?.messageUpdatedAt, dealerSwitchLine, dealerTransitionState, displayedDealerLine, playDealerVoice])
 
   useEffect(() => {
     if (!blackjackState || !me || blackjackState.phase !== 'settled' || !me.lastResult) return
