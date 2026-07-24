@@ -19,6 +19,7 @@ export const AVATARS: AvatarOption[] = [
   ...buildAvatarSet('m', 'Male'),
   ...buildAvatarSet('f', 'Female'),
   { id: 'avatar_gm', image: '/avatars/GM.png', label: 'GM', adminOnly: true },
+  { id: 'avatar_gm1', image: '/avatars/GM1.png', label: 'GM 1', adminOnly: true },
   { id: 'ai_alice', image: '/avatars/ai/Alice.png', label: 'Alice' },
   { id: 'ai_bernice', image: '/avatars/ai/Bernice.png', label: 'Bernice' },
   { id: 'ai_candice', image: '/avatars/ai/Candice.png', label: 'Candice' },
