@@ -300,7 +300,6 @@ export function PokerTable({
     const shuffleKey = `${gameState.tableId}:${gameState.handNumber}`
     if (shuffleKey === lastShuffleKey.current) return
     lastShuffleKey.current = shuffleKey
-    playSfx('shuffle')
     setTimeout(() => {
       playSfx('deal')
     }, 250)
@@ -599,6 +598,7 @@ export function PokerTable({
           <ActionPanel
             validActions={gameState.validActions}
             callAmount={gameState.callAmount}
+            pot={gameState.pot}
             minRaise={gameState.minRaise}
             myStack={me?.stack ?? 0}
             myCurrentBet={me?.currentBet ?? 0}

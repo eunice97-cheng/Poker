@@ -7,12 +7,14 @@ interface BetSliderProps {
   minRaise: number
   maxRaise: number
   bigBlind: number
+  pot: number
   callAmount: number
+  myCurrentBet: number
   onRaise: (amount: number) => void
   onCancel: () => void
 }
 
-export function BetSlider({ minRaise, maxRaise, bigBlind, callAmount, onRaise, onCancel }: BetSliderProps) {
+export function BetSlider({ minRaise, maxRaise, bigBlind, pot, callAmount, myCurrentBet, onRaise, onCancel }: BetSliderProps) {
   const clampAmount = useCallback((value: number) => {
     const rounded = Math.round(value)
     return Math.min(maxRaise, Math.max(minRaise, rounded))
@@ -45,6 +47,16 @@ export function BetSlider({ minRaise, maxRaise, bigBlind, callAmount, onRaise, o
   const handleRaise = useCallback(() => {
     onRaise(amount)
   }, [amount, onRaise])
+
+  const baseCommitment = myCurrentBet + callAmount
+  const potAfterCall = Math.max(bigBlind, pot + callAmount)
+  const presets = [
+    { label: 'Min', value: minRaise },
+    { label: '1/2 Pot', value: baseCommitment + Math.round(potAfterCall * 0.5) },
+    { label: 'Pot', value: baseCommitment + potAfterCall },
+    { label: '2x Pot', value: baseCommitment + potAfterCall * 2 },
+    { label: 'Max', value: maxRaise },
+  ].map((preset) => ({ ...preset, value: clampAmount(preset.value) }))
 
   return (
     <div className="w-72 rounded-xl border border-gray-700 bg-gray-900/95 p-4">
@@ -93,18 +105,12 @@ export function BetSlider({ minRaise, maxRaise, bigBlind, callAmount, onRaise, o
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {[
-          { label: 'Min', value: minRaise },
-          { label: '1/2 Pot', value: Math.round(callAmount * 1.5) },
-          { label: 'Pot', value: callAmount * 2 },
-          { label: '2x Pot', value: callAmount * 4 },
-          { label: 'Max', value: maxRaise },
-        ].map(({ label, value }) => (
+        {presets.map(({ label, value }) => (
           <button
             key={label}
             type="button"
             onClick={() => setPreset(value)}
-            className="rounded bg-gray-700 px-2 py-1 text-xs text-white transition-colors hover:bg-gray-600"
+            className="rounded bg-gray-700 px-2 py-1 text-xs text-white transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400/70"
           >
             {label}
           </button>

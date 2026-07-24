@@ -8,6 +8,7 @@ import { BetSlider } from './BetSlider'
 interface ActionPanelProps {
   validActions: PlayerAction[]
   callAmount: number
+  pot: number
   minRaise: number
   myStack: number
   myCurrentBet: number
@@ -16,7 +17,7 @@ interface ActionPanelProps {
   timeLeft: number
 }
 
-export function ActionPanel({ validActions, callAmount, minRaise, myStack, myCurrentBet, bigBlind, onAction, timeLeft }: ActionPanelProps) {
+export function ActionPanel({ validActions, callAmount, pot, minRaise, myStack, myCurrentBet, bigBlind, onAction, timeLeft }: ActionPanelProps) {
   const [showRaiseSlider, setShowRaiseSlider] = useState(false)
 
   if (validActions.length === 0) return null
@@ -31,7 +32,9 @@ export function ActionPanel({ validActions, callAmount, minRaise, myStack, myCur
             minRaise={minRaise}
             maxRaise={maxRaise}
             bigBlind={bigBlind}
+            pot={pot}
             callAmount={callAmount}
+            myCurrentBet={myCurrentBet}
             onRaise={(amount) => {
               setShowRaiseSlider(false)
               onAction('raise', amount)

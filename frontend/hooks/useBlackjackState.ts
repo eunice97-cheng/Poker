@@ -88,7 +88,19 @@ export function useBlackjackState(socket: Socket | null, tableId: string) {
         return
       }
 
+      let settled = false
+      const timeout = setTimeout(() => {
+        if (settled) return
+        settled = true
+        const response = { error: 'No response from blackjack table' }
+        setLastError(response.error)
+        resolve(response)
+      }, 8000)
+
       socket.emit(event, payload, (res?: AckResponse) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
         const response = res ?? { error: 'No response from blackjack table' }
         setLastError(response.error ?? '')
         resolve(response)
