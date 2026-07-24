@@ -117,7 +117,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-19'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-20'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -263,6 +263,11 @@ function signedMoney(value: number) {
   if (value > 0) return `+${money(value)}`
   if (value < 0) return `-${money(Math.abs(value))}`
   return '$0'
+}
+
+function clampIntegerValue(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return min
+  return Math.max(min, Math.min(max, Math.floor(value)))
 }
 
 function historyTypeFromNet(net: number, label: string): SessionHistoryItem['type'] {
@@ -435,6 +440,10 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const playerHands = me?.hands ?? []
   const activeHand = playerHands[me?.activeHandIndex ?? 0] ?? playerHands[0] ?? null
   const currentBet = playerHands.length > 0 ? playerHands.reduce((sum, hand) => sum + hand.bet, 0) : me?.bet ?? 0
+  const tableMinBuyin = blackjackState?.minBuyin ?? bustedInfo?.minBuyin ?? 1000
+  const tableMaxBuyin = blackjackState?.maxBuyin ?? bustedInfo?.maxBuyin ?? 20000
+  const tableStack = me?.stack ?? waitingMe?.stack ?? 0
+  const normalizedRebuyAmount = clampIntegerValue(rebuyAmount, tableMinBuyin, tableMaxBuyin)
   const chatMessages = useMemo<ChatMessage[]>(
     () => messages.map((message) => ({ ...message, isSystem: false })),
     [messages]
@@ -450,6 +459,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   ], [activeDealer.id, activeDealer.name, activeDealerTipTotal])
   const canBet = blackjackState?.phase === 'betting'
   const isRoundLocked = blackjackState?.phase === 'playing' || blackjackState?.phase === 'insurance'
+  const needsTableBuyIn = Boolean((me || waitingMe) && !isRoundLocked && tableStack < (blackjackState?.minBet ?? 0))
   const canSitAtSeat = Boolean(waitingMe && blackjackState && blackjackState.players.length < blackjackState.maxPlayers)
   const isMyTurn = Boolean(me?.isCurrentTurn)
   const bettingSecondsLeft = secondsLeft(blackjackState?.bettingEndsAt, now)
@@ -471,6 +481,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     blackjackState?.phase === 'insurance' &&
     dealerUpcard?.rank === 'A' &&
     me &&
+    activeHand?.status === 'playing' &&
     insuranceAmount > 0 &&
     (me.insuranceBet ?? 0) <= 0 &&
     me.stack >= insuranceAmount
@@ -486,6 +497,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     ? me?.insuranceBet
       ? `Insurance placed: ${money(me.insuranceBet)}`
       : 'Dealer shows ace. Insurance is open.'
+    : needsTableBuyIn
+      ? 'Buy in to continue playing.'
     : 'Click a chip to place your bet'
   const displayMessage = leaveError || lastError || bustedInfo?.message || tablePrompt
   const bgmVolume = Math.round(musicVol * 100)
@@ -502,6 +515,11 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     const interval = window.setInterval(() => setNow(Date.now()), 250)
     return () => window.clearInterval(interval)
   }, [blackjackState?.bettingEndsAt, blackjackState?.insuranceEndsAt, blackjackState?.turnEndsAt, blackjackState?.nextRoundStartsAt])
+
+  useEffect(() => {
+    if (!blackjackState) return
+    setRebuyAmount((amount) => clampIntegerValue(amount, blackjackState.minBuyin, blackjackState.maxBuyin))
+  }, [blackjackState?.maxBuyin, blackjackState?.minBuyin])
 
   useEffect(() => {
     setSessionHistory([])
@@ -843,7 +861,9 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     setRebuyLoading(true)
     clearLastError()
 
-    const res = await rebuy(rebuyAmount)
+    const amount = clampIntegerValue(rebuyAmount, blackjackState.minBuyin, blackjackState.maxBuyin)
+    setRebuyAmount(amount)
+    const res = await rebuy(amount)
     if (res.balance !== undefined) setAccountBalance(res.balance)
     if (!res.error) {
       setSettingsOpen(false)
@@ -1244,21 +1264,52 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
             <strong id="winAmount">{signedMoney(lastWin)}</strong>
           </aside>
 
-          <div className="chip-selector" id="chipRow">
-            {CHIP_VALUES.map((value) => (
+          {needsTableBuyIn ? (
+            <div className="rebuy-panel" id="rebuyPanel" aria-label="Buy in to the blackjack table">
+              <div className="rebuy-copy">
+                <span>TABLE STACK</span>
+                <strong>Buy in to continue</strong>
+              </div>
+              <label className="rebuy-amount" htmlFor="rebuyAmountInput">
+                <span>BUY-IN</span>
+                <input
+                  id="rebuyAmountInput"
+                  type="number"
+                  min={tableMinBuyin}
+                  max={tableMaxBuyin}
+                  step={100}
+                  value={rebuyAmount}
+                  onChange={(event) => {
+                    setRebuyAmount(clampIntegerValue(Number(event.target.value), tableMinBuyin, tableMaxBuyin))
+                  }}
+                />
+              </label>
               <button
-                key={value}
                 type="button"
-                className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
-                data-value={value}
-                aria-label={`${money(value)} chip`}
-                disabled={!canBet || !me || me.stack < value || me.bet + value > blackjackState.maxBet}
-                onClick={() => handleChip(value)}
+                className="rebuy-submit"
+                disabled={rebuyLoading}
+                onClick={handleRebuy}
               >
-                <span>{value}</span>
+                {rebuyLoading ? 'Buying In' : `Buy In ${money(normalizedRebuyAmount)}`}
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="chip-selector" id="chipRow">
+              {CHIP_VALUES.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
+                  data-value={value}
+                  aria-label={`${money(value)} chip`}
+                  disabled={!canBet || !me || me.stack < value || me.bet + value > blackjackState.maxBet}
+                  onClick={() => handleChip(value)}
+                >
+                  <span>{value}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="action-row">
             <button type="button" id="undoBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet}>

@@ -421,6 +421,7 @@ export class BlackjackRoom {
 
     const hand = player.hands[0]
     if (!hand || hand.bet <= 0) return { error: 'No live hand to insure' }
+    if (hand.status !== 'playing') return { error: 'Insurance is not available for this hand' }
 
     const amount = Math.floor(hand.bet / 2)
     if (amount <= 0) return { error: 'Insurance amount is too small' }
@@ -505,6 +506,9 @@ export class BlackjackRoom {
 
     const dealerNatural = scoreHand(this.state.dealerCards) === 21
     const dealerShowsAce = this.state.dealerCards[0]?.rank === 'A'
+    const hasInsuranceEligibleHands = activePlayers.some((player) =>
+      player.hands.some((hand) => hand.bet > 0 && hand.status === 'playing')
+    )
 
     if (naturalBlackjackPlayers.length > 0) {
       this.setDealerMessage(randomChoice(['Natural twenty-one.', 'Blackjack! Congratulations.']))
@@ -512,7 +516,7 @@ export class BlackjackRoom {
       await delay(PLAYER_BLACKJACK_PAUSE_MS)
     }
 
-    if (dealerShowsAce) {
+    if (dealerShowsAce && hasInsuranceEligibleHands) {
       this.beginInsuranceCountdown(dealerNatural)
       return { ok: true }
     }
@@ -618,7 +622,17 @@ export class BlackjackRoom {
 
   async addToStack(playerId: string, amount: number) {
     const player = this.getPlayerByPlayerId(playerId)
-    if (!player) return { error: 'Not at this blackjack table' }
+    if (!player) {
+      const observer = this.getObserverByPlayerId(playerId)
+      if (!observer) return { error: 'Not at this blackjack table' }
+
+      observer.stack += amount
+      if (!isLocalOnlyTable(this.tableId) && observer.hasTableEntry) {
+        await supabaseService.updateTablePlayerStack(this.tableId, observer.playerId, observer.stack)
+      }
+      this.broadcastState()
+      return { ok: true, stack: observer.stack }
+    }
 
     player.stack += amount
     if (!isLocalOnlyTable(this.tableId)) {

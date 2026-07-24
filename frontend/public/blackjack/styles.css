@@ -1965,6 +1965,110 @@ button { font: inherit; }
   box-shadow: 0 8px 20px rgba(0,0,0,.45);
 }
 
+.rebuy-panel {
+  grid-column: 1;
+  grid-row: 2;
+  position: static;
+  justify-self: start;
+  width: min(100%, var(--chip-tray-width));
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: minmax(108px, 1fr) 112px 128px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(214,173,72,.44);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(243,212,125,.12), transparent 45%),
+    linear-gradient(180deg, rgba(9,9,8,.98), rgba(3,7,5,.96));
+  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 8px 20px rgba(0,0,0,.45);
+}
+
+.rebuy-copy {
+  min-width: 0;
+}
+
+.rebuy-copy span,
+.rebuy-amount span {
+  display: block;
+  color: var(--gold-light);
+  font-family: var(--font-display);
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.rebuy-copy strong {
+  display: block;
+  margin-top: 7px;
+  color: #fff;
+  font-size: .84rem;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.rebuy-amount {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rebuy-amount input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(214,173,72,.36);
+  border-radius: 6px;
+  background: rgba(2,5,4,.78);
+  color: #fff;
+  font-family: var(--font-number);
+  font-size: .92rem;
+  font-weight: 800;
+  outline: 0;
+}
+
+.rebuy-amount input:focus {
+  border-color: rgba(243,212,125,.78);
+  box-shadow: 0 0 0 2px rgba(214,173,72,.16);
+}
+
+.rebuy-submit {
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid rgba(243,212,125,.74);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #ffd35a, #f1b500);
+  color: #090805;
+  font-family: var(--font-display);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 1px rgba(255,255,255,.32);
+  cursor: pointer;
+  box-shadow: inset 0 1px rgba(255,255,255,.34), 0 8px 16px rgba(0,0,0,.36);
+}
+
+.rebuy-submit:hover:not(:disabled),
+.rebuy-submit:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  outline: 0;
+}
+
+.rebuy-submit:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.55) brightness(.72);
+  opacity: .7;
+}
+
 .chip {
   position: relative;
   width: 54px;
@@ -2455,6 +2559,7 @@ button { font: inherit; }
   }
   .message,
   .chip-selector,
+  .rebuy-panel,
   .action-row,
   .round-info,
   .round-tip-control {
@@ -2463,6 +2568,10 @@ button { font: inherit; }
     justify-self: center;
   }
   .chip-selector { width: max-content; max-width: 100%; }
+  .rebuy-panel {
+    width: min(100%, 430px);
+    grid-template-columns: minmax(120px, 1fr) 112px 128px;
+  }
   .action-row { flex-wrap: wrap; }
   .round-info { position: static; transform: none; width: min(100%, 360px); }
   .round-tip-control {
@@ -2600,6 +2709,18 @@ button { font: inherit; }
   }
   .round-info { min-height: 72px; }
   .message { margin-bottom: 6px; }
+  .rebuy-panel {
+    min-height: 70px;
+    grid-template-columns: minmax(100px, 1fr) 104px 118px;
+    padding: 8px 10px;
+  }
+  .rebuy-copy strong {
+    font-size: .78rem;
+  }
+  .rebuy-submit {
+    height: 38px;
+    font-size: .62rem;
+  }
 }
 
 @media (max-width: 760px) {
@@ -2637,6 +2758,10 @@ button { font: inherit; }
     grid-template-columns: 1fr;
     max-height: calc(84vh - 72px);
     padding: 14px;
+  }
+  .rebuy-panel {
+    grid-template-columns: 1fr;
+    width: min(100%, 360px);
   }
   .table-frame { padding: 0; }
   .session-history {
