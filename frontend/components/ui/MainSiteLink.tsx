@@ -60,7 +60,7 @@ export function MainSiteLink() {
   const pathname = usePathname()
   const href = normalizeUrl(process.env.NEXT_PUBLIC_MAIN_SITE_URL) || DEFAULT_MAIN_SITE_URL
 
-  if (pathname?.startsWith('/table/')) {
+  if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')) {
     return null
   }
 

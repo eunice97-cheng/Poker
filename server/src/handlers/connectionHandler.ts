@@ -4,7 +4,10 @@ import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
 import { registerTableHandlers } from './tableHandler'
 import { registerGameHandlers } from './gameHandler'
+import { registerBlackjackHandlers } from './blackjackHandler'
+import { blackjackRoomManager } from '../rooms/BlackjackRoomManager'
 import { sanitizeChatText } from '../utils/chatEmojis'
+import { isLocalOnlyTable } from '../utils/localAdmin'
 
 const LOBBY_ROOM = 'lobby'
 const MAX_LOBBY_MESSAGES = 60
@@ -42,6 +45,7 @@ export function registerConnectionHandler(io: Server) {
 
     registerTableHandlers(io, authed)
     registerGameHandlers(io, authed)
+    registerBlackjackHandlers(io, authed)
 
     socket.on('lobby_chat_message', (data: { text: string }, callback) => {
       const text = sanitizeChatText(data.text?.trim().slice(0, 240) ?? '', authed.hasVipEmojis)
@@ -97,21 +101,73 @@ export function registerConnectionHandler(io: Server) {
       console.log(`[WS] Disconnected: ${authed.username} socket=${socket.id}`)
       lastLobbyMessageAt.delete(socket.id)
 
+      const blackjackRoom = blackjackRoomManager.getRoomBySocketId(socket.id)
+      if (blackjackRoom) {
+        const blackjackObserver = blackjackRoom.getObserverBySocketId(socket.id)
+        if (blackjackObserver) {
+          blackjackRoom.removeObserver(blackjackObserver.playerId)
+
+          if (!isLocalOnlyTable(blackjackRoom.tableId)) {
+            if (blackjackObserver.stack > 0) {
+              await supabaseService.addChips(blackjackObserver.playerId, blackjackRoom.tableId, blackjackObserver.stack, 'cashout').catch(console.error)
+            }
+            if (blackjackObserver.hasTableEntry) {
+              await supabaseService.removeTablePlayer(blackjackRoom.tableId, blackjackObserver.playerId).catch(console.error)
+            }
+          }
+
+          if (!blackjackRoom.shouldKeepAlive()) {
+            if (!isLocalOnlyTable(blackjackRoom.tableId)) {
+              await supabaseService.deleteTable(blackjackRoom.tableId).catch(console.error)
+            }
+            blackjackRoomManager.deleteRoom(blackjackRoom.tableId)
+            io.emit('blackjack_table_deleted', { tableId: blackjackRoom.tableId })
+          }
+          return
+        }
+
+        blackjackRoom.handleDisconnect(socket.id, async (removedPlayer, cashout) => {
+          if (isLocalOnlyTable(blackjackRoom.tableId)) {
+            if (!blackjackRoom.shouldKeepAlive()) {
+              blackjackRoomManager.deleteRoom(blackjackRoom.tableId)
+              io.emit('blackjack_table_deleted', { tableId: blackjackRoom.tableId })
+            }
+            return
+          }
+
+          if (cashout > 0) {
+            await supabaseService.addChips(removedPlayer.playerId, blackjackRoom.tableId, cashout, 'cashout').catch(console.error)
+          }
+          await supabaseService.removeTablePlayer(blackjackRoom.tableId, removedPlayer.playerId).catch(console.error)
+          if (!blackjackRoom.shouldKeepAlive()) {
+            await supabaseService.deleteTable(blackjackRoom.tableId).catch(console.error)
+            blackjackRoomManager.deleteRoom(blackjackRoom.tableId)
+            io.emit('blackjack_table_deleted', { tableId: blackjackRoom.tableId })
+          }
+        })
+      }
+
       const room = roomManager.getRoomBySocketId(socket.id)
       if (!room) return
 
       const observer = room.getObserverBySocketId(socket.id)
       if (observer) {
         room.removeObserver(observer.playerId)
-        if (observer.stack > 0) {
-          await supabaseService.addChips(observer.playerId, room.tableId, observer.stack, 'cashout').catch(console.error)
-        }
-        if (observer.hasTableEntry) {
-          await supabaseService.removeTablePlayer(room.tableId, observer.playerId).catch(console.error)
+        const localOnly = isLocalOnlyTable(room.tableId)
+        if (!localOnly) {
+          if (observer.stack > 0) {
+            await supabaseService.addChips(observer.playerId, room.tableId, observer.stack, 'cashout').catch(console.error)
+          }
+          if (observer.hasTableEntry) {
+            await supabaseService.removeTablePlayer(room.tableId, observer.playerId).catch(console.error)
+          }
         }
         if (!room.shouldKeepAlive()) {
-          await supabaseService.deleteTable(room.tableId).catch(console.error)
+          if (!localOnly) {
+            await supabaseService.deleteTable(room.tableId).catch(console.error)
+          }
           roomManager.deleteRoom(room.tableId)
+          io.emit('table_deleted', { tableId: room.tableId })
         }
         return
       }
@@ -126,14 +182,20 @@ export function registerConnectionHandler(io: Server) {
       room.engine.broadcastGameState()
 
       room.handleDisconnect(socket.id, async (removedPlayer) => {
-        if (removedPlayer.stack > 0) {
-          await supabaseService.addChips(removedPlayer.playerId, room.tableId, removedPlayer.stack, 'cashout').catch(console.error)
+        const localOnly = isLocalOnlyTable(room.tableId)
+        if (!localOnly) {
+          if (removedPlayer.stack > 0) {
+            await supabaseService.addChips(removedPlayer.playerId, room.tableId, removedPlayer.stack, 'cashout').catch(console.error)
+          }
+          await supabaseService.removeTablePlayer(room.tableId, removedPlayer.playerId).catch(console.error)
         }
-        await supabaseService.removeTablePlayer(room.tableId, removedPlayer.playerId).catch(console.error)
 
         if (!room.shouldKeepAlive()) {
-          await supabaseService.deleteTable(room.tableId).catch(console.error)
+          if (!localOnly) {
+            await supabaseService.deleteTable(room.tableId).catch(console.error)
+          }
           roomManager.deleteRoom(room.tableId)
+          io.emit('table_deleted', { tableId: room.tableId })
         }
       })
     })

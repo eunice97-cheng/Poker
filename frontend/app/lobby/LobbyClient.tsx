@@ -27,6 +27,7 @@ interface LobbyClientProps {
   unreadMailCount: number
   isAdmin: boolean
   hasVipEmojis: boolean
+  isLocalAdmin?: boolean
 }
 
 type AckResponse = {
@@ -57,7 +58,7 @@ function emitWithAck<T>(
   })
 }
 
-export function LobbyClient({ initialTables, profile, token, unreadMailCount, isAdmin, hasVipEmojis }: LobbyClientProps) {
+export function LobbyClient({ initialTables, profile, token, unreadMailCount, isAdmin, hasVipEmojis, isLocalAdmin = false }: LobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { playSfx } = useAudio()
@@ -150,7 +151,11 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
 
   const handleSignOut = async () => {
     playSfx('click')
-    await supabase.auth.signOut()
+    if (isLocalAdmin) {
+      await fetch('/api/dev/local-admin-logout', { method: 'POST' })
+    } else {
+      await supabase.auth.signOut()
+    }
     router.push('/auth/login')
   }
 
@@ -272,6 +277,12 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               >
                 {inviteLabel === 'done' ? 'Copied' : 'Invite'}
               </button>
+              <Link
+                href="/blackjack"
+                className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-200/40 hover:bg-emerald-400/15"
+              >
+                Blackjack
+              </Link>
               {isAdmin && (
                 <Link
                   href="/gm"
@@ -310,6 +321,12 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   >
                     Start a table
                   </Button>
+                  <Link
+                    href="/blackjack"
+                    className="w-full rounded-full border border-emerald-300/20 bg-emerald-400/10 px-6 py-3 text-center text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-200/40 hover:bg-emerald-400/15 sm:w-auto"
+                  >
+                    Blackjack room
+                  </Link>
                   <button
                     onClick={handleInvite}
                     className="w-full rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white sm:w-auto"

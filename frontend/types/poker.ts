@@ -76,6 +76,7 @@ export interface TableInfo {
   id: string
   name: string
   host_id: string | null
+  game_type?: 'poker' | 'blackjack'
   max_players: number
   small_blind: number
   big_blind: number

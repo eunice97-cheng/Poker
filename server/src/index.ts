@@ -6,10 +6,12 @@ import { Server } from 'socket.io'
 import { authenticateSocket } from './middleware/authMiddleware'
 import { registerConnectionHandler } from './handlers/connectionHandler'
 import { roomManager } from './rooms/RoomManager'
+import { blackjackRoomManager } from './rooms/BlackjackRoomManager'
 import { supabaseService } from './services/supabaseService'
 import kofiWebhookRouter from './routes/kofiWebhook'
 import redeemCodeRouter from './routes/redeemCode'
 import adminBuzzerRouter from './routes/adminBuzzer'
+import { isLocalOnlyTable } from './utils/localAdmin'
 
 const PORT = parseInt(process.env.PORT ?? '4000')
 
@@ -75,6 +77,7 @@ const io = new Server(httpServer, {
 
 // Initialize room manager with the io instance
 roomManager.init(io)
+blackjackRoomManager.init(io)
 
 // Auth middleware for all socket connections
 io.use(authenticateSocket)
@@ -95,6 +98,7 @@ app.get('/health', (_, res) => {
   res.json({
     status: 'ok',
     rooms: roomManager.getAllRooms().length,
+    blackjackRooms: blackjackRoomManager.getAllRooms().length,
     uptime: process.uptime(),
   })
 })
@@ -104,11 +108,39 @@ app.get('/tables', (_, res) => {
   const tables = roomManager.getAllRooms().map((room) => ({
     id: room.tableId,
     name: room.state.tableName,
+    game_type: 'poker',
+    host_id: null,
+    player_count: room.getPlayerCount(),
     playerCount: room.getPlayerCount(),
+    max_players: room.state.maxPlayers,
     maxPlayers: room.state.maxPlayers,
+    small_blind: room.state.smallBlind,
     smallBlind: room.state.smallBlind,
+    big_blind: room.state.bigBlind,
     bigBlind: room.state.bigBlind,
+    min_buyin: room.state.minBuyin,
+    minBuyin: room.state.minBuyin,
+    max_buyin: room.state.maxBuyin,
+    maxBuyin: room.state.maxBuyin,
     status: room.state.phase === 'waiting' ? 'waiting' : 'playing',
+    created_at: room.state.handStartedAt?.toISOString() ?? new Date().toISOString(),
+  }))
+  res.json(tables)
+})
+
+app.get('/blackjack/tables', (_, res) => {
+  const tables = blackjackRoomManager.getAllRooms().map((room) => ({
+    id: room.tableId,
+    name: room.state.tableName,
+    game_type: 'blackjack',
+    host_id: null,
+    max_players: room.state.maxPlayers,
+    small_blind: room.state.minBet,
+    big_blind: room.state.maxBet,
+    min_buyin: room.state.minBuyin,
+    max_buyin: room.state.maxBuyin,
+    status: room.state.status,
+    player_count: room.getPlayerCount(),
   }))
   res.json(tables)
 })
@@ -117,6 +149,8 @@ async function reconcileLobbyTables() {
   const rooms = roomManager.getAllRooms()
 
   for (const room of rooms) {
+    if (isLocalOnlyTable(room.tableId)) continue
+
     const status = room.state.phase === 'waiting' ? 'waiting' : 'playing'
     await supabaseService
       .updateTableStatus(room.tableId, status, room.getPlayerCount())

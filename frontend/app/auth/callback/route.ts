@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const type = searchParams.get('type')
   const siteUrl = getServerSiteUrl(origin)
 
   if (code) {
@@ -19,6 +20,10 @@ export async function GET(request: NextRequest) {
         verified: 'true',
         profile: profileError ? 'failed' : 'ok',
       })
+
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${siteUrl}/auth/reset-password`)
+      }
 
       return NextResponse.redirect(`${siteUrl}/auth/login?${params.toString()}`)
     }

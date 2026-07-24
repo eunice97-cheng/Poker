@@ -4,12 +4,25 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { ensureProfileExists } from '@/lib/profile'
 import { getAuthErrorMessage } from '@/lib/auth-errors'
 import { getClientSiteUrl } from '@/lib/site-url'
 
 const REMEMBERED_EMAIL_KEY = 'poker_remembered_email'
+const LOGIN_TIMEOUT_MS = 15000
+
+function withTimeout<T>(promise: Promise<T>, timeoutMessage: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error(timeoutMessage))
+    }, LOGIN_TIMEOUT_MS)
+
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => window.clearTimeout(timeout))
+  })
+}
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -21,7 +34,6 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [showResendConfirmation, setShowResendConfirmation] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
@@ -40,13 +52,20 @@ export function LoginForm() {
     setShowResendConfirmation(false)
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const normalizedEmail = email.trim()
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: normalizedEmail, password }),
+        'Sign in is taking too long. Check your internet/Supabase connection and try again.'
+      )
       if (error) throw error
 
       const {
         data: { user },
         error: userError,
-      } = await supabase.auth.getUser()
+      } = await withTimeout(
+        supabase.auth.getUser(),
+        'Signed in, but loading your account took too long. Try refreshing the page.'
+      )
 
       if (userError || !user) {
         throw userError ?? new Error('Unable to load your account')
@@ -61,11 +80,11 @@ export function LoginForm() {
       if (profileError) throw profileError
 
       if (rememberEmail) {
-        localStorage.setItem(REMEMBERED_EMAIL_KEY, email)
+        localStorage.setItem(REMEMBERED_EMAIL_KEY, normalizedEmail)
       } else {
         localStorage.removeItem(REMEMBERED_EMAIL_KEY)
       }
-      router.push('/lobby')
+      window.location.assign('/lobby')
     } catch (err: unknown) {
       const nextError = getAuthErrorMessage(err, 'Login failed')
       setError(nextError)
@@ -175,6 +194,10 @@ export function LoginForm() {
         No account?{' '}
         <Link href="/auth/register" className="text-yellow-400 hover:text-yellow-300">
           Register
+        </Link>{' '}
+        <span className="text-gray-700">|</span>{' '}
+        <Link href="/auth/forgot-password" className="text-yellow-400 hover:text-yellow-300">
+          Forgot password?
         </Link>
       </p>
     </form>

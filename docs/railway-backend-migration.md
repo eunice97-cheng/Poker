@@ -11,6 +11,7 @@ This repo is ready to move the realtime backend from Render to Railway while kee
 5. Set `Root Directory` to `/server`.
 6. Set `Config as Code` path to `/server/railway.toml`.
 7. In `Networking -> Public Networking`, click `Generate Domain`.
+8. Make sure the public domain points to the same port the server logs at startup. By default this backend listens on `4000`, so Public Networking should target port `4000` unless you explicitly set a different `PORT` variable.
 
 Railway documents both the root-directory monorepo flow and the note that config-as-code does not follow the root directory path:
 https://docs.railway.com/guides/monorepo
@@ -38,7 +39,7 @@ Notes:
 
 - `CLIENT_URL`, `CORS_ALLOWED_ORIGINS`, and `SOCKET_ALLOWED_ORIGINS` should contain your Vercel domain.
 - If you use both a Vercel default domain and a custom domain, include both as a comma-separated list.
-- Railway provides `PORT` automatically, so do not hardcode it unless needed.
+- Railway may provide `PORT` automatically, but the public networking target must match whatever the server logs as `Poker game server running on port ...`. If you see `502 Bad Gateway` while the server says it started, check this port first.
 
 Railway variable behavior:
 https://docs.railway.com/develop/variables

@@ -32,7 +32,6 @@ export async function sendChipCodeEmail(params: ChipCodeEmailParams) {
 
   const siteUrl = getSiteUrl()
   const redeemUrl = `${siteUrl}/redeem`
-  const logoUrl = `${siteUrl}/icon.svg`
   const safeBuyerName = escapeHtml(params.buyerName)
   const safeCode = escapeHtml(params.code)
   const safeLabel = escapeHtml(params.label)
@@ -42,7 +41,11 @@ export async function sendChipCodeEmail(params: ChipCodeEmailParams) {
       <div style="max-width:560px;margin:0 auto;border:1px solid rgba(243,210,162,0.24);border-radius:28px;overflow:hidden;background:linear-gradient(180deg,#1a0d08 0%,#100806 100%);box-shadow:0 30px 80px rgba(0,0,0,0.35)">
         <div style="padding:24px 28px 18px;background:radial-gradient(circle at top,rgba(243,180,91,0.18),transparent 54%)">
           <div style="display:flex;align-items:center;gap:14px">
-            <img src="${logoUrl}" alt="ASL Basement Poker" width="56" height="56" style="display:block;border-radius:14px;background:#120907" />
+            <div style="position:relative;display:flex;height:56px;width:56px;align-items:center;justify-content:center;border-radius:16px;border:1px solid rgba(243,210,162,0.26);background:#080403;box-shadow:0 0 24px rgba(241,180,91,0.18)">
+              <div style="position:absolute;inset:4px;border-radius:14px;border:1px solid rgba(255,241,186,0.18)"></div>
+              <div style="position:absolute;right:12px;top:12px;height:6px;width:6px;border-radius:999px;background:#fff7cf;box-shadow:0 0 10px rgba(255,247,207,0.9)"></div>
+              <div style="font-size:31px;line-height:1;background:linear-gradient(180deg,#fff3bd 0%,#f3cf73 26%,#cc8c27 62%,#8f5b12 100%);-webkit-background-clip:text;background-clip:text;color:transparent">♠</div>
+            </div>
             <div>
               <div style="font-size:28px;line-height:1.05;font-weight:700;color:#fff3e2">ASL Basement Poker</div>
               <div style="margin-top:6px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.34em;text-transform:uppercase;color:rgba(243,210,162,0.66)">Drinks first. Cards after.</div>

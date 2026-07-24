@@ -12,6 +12,7 @@ export const supabaseService = {
   async createTable(params: {
     name: string
     hostId: string
+    gameType?: 'poker' | 'blackjack'
     maxPlayers: number
     smallBlind: number
     bigBlind: number
@@ -23,6 +24,7 @@ export const supabaseService = {
       .insert({
         name: params.name,
         host_id: params.hostId,
+        game_type: params.gameType ?? 'poker',
         max_players: params.maxPlayers,
         small_blind: params.smallBlind,
         big_blind: params.bigBlind,
@@ -38,6 +40,7 @@ export const supabaseService = {
       id: data.id,
       name: data.name,
       hostId: data.host_id,
+      gameType: data.game_type ?? 'poker',
       maxPlayers: data.max_players,
       smallBlind: data.small_blind,
       bigBlind: data.big_blind,
@@ -150,6 +153,16 @@ export const supabaseService = {
       .update({ stack })
       .eq('table_id', tableId)
       .eq('player_id', playerId)
+  },
+
+  async incrementGamesPlayed(playerIds: string[]) {
+    if (playerIds.length === 0) return
+    await supabase.rpc('increment_games_played', { player_ids: playerIds })
+  },
+
+  async incrementGamesWon(playerIds: string[]) {
+    if (playerIds.length === 0) return
+    await supabase.rpc('increment_games_won', { player_ids: playerIds })
   },
 
   // ─── Hand History ──────────────────────────────────────────────────────

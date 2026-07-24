@@ -21,6 +21,16 @@ server/dist/
 *.log
 npm-debug.log*
 
+# Local QA artifacts
+__*.png
+__*_profile/
+__qa_*/
+__qa_*.html
+__qa_*.js
+*.tsbuildinfo
+/Audio/
+/Images/
+
 # OS files
 .DS_Store
 Thumbs.db

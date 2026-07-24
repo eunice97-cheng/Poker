@@ -1,10 +1,12 @@
 import { AuthenticatedSocket } from '../middleware/authMiddleware'
+import { randomUUID } from 'crypto'
 import { roomManager } from '../rooms/RoomManager'
 import { supabaseService } from '../services/supabaseService'
 import { ServerObserver, ServerPlayer } from '../types/game'
 import { Server } from 'socket.io'
 import { getHouseExitLine, releaseHousePlayer } from '../ai/housePlayers'
 import { sanitizeChatText } from '../utils/chatEmojis'
+import { isLocalOnlyTable, LOCAL_ADMIN_ID } from '../utils/localAdmin'
 
 export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   // Create a new table
@@ -18,13 +20,69 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
     buyIn: number
   }, callback) => {
     try {
-      const profile = await supabaseService.getProfile(socket.userId)
       const bigBlind = params.bigBlind ?? 50
       const smallBlind = params.smallBlind ?? bigBlind / 2
       const minBuyin = params.minBuyin ?? bigBlind * 20
       const maxBuyin = params.maxBuyin ?? bigBlind * 100
       const buyIn = Math.max(minBuyin, Math.min(maxBuyin, params.buyIn))
 
+      if (socket.userId === LOCAL_ADMIN_ID) {
+        const tableInfo = {
+          id: `local_poker_${randomUUID()}`,
+          name: params.name?.trim().slice(0, 40) || `${socket.username}'s Table`,
+          hostId: socket.userId,
+          gameType: 'poker' as const,
+          maxPlayers: params.maxPlayers ?? 6,
+          smallBlind,
+          bigBlind,
+          minBuyin,
+          maxBuyin,
+          status: 'waiting' as const,
+          playerCount: 1,
+        }
+
+        const room = roomManager.createRoom(tableInfo)
+        const player: ServerPlayer = {
+          socketId: socket.id,
+          playerId: socket.userId,
+          username: socket.username,
+          avatar: socket.avatar ?? 'avatar_m1',
+          seat: 0,
+          stack: buyIn,
+          holeCards: [],
+          currentBet: 0,
+          totalBetThisHand: 0,
+          folded: false,
+          allIn: false,
+          sittingOut: false,
+          hasActed: false,
+          isConnected: true,
+          isBot: false,
+          standUpAfterHand: false,
+        }
+
+        room.addPlayer(player)
+        room.engine.broadcastGameState()
+        io.to(tableInfo.id).emit('action_log', { message: `${socket.username} joined the game` })
+        io.emit('table_created', {
+          id: tableInfo.id,
+          name: tableInfo.name,
+          game_type: tableInfo.gameType,
+          host_id: tableInfo.hostId,
+          max_players: tableInfo.maxPlayers,
+          small_blind: tableInfo.smallBlind,
+          big_blind: tableInfo.bigBlind,
+          min_buyin: tableInfo.minBuyin,
+          max_buyin: tableInfo.maxBuyin,
+          status: tableInfo.status,
+          player_count: tableInfo.playerCount,
+          created_at: new Date().toISOString(),
+        })
+        callback?.({ tableId: tableInfo.id, seat: 0, stack: buyIn, balance: 100000 - buyIn })
+        return
+      }
+
+      const profile = await supabaseService.getProfile(socket.userId)
       if (profile.chip_balance < buyIn) {
         return callback?.({ error: 'Insufficient chips for buy-in' })
       }
@@ -106,12 +164,17 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const { minBuyin, maxBuyin } = room.state
       const actualBuyIn = Math.max(minBuyin, Math.min(maxBuyin, buyIn))
 
-      const profile = await supabaseService.getProfile(socket.userId)
+      const localOnly = isLocalOnlyTable(tableId)
+      const profile = socket.userId === LOCAL_ADMIN_ID
+        ? { chip_balance: 100000, avatar: socket.avatar ?? 'avatar_m1' }
+        : await supabaseService.getProfile(socket.userId)
       if (profile.chip_balance < actualBuyIn) {
         return callback?.({ error: 'Insufficient chips for buy-in' })
       }
 
-      const balanceAfter = await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
+      const balanceAfter = localOnly || socket.userId === LOCAL_ADMIN_ID
+        ? 100000 - actualBuyIn
+        : await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
 
       if (handInProgress) {
         const observer: ServerObserver = {
@@ -139,7 +202,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const seat = room.findEmptySeat()
       if (seat === null) return callback?.({ error: 'No seats available' })
 
-      await supabaseService.addTablePlayer(tableId, socket.userId, seat, actualBuyIn)
+      if (!localOnly) {
+        await supabaseService.addTablePlayer(tableId, socket.userId, seat, actualBuyIn)
+      }
 
       const player: ServerPlayer = {
         socketId: socket.id,
@@ -203,9 +268,12 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       if (observer) {
         room.removeObserver(observer.playerId)
         const cashout = observer.stack
+        const localOnly = isLocalOnlyTable(room.tableId)
         io.to(room.tableId).emit('action_log', { message: `${observer.username} left the room` })
         room.engine.broadcastGameState()
-        if (cashout > 0) {
+        if (localOnly) {
+          callback?.({ cashout, balance: 100000 })
+        } else if (cashout > 0) {
           const balanceAfter = await supabaseService.addChips(socket.userId, room.tableId, cashout, 'cashout')
           if (observer.hasTableEntry) {
             await supabaseService.removeTablePlayer(room.tableId, socket.userId)
@@ -218,8 +286,11 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
           callback?.({ cashout: 0 })
         }
         if (!room.shouldKeepAlive()) {
-          await supabaseService.deleteTable(room.tableId)
+          if (!localOnly) {
+            await supabaseService.deleteTable(room.tableId)
+          }
           roomManager.deleteRoom(room.tableId)
+          io.emit('table_deleted', { tableId: room.tableId })
         }
         return
       }
@@ -229,6 +300,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       if (!player) return callback?.({ error: 'Player not found' })
 
       const cashout = player.stack + player.currentBet
+      const localOnly = isLocalOnlyTable(room.tableId)
       room.removePlayer(socket.id)
 
       io.to(room.tableId).emit('action_log', { message: `${player.username} left the room` })
@@ -240,7 +312,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
       room.engine.broadcastGameState()
 
-      if (cashout > 0) {
+      if (localOnly) {
+        callback?.({ cashout, balance: 100000 })
+      } else if (cashout > 0) {
         const balanceAfter = await supabaseService.addChips(socket.userId, room.tableId, cashout, 'cashout')
         await supabaseService.removeTablePlayer(room.tableId, socket.userId)
         callback?.({ cashout, balance: balanceAfter })
@@ -250,8 +324,11 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       }
 
       if (!room.shouldKeepAlive()) {
-        await supabaseService.deleteTable(room.tableId)
+        if (!localOnly) {
+          await supabaseService.deleteTable(room.tableId)
+        }
         roomManager.deleteRoom(room.tableId)
+        io.emit('table_deleted', { tableId: room.tableId })
       }
     } catch (err) {
       console.error('leave_table error:', err)

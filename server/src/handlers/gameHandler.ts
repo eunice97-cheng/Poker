@@ -4,6 +4,7 @@ import { roomManager } from '../rooms/RoomManager'
 import { GameRoom } from '../rooms/GameRoom'
 import { PlayerAction, ServerObserver, ServerPlayer } from '../types/game'
 import { supabaseService } from '../services/supabaseService'
+import { isLocalOnlyTable } from '../utils/localAdmin'
 
 export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
   const DEALER_TIP_AMOUNTS = new Set([100, 500, 1000])
@@ -63,7 +64,9 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
       }
 
       const nextStack = player.stack - amount
-      await supabaseService.updateTablePlayerStack(room.tableId, player.playerId, nextStack)
+      if (!isLocalOnlyTable(room.tableId)) {
+        await supabaseService.updateTablePlayerStack(room.tableId, player.playerId, nextStack)
+      }
       player.stack = nextStack
 
       io.to(room.tableId).emit('action_log', {
@@ -147,10 +150,12 @@ export function registerGameHandlers(io: Server, socket: AuthenticatedSocket) {
     room.addPlayer(player)
 
     // Create or update the seat row in DB depending on how the observer entered the table.
-    if (observer.hasTableEntry) {
-      supabaseService.updateTablePlayerSeat(room.tableId, observer.playerId, seat).catch(console.error)
-    } else {
-      supabaseService.addTablePlayer(room.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+    if (!isLocalOnlyTable(room.tableId)) {
+      if (observer.hasTableEntry) {
+        supabaseService.updateTablePlayerSeat(room.tableId, observer.playerId, seat).catch(console.error)
+      } else {
+        supabaseService.addTablePlayer(room.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+      }
     }
 
     io.to(room.tableId).emit('action_log', { message: `${observer.username} takes a seat` })

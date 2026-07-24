@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io'
 import { createClient } from '@supabase/supabase-js'
 import { isAdminEmail } from '../utils/admin'
+import { isLocalAdminToken, LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME } from '../utils/localAdmin'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -22,6 +23,15 @@ export async function authenticateSocket(
     const token = socket.handshake.auth?.token as string | undefined
     if (!token) {
       return next(new Error('Authentication token required'))
+    }
+
+    if (isLocalAdminToken(token)) {
+      ;(socket as AuthenticatedSocket).userId = LOCAL_ADMIN_ID
+      ;(socket as AuthenticatedSocket).username = LOCAL_ADMIN_USERNAME
+      ;(socket as AuthenticatedSocket).avatar = 'avatar_m1'
+      ;(socket as AuthenticatedSocket).hasVipEmojis = true
+      next()
+      return
     }
 
     const { data, error } = await supabase.auth.getUser(token)

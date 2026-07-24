@@ -15,8 +15,23 @@ interface TableListProps {
 
 type LiveTableSnapshot = {
   id: string
-  playerCount: number
+  name?: string
+  game_type?: TableInfo['game_type']
+  host_id?: string | null
+  player_count?: number
+  playerCount?: number
+  max_players?: number
+  maxPlayers?: number
+  small_blind?: number
+  smallBlind?: number
+  big_blind?: number
+  bigBlind?: number
+  min_buyin?: number
+  minBuyin?: number
+  max_buyin?: number
+  maxBuyin?: number
   status: TableInfo['status']
+  created_at?: string
 }
 
 export function TableList({
@@ -42,11 +57,17 @@ export function TableList({
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newTable = payload.new as TableInfo
+            if (newTable.game_type && newTable.game_type !== 'poker') return
             if (newTable.name?.toLowerCase().includes('dev table')) return
             setTables((prev) => [newTable, ...prev])
           } else if (payload.eventType === 'UPDATE') {
+            const updatedTable = payload.new as TableInfo
+            if (updatedTable.game_type && updatedTable.game_type !== 'poker') {
+              setTables((prev) => prev.filter((t) => t.id !== updatedTable.id))
+              return
+            }
             setTables((prev) =>
-              prev.map((t) => (t.id === (payload.new as TableInfo).id ? (payload.new as TableInfo) : t))
+              prev.map((t) => (t.id === updatedTable.id ? updatedTable : t))
             )
           } else if (payload.eventType === 'DELETE') {
             setTables((prev) => prev.filter((t) => t.id !== (payload.old as { id: string }).id))
@@ -74,19 +95,26 @@ export function TableList({
         if (!res.ok) return
 
         const liveTables = (await res.json()) as LiveTableSnapshot[]
-        const liveById = new Map(liveTables.map((table) => [table.id, table]))
 
         setTables((prev) =>
-          prev
-            .filter((table) => liveById.has(table.id))
-            .map((table) => {
-              const liveTable = liveById.get(table.id)!
-              return {
-                ...table,
-                player_count: liveTable.playerCount,
-                status: liveTable.status,
-              }
-            })
+          liveTables.map((liveTable) => {
+            const existing = prev.find((table) => table.id === liveTable.id)
+            return {
+              ...existing,
+              id: liveTable.id,
+              name: liveTable.name ?? existing?.name ?? 'Poker Table',
+              game_type: liveTable.game_type ?? existing?.game_type ?? 'poker',
+              host_id: liveTable.host_id ?? existing?.host_id ?? null,
+              player_count: liveTable.player_count ?? liveTable.playerCount ?? existing?.player_count ?? 0,
+              max_players: liveTable.max_players ?? liveTable.maxPlayers ?? existing?.max_players ?? 6,
+              small_blind: liveTable.small_blind ?? liveTable.smallBlind ?? existing?.small_blind ?? 25,
+              big_blind: liveTable.big_blind ?? liveTable.bigBlind ?? existing?.big_blind ?? 50,
+              min_buyin: liveTable.min_buyin ?? liveTable.minBuyin ?? existing?.min_buyin ?? 1000,
+              max_buyin: liveTable.max_buyin ?? liveTable.maxBuyin ?? existing?.max_buyin ?? 5000,
+              status: liveTable.status,
+              created_at: liveTable.created_at ?? existing?.created_at ?? new Date().toISOString(),
+            }
+          })
         )
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -96,9 +124,13 @@ export function TableList({
     }
 
     void syncWithLiveRooms()
+    const interval = window.setInterval(() => {
+      void syncWithLiveRooms()
+    }, 5000)
 
     return () => {
       controller.abort()
+      window.clearInterval(interval)
     }
   }, [connected, socketUrl])
 

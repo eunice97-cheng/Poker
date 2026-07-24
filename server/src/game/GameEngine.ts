@@ -6,6 +6,7 @@ import { calculatePots } from './PotCalculator'
 import { validateAction, getValidActions, getCallAmount, getMinRaise } from './ActionValidator'
 import { supabaseService } from '../services/supabaseService'
 import { decideHouseAction, getHouseExitLine, releaseHousePlayer, shouldHousePlayerRest } from '../ai/housePlayers'
+import { isLocalOnlyTable } from '../utils/localAdmin'
 
 const ACTION_TIMEOUT = parseInt(process.env.ACTION_TIMEOUT_SECONDS ?? '30') * 1000
 const BETWEEN_HAND_DELAY = Math.max(parseInt(process.env.BETWEEN_HAND_DELAY_SECONDS ?? '5'), 5) * 1000
@@ -328,15 +329,16 @@ export class GameEngine {
     this.io.to(this.state.tableId).emit('hand_result', result)
     this.broadcastGameState()
 
-    // Persist to Supabase
-    try {
-      await supabaseService.recordHand(this.state, winnerSummary, allHoleCards)
-      await supabaseService.updateChipBalances(
-        Array.from(this.state.players.values()),
-        this.state.tableId
-      )
-    } catch (err) {
-      console.error('Failed to persist hand result:', err)
+    if (!isLocalOnlyTable(this.state.tableId)) {
+      try {
+        await supabaseService.recordHand(this.state, winnerSummary, allHoleCards)
+        await supabaseService.updateChipBalances(
+          Array.from(this.state.players.values()),
+          this.state.tableId
+        )
+      } catch (err) {
+        console.error('Failed to persist hand result:', err)
+      }
     }
 
     let removedBustedPlayers = false
@@ -347,15 +349,19 @@ export class GameEngine {
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
         removedBustedPlayers = true
-        await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
+        if (!isLocalOnlyTable(this.state.tableId)) {
+          await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
+        }
         this.io.to(player.socketId).emit('busted', {
           message: 'You ran out of chips!',
           minBuyin: this.state.minBuyin,
           maxBuyin: this.state.maxBuyin,
           tableId: this.state.tableId,
         })
-        // Mark as broke so they receive 2,000 free chips after 24 hours
-        await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
+        if (!isLocalOnlyTable(this.state.tableId)) {
+          // Mark as broke so they receive 2,000 free chips after 24 hours
+          await supabaseService.markPlayerBroke(player.playerId).catch(console.error)
+        }
       }
     }
 
@@ -372,7 +378,9 @@ export class GameEngine {
     // If no real players remain after busts, delete the table — no next hand needed
     const realPlayersLeft = Array.from(this.state.players.values()).filter(p => !p.isBot)
     if (realPlayersLeft.length === 0) {
-      await supabaseService.deleteTable(this.state.tableId).catch(console.error)
+      if (!isLocalOnlyTable(this.state.tableId)) {
+        await supabaseService.deleteTable(this.state.tableId).catch(console.error)
+      }
       return
     }
 
@@ -399,10 +407,12 @@ export class GameEngine {
     this.state.currentSeat = -1
     this.broadcastGameState()
 
-    try {
-      await supabaseService.updateChipBalances(Array.from(this.state.players.values()), this.state.tableId)
-    } catch (err) {
-      console.error('Failed to update chip balances:', err)
+    if (!isLocalOnlyTable(this.state.tableId)) {
+      try {
+        await supabaseService.updateChipBalances(Array.from(this.state.players.values()), this.state.tableId)
+      } catch (err) {
+        console.error('Failed to update chip balances:', err)
+      }
     }
 
     const seatsChangedAfterHand = await this.processPostHandSeatTransitions()
@@ -713,7 +723,9 @@ export class GameEngine {
         stack: observer.stack,
       })
 
-      await supabaseService.addTablePlayer(this.state.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+      if (!isLocalOnlyTable(this.state.tableId)) {
+        await supabaseService.addTablePlayer(this.state.tableId, observer.playerId, seat, observer.stack).catch(console.error)
+      }
     }
 
     this.state.status = 'waiting'

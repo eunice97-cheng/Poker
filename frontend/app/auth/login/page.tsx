@@ -29,6 +29,15 @@ export default function LoginPage({ searchParams }: { searchParams: { verified?:
         <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8">
           <LoginForm />
         </div>
+
+        {process.env.NODE_ENV !== 'production' && (
+          <a
+            href="/api/dev/local-admin-login"
+            className="mt-4 block rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-center text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-300/45 hover:bg-emerald-400/15"
+          >
+            LocalAdmin Test Login
+          </a>
+        )}
       </div>
     </AuthShell>
   )

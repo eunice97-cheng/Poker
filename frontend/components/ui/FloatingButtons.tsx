@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { getDiscordUrl } from '@/lib/invite'
 
@@ -57,6 +58,7 @@ function GoldRim() {
 }
 
 export function FloatingButtons() {
+  const pathname = usePathname()
   const [supportOpen, setSupportOpen] = useState(false)
   const supportRef = useRef<HTMLDivElement | null>(null)
 
@@ -70,6 +72,10 @@ export function FloatingButtons() {
     document.addEventListener('mousedown', handlePointerDown)
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
+
+  if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')) {
+    return null
+  }
 
   return (
     <div className="fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">

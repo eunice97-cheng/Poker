@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled, isLocalHost } from '@/lib/local-admin'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } })
@@ -29,8 +30,11 @@ export async function middleware(request: NextRequest) {
   const authPaths = ['/auth/login', '/auth/register']
   const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
   const isAuthPage = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+  const isLocalAdmin = isLocalAdminEnabled()
+    && isLocalHost(request.nextUrl.hostname)
+    && request.cookies.get(LOCAL_ADMIN_COOKIE)?.value === 'true'
 
-  let isVerified = false
+  let isVerified = isLocalAdmin
   if (session) {
     const {
       data: { user },
@@ -38,7 +42,7 @@ export async function middleware(request: NextRequest) {
     isVerified = !!user?.email_confirmed_at
   }
 
-  if (isProtected && !session) {
+  if (isProtected && !session && !isLocalAdmin) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
