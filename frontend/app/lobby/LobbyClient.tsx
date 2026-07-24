@@ -309,17 +309,15 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                 <div className="flex flex-col items-stretch gap-3">
                   <Link
                     href="/blackjack"
-                    className="group flex aspect-square w-full max-w-[176px] flex-col items-center justify-center gap-3 self-stretch rounded-[18px] border border-[#f3d2a2]/25 bg-[linear-gradient(180deg,rgba(22,49,31,0.82),rgba(10,22,14,0.9))] p-4 text-center shadow-[0_20px_52px_rgba(0,0,0,0.32)] transition-colors hover:border-[#f3d2a2]/55 hover:bg-[linear-gradient(180deg,rgba(32,72,45,0.88),rgba(12,28,18,0.94))]"
+                    className="group flex min-h-[76px] w-full max-w-[176px] items-center gap-3 rounded-[16px] border border-[#f3d2a2]/25 bg-[linear-gradient(180deg,rgba(19,34,23,0.78),rgba(8,14,10,0.88))] px-4 py-3 text-left shadow-[0_18px_44px_rgba(0,0,0,0.3)] transition-colors hover:border-[#f3d2a2]/55 hover:bg-[linear-gradient(180deg,rgba(28,48,32,0.84),rgba(10,20,13,0.92))]"
                     aria-label="Visit the new Blackjack Lounge"
                   >
                     <img
                       src="/blackjack/Images/ASL%20BlackJack%20Lounge%20Logo.png"
                       alt=""
-                      className="h-16 w-16 rounded-full border border-[#f3d2a2]/20 object-cover shadow-[0_0_24px_rgba(243,210,162,0.18)] transition-transform group-hover:scale-105"
+                      className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_0_14px_rgba(243,210,162,0.18)] transition-transform group-hover:scale-105"
                     />
-                    <span className="max-w-[8.5rem] text-sm font-bold leading-5 text-[#fff3e2]">
-                      Visit the new Blackjack Lounge
-                    </span>
+                    <span className="min-w-0 text-sm font-bold leading-5 text-[#fff3e2]">Visit the new Blackjack Lounge</span>
                   </Link>
                   <Button
                     variant="primary"
