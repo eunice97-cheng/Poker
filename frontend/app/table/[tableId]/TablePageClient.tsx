@@ -36,6 +36,8 @@ export function TablePageClient({
   const [leaving, setLeaving] = useState(false)
   const leavingRef = useRef(false)
   const [leaveError, setLeaveError] = useState('')
+  const [rebuyError, setRebuyError] = useState('')
+  const [rebuyLoading, setRebuyLoading] = useState(false)
   const [chipBalance, setChipBalance] = useState(initialBalance)
   const [buzzerRoom, setBuzzerRoom] = useState<BuzzerRoom | null>(null)
   const [housePlayers, setHousePlayers] = useState<BuzzerHousePlayer[]>([])
@@ -110,22 +112,34 @@ export function TablePageClient({
   }, [leaveTable])
 
   const handleRebuy = useCallback((amount: number, newAutoRebuy: boolean) => {
-    if (!socket) return
+    if (!socket) {
+      setRebuyError('Not connected. Please try again.')
+      return
+    }
     // Persist auto-rebuy preference
     setAutoRebuy(newAutoRebuy)
     localStorage.setItem(AUTO_REBUY_KEY, String(newAutoRebuy))
 
-    clearBusted()
+    setRebuyError('')
+    setRebuyLoading(true)
+    const timeout = window.setTimeout(() => {
+      setRebuyLoading(false)
+      setRebuyError('Rebuy timed out. Please try again.')
+    }, LEAVE_TABLE_TIMEOUT_MS)
+
     socket.emit('join_table', { tableId, buyIn: amount }, (res: { error?: string; seat?: number; stack?: number; balance?: number }) => {
+      window.clearTimeout(timeout)
+      setRebuyLoading(false)
       if (res.error) {
         console.error('Rebuy failed:', res.error)
-        router.push('/lobby')
+        setRebuyError(res.error)
         return
       }
+      clearBusted()
       playSfx('joinLeave')
       if (res.balance !== undefined) setChipBalance(res.balance)
     })
-  }, [socket, tableId, clearBusted, playSfx, router])
+  }, [socket, tableId, clearBusted, playSfx])
 
   const handleTipDealer = useCallback((amount: number) => {
     return new Promise<{ ok?: boolean; error?: string; stack?: number }>((resolve) => {
@@ -308,6 +322,8 @@ export function TablePageClient({
           maxBuyin={bustedInfo.maxBuyin}
           chipBalance={chipBalance}
           autoRebuy={autoRebuy}
+          error={rebuyError}
+          loading={rebuyLoading}
           onRebuy={handleRebuy}
           onLeave={handleLeave}
         />

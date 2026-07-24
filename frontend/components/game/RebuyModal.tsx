@@ -7,11 +7,13 @@ interface RebuyModalProps {
   maxBuyin: number
   chipBalance: number
   autoRebuy: boolean
+  error?: string
+  loading?: boolean
   onRebuy: (amount: number, autoRebuy: boolean) => void
   onLeave: () => void
 }
 
-export function RebuyModal({ minBuyin, maxBuyin, chipBalance, autoRebuy: initialAutoRebuy, onRebuy, onLeave }: RebuyModalProps) {
+export function RebuyModal({ minBuyin, maxBuyin, chipBalance, autoRebuy: initialAutoRebuy, error, loading = false, onRebuy, onLeave }: RebuyModalProps) {
   const effectiveMax = Math.min(maxBuyin, chipBalance)
   const canRebuy = chipBalance >= minBuyin
 
@@ -48,6 +50,7 @@ export function RebuyModal({ minBuyin, maxBuyin, chipBalance, autoRebuy: initial
                 step={Math.max(1, Math.floor(minBuyin / 10))}
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
+                disabled={loading}
                 className="w-full accent-yellow-400"
               />
               <div className="text-gray-500 text-xs mt-1">
@@ -60,23 +63,30 @@ export function RebuyModal({ minBuyin, maxBuyin, chipBalance, autoRebuy: initial
                 type="checkbox"
                 checked={autoRebuy}
                 onChange={(e) => setAutoRebuy(e.target.checked)}
+                disabled={loading}
                 className="accent-yellow-400"
               />
               Auto-rebuy next time
             </label>
 
+            {error && (
+              <p className="text-red-400 text-sm mb-4">{error}</p>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={onLeave}
+                disabled={loading}
                 className="flex-1 py-2 rounded-lg border border-gray-600 text-gray-400 hover:text-white text-sm transition-colors"
               >
                 Leave
               </button>
               <button
                 onClick={() => onRebuy(amount, autoRebuy)}
+                disabled={loading}
                 className="flex-1 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-sm transition-colors"
               >
-                Rebuy
+                {loading ? 'Rebuying...' : 'Rebuy'}
               </button>
             </div>
           </>

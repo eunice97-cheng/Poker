@@ -101,7 +101,7 @@ const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
 const TRANSIENT_DEALER_LINE_MS = 4500
 const BLACKJACK_CELEBRATION_MS = 2350
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-12'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-13'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',

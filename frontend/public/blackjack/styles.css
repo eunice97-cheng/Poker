@@ -883,8 +883,8 @@ button { font: inherit; }
 
 .dealer-tip-board {
   position: absolute;
-  left: calc(50% - 300px);
-  top: -27%;
+  left: calc(50% - 380px);
+  top: -34%;
   z-index: 7;
   width: 264px;
   padding: 10px;
@@ -2472,8 +2472,8 @@ button { font: inherit; }
     font-size: 1.38rem;
   }
   .dealer-tip-board {
-    left: calc(50% - 270px);
-    top: -28%;
+    left: calc(50% - 350px);
+    top: -36%;
     width: 238px;
     padding: 8px;
   }
@@ -2619,8 +2619,8 @@ button { font: inherit; }
     font-size: 1.38rem;
   }
   .dealer-tip-board {
-    left: calc(50% - 270px);
-    top: -28%;
+    left: calc(50% - 350px);
+    top: -36%;
     width: 238px;
     padding: 8px;
   }

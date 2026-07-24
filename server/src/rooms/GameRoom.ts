@@ -297,6 +297,10 @@ export class GameRoom {
     return null
   }
 
+  getObserverByPlayerId(playerId: string): ServerObserver | null {
+    return this.state.observers.get(playerId) ?? null
+  }
+
   addObserver(observer: ServerObserver) {
     this.state.observers.set(observer.playerId, observer)
     this.io.sockets.sockets.get(observer.socketId)?.join(this.tableId)

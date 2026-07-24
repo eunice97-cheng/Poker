@@ -143,8 +143,10 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       if (!room) return callback?.({ error: 'Table not found' })
       if (room.hasPendingJoin(socket.userId)) return callback?.({ error: 'Join already in progress' })
       room.beginPendingJoin(socket.userId)
+      const existingPlayer = room.getPlayerByPlayerId(socket.userId)
+      const existingObserver = room.getObserverBySocketId(socket.id) ?? room.getObserverByPlayerId(socket.userId)
       const aiOpponent = room.getAutoHousePlayer()
-      const handInProgress = room.state.phase !== 'waiting'
+      const handInProgress = room.state.phase !== 'waiting' && room.state.phase !== 'showdown'
       const shouldQueueBehindAi = !!aiOpponent && room.getRealPlayerCount() === 1 && handInProgress
 
       if (room.isFull() && !shouldQueueBehindAi) {
@@ -159,7 +161,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
           return callback?.({ error: 'Table is full' })
         }
       }
-      if (room.hasPlayer(socket.userId)) return callback?.({ error: 'Already at this table' })
+      if (existingPlayer) return callback?.({ error: 'Already at this table' })
 
       const { minBuyin, maxBuyin } = room.state
       const actualBuyIn = Math.max(minBuyin, Math.min(maxBuyin, buyIn))
@@ -177,17 +179,29 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         : await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
 
       if (handInProgress) {
-        const observer: ServerObserver = {
-          socketId: socket.id,
-          playerId: socket.userId,
-          username: socket.username,
-          avatar: profile.avatar ?? 'avatar_m1',
-          stack: actualBuyIn,
-          hasTableEntry: false,
-        }
+        const observer: ServerObserver = existingObserver
+          ? {
+              ...existingObserver,
+              socketId: socket.id,
+              username: socket.username,
+              avatar: profile.avatar ?? existingObserver.avatar,
+              stack: existingObserver.stack + actualBuyIn,
+            }
+          : {
+              socketId: socket.id,
+              playerId: socket.userId,
+              username: socket.username,
+              avatar: profile.avatar ?? 'avatar_m1',
+              stack: actualBuyIn,
+              hasTableEntry: false,
+            }
 
         room.addObserver(observer)
-        io.to(tableId).emit('action_log', { message: `${socket.username} takes a rail seat until this hand finishes` })
+        io.to(tableId).emit('action_log', {
+          message: existingObserver
+            ? `${socket.username} rebuys and waits for the next hand`
+            : `${socket.username} takes a rail seat until this hand finishes`,
+        })
 
         if (shouldQueueBehindAi && aiOpponent && !aiOpponent.botLeaveAfterHand) {
           aiOpponent.botLeaveAfterHand = true
@@ -195,15 +209,24 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         }
 
         room.engine.broadcastGameState()
-        callback?.({ observer: true, stack: actualBuyIn, balance: balanceAfter })
+        callback?.({ observer: true, stack: observer.stack, balance: balanceAfter })
         return
       }
 
       const seat = room.findEmptySeat()
       if (seat === null) return callback?.({ error: 'No seats available' })
+      const seatedStack = (existingObserver?.stack ?? 0) + actualBuyIn
 
+      if (existingObserver) {
+        room.removeObserver(existingObserver.playerId)
+      }
       if (!localOnly) {
-        await supabaseService.addTablePlayer(tableId, socket.userId, seat, actualBuyIn)
+        if (existingObserver?.hasTableEntry) {
+          await supabaseService.updateTablePlayerSeat(tableId, socket.userId, seat)
+          await supabaseService.updateTablePlayerStack(tableId, socket.userId, seatedStack)
+        } else {
+          await supabaseService.addTablePlayer(tableId, socket.userId, seat, seatedStack)
+        }
       }
 
       const player: ServerPlayer = {
@@ -212,7 +235,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         username: socket.username,
         avatar: profile.avatar ?? 'avatar_m1',
         seat,
-        stack: actualBuyIn,
+        stack: seatedStack,
         holeCards: [],
         currentBet: 0,
         totalBetThisHand: 0,
@@ -226,7 +249,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       }
 
       room.addPlayer(player)
-      io.to(tableId).emit('action_log', { message: `${socket.username} joined the game` })
+      io.to(tableId).emit('action_log', {
+        message: existingObserver ? `${socket.username} rebuys and takes a seat` : `${socket.username} joined the game`,
+      })
 
       const houseAi = room.getAutoHousePlayer()
       if (houseAi && room.getRealPlayerCount() > 1) {
@@ -244,11 +269,11 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         playerId: socket.userId,
         username: socket.username,
         seat,
-        stack: actualBuyIn,
+        stack: seatedStack,
       })
 
       room.engine.broadcastGameState()
-      callback?.({ seat, stack: actualBuyIn, balance: balanceAfter })
+      callback?.({ seat, stack: seatedStack, balance: balanceAfter })
     } catch (err) {
       console.error('join_table error:', err)
       callback?.({ error: 'Failed to join table' })

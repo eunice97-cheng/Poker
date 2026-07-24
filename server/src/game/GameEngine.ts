@@ -348,6 +348,14 @@ export class GameEngine {
       if (player.stack <= 0 && !player.isBot) {
         this.state.players.delete(seat)
         this.state.socketToSeat.delete(player.socketId)
+        this.state.observers.set(player.playerId, {
+          socketId: player.socketId,
+          playerId: player.playerId,
+          username: player.username,
+          avatar: player.avatar,
+          stack: 0,
+          hasTableEntry: false,
+        })
         removedBustedPlayers = true
         if (!isLocalOnlyTable(this.state.tableId)) {
           await supabaseService.removeTablePlayer(this.state.tableId, player.playerId)
@@ -377,10 +385,19 @@ export class GameEngine {
 
     // If no real players remain after busts, delete the table — no next hand needed
     const realPlayersLeft = Array.from(this.state.players.values()).filter(p => !p.isBot)
-    if (realPlayersLeft.length === 0) {
+    const realObserversLeft = Array.from(this.state.observers.values()).filter((observer) => !observer.playerId.startsWith('ai_'))
+    if (realPlayersLeft.length === 0 && realObserversLeft.length === 0) {
       if (!isLocalOnlyTable(this.state.tableId)) {
         await supabaseService.deleteTable(this.state.tableId).catch(console.error)
       }
+      return
+    }
+    if (realPlayersLeft.length === 0) {
+      this.state.phase = 'waiting'
+      this.state.status = 'waiting'
+      this.state.currentSeat = -1
+      this.broadcastGameState()
+      this.onWaitingForPlayers?.()
       return
     }
 
@@ -685,7 +702,7 @@ export class GameEngine {
   }
 
   private async seatQueuedObservers() {
-    const queuedObservers = Array.from(this.state.observers.values()).filter((observer) => !observer.hasTableEntry)
+    const queuedObservers = Array.from(this.state.observers.values()).filter((observer) => !observer.hasTableEntry && observer.stack > 0)
     if (queuedObservers.length === 0) return false
 
     for (const observer of queuedObservers) {
