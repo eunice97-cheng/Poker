@@ -6,6 +6,7 @@ import { hasVipEmojiAccess } from '@/lib/supporter-access'
 import { BlackjackLobbyClient } from './BlackjackLobbyClient'
 import type { BlackjackTableInfo } from '@/types/blackjack'
 import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
+import { isAdminEmail } from '@/lib/admin'
 
 export default async function BlackjackLobbyPage() {
   const supabase = createClient()
@@ -31,12 +32,14 @@ export default async function BlackjackLobbyPage() {
         }}
         token={LOCAL_ADMIN_TOKEN}
         hasVipEmojis
+        unreadMailCount={0}
+        isAdmin
         isLocalAdmin
       />
     )
   }
 
-  const [{ data: tables }, { data: profile }, canUseVipEmojis] = await Promise.all([
+  const [{ data: tables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] = await Promise.all([
     supabase
       .from('tables')
       .select('*')
@@ -45,6 +48,11 @@ export default async function BlackjackLobbyPage() {
       .order('created_at', { ascending: false }),
     supabase.from('profiles').select('*').eq('id', session!.user.id).single(),
     hasVipEmojiAccess(supabase, session!.user.id, session!.user.email),
+    supabase
+      .from('player_mail')
+      .select('id', { count: 'exact', head: true })
+      .eq('player_id', session!.user.id)
+      .eq('is_read', false),
   ])
 
   if (!profile) {
@@ -64,6 +72,8 @@ export default async function BlackjackLobbyPage() {
       profile={profile}
       token={session!.access_token}
       hasVipEmojis={canUseVipEmojis}
+      unreadMailCount={unreadMailCount ?? 0}
+      isAdmin={isAdminEmail(session!.user.email)}
       isLocalAdmin={false}
     />
   )

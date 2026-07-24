@@ -19,6 +19,11 @@ export function buildLobbyInvite() {
   return `Join me in ASL Basement Poker.\n${url}`
 }
 
+export function buildBlackjackLobbyInvite() {
+  const url = `${getBaseUrl()}/blackjack`
+  return `Join me in ASL BlackJack Lounge.\n${url}`
+}
+
 export function buildTableInvite(tableName: string, tableId: string, bigBlind: number) {
   const url = `${getBaseUrl()}/table/${tableId}`
   return `Join my table "${tableName}" (${bigBlind} BB) in ASL Basement Poker.\n${url}`

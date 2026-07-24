@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { MailIcon } from '@/components/ui/MailIcon'
 import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { createClient } from '@/lib/supabase/client'
+import { buildBlackjackLobbyInvite, getDiscordUrl, shareInvite } from '@/lib/invite'
 import { useSocket } from '@/hooks/useSocket'
 import type { BlackjackTableInfo } from '@/types/blackjack'
 import type { Profile } from '@/types/poker'
@@ -19,6 +21,8 @@ interface BlackjackLobbyClientProps {
   profile: Profile
   token: string
   hasVipEmojis: boolean
+  unreadMailCount: number
+  isAdmin: boolean
   isLocalAdmin?: boolean
 }
 
@@ -89,7 +93,7 @@ function tableLimitLabel(table: BlackjackTableInfo) {
   return `${table.small_blind.toLocaleString()}-${table.big_blind.toLocaleString()}`
 }
 
-export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmojis, isLocalAdmin = false }: BlackjackLobbyClientProps) {
+export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmojis, unreadMailCount, isAdmin, isLocalAdmin = false }: BlackjackLobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { socket, connected, error: socketError, socketUrl } = useSocket(token)
@@ -99,12 +103,14 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
   const [buyIn, setBuyIn] = useState(1000)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [inviteLabel, setInviteLabel] = useState<'idle' | 'done'>('idle')
 
   const activeTables = tables.filter((table) => table.status !== 'finished')
   const playersSeated = activeTables.reduce((sum, table) => sum + table.player_count, 0)
   const openSeats = activeTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
   const featuredTable = [...activeTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
   const featuredLimits = featuredTable ? tableLimitLabel(featuredTable) : '10-5,000'
+  const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
 
   useEffect(() => {
     if (!socket) return
@@ -165,6 +171,16 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
 
     await supabase.auth.signOut()
     router.push('/auth/login')
+  }
+
+  const handleInvite = async () => {
+    try {
+      await shareInvite(buildBlackjackLobbyInvite(), getDiscordUrl())
+      setInviteLabel('done')
+      window.setTimeout(() => setInviteLabel('idle'), 1800)
+    } catch {
+      alert('Could not copy the invite. Please try again.')
+    }
   }
 
   const createTable = async (params: {
@@ -238,7 +254,7 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
               <img
                 src="/blackjack/Images/ASL%20BlackJack%20Lounge%20Logo.png"
                 alt="ASL BlackJack Lounge"
-                className="h-12 w-12 rounded-full border border-[#f5c76d]/[0.24] object-cover"
+                className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(245,199,109,0.2)]"
               />
               <div>
                 <div className="font-serif text-xl tracking-wide text-[#fff0c7] sm:text-2xl">ASL BlackJack Lounge</div>
@@ -255,16 +271,45 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                 <div className="text-sm font-semibold text-[#fff0c7]">{profile.username}</div>
                 <div className="text-xs uppercase tracking-[0.22em] text-[#f5c76d]/[0.64]">{profile.chip_balance.toLocaleString()} chips</div>
               </div>
+              <Link
+                href="/profile?tab=mail"
+                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/[0.24] text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
+                title="Open mailbox"
+                aria-label="Open mailbox"
+              >
+                <MailIcon className="h-5 w-5" />
+                <span className="sr-only">Mailbox</span>
+                {unreadMailCount > 0 && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
+                    {unreadMailLabel}
+                  </span>
+                )}
+              </Link>
               <Link href="/profile" className="transition-transform hover:scale-105" title="My Profile">
                 <AvatarDisplay avatarId={profile.avatar} size="md" />
               </Link>
               <AudioControls />
+              <button
+                onClick={handleInvite}
+                className="rounded-full border border-[#f5c76d]/[0.14] bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f6cd75]"
+                title="Copy blackjack invite and open Discord"
+              >
+                {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+              </button>
               <Link
                 href="/lobby"
                 className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-amber-200/[0.35] hover:text-white"
               >
                 Poker Lounge
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/gm"
+                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
+                >
+                  GM
+                </Link>
+              )}
               <Button variant="ghost" size="sm" className="rounded-full" onClick={handleSignOut}>Sign Out</Button>
             </div>
           </div>

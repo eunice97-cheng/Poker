@@ -231,7 +231,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               {profile && (
                 <div className="col-span-2 rounded-full border border-[#f3d2a2]/10 bg-black/20 px-4 py-2 text-left sm:col-span-1 md:text-right">
                   <div className="text-sm font-semibold text-[#fff3e2]">{profile.username}</div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">Tab {profile.chip_balance.toLocaleString()} chips</div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">{profile.chip_balance.toLocaleString()} chips</div>
                 </div>
               )}
               {isUsingDefaultAvatar && (
