@@ -9,6 +9,7 @@ import { ChatMessageText } from '@/components/ui/ChatMessageText'
 import { useSocket } from '@/hooks/useSocket'
 import { useBlackjackState } from '@/hooks/useBlackjackState'
 import { appendChatEmojiCode } from '@/lib/chat-emojis'
+import { useAudio } from '@/hooks/useAudio'
 import type { BlackjackAction, BlackjackCard, ClientBlackjackHand, ClientBlackjackPlayer } from '@/types/blackjack'
 import type { ChatMessage } from '@/types/poker'
 
@@ -179,18 +180,21 @@ function chipFacesForBet(value: number) {
 export function BlackjackTableClient({ tableId, token, chipBalance: initialChipBalance }: BlackjackTableClientProps) {
   const router = useRouter()
   const { socket, connected, error: socketError, socketUrl } = useSocket(token)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const {
+    musicVol,
+    sfxVol,
+    musicMute,
+    sfxMute,
+    setMusicVol,
+    setSfxVol,
+    toggleMusic,
+    toggleSfx,
+  } = useAudio()
   const [accountBalance, setAccountBalance] = useState(initialChipBalance)
   const [selectedChip, setSelectedChip] = useState(10)
   const [historyOpen, setHistoryOpen] = useState(true)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [audioMuted, setAudioMuted] = useState(false)
-  const [volume, setVolume] = useState(70)
-  const [bgmMuted, setBgmMuted] = useState(false)
-  const [bgmVolume, setBgmVolume] = useState(100)
-  const [sfxMuted, setSfxMuted] = useState(false)
-  const [sfxVolume, setSfxVolume] = useState(100)
   const [activeDealer, setActiveDealer] = useState(() => dealerForTime(Date.now()))
   const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([])
@@ -273,15 +277,12 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const dealerLine = blackjackState?.message ?? ''
   const visibleDealerLine = showDealerLine ? dealerLine : ''
   const displayMessage = leaveError || lastError || bustedInfo?.message || 'Click a chip to place your bet'
-  const audioEffectivelyMuted = audioMuted || volume === 0
-  const bgmEffectivelyMuted = bgmMuted || bgmVolume === 0
-  const sfxEffectivelyMuted = sfxMuted || sfxVolume === 0
-
-  useEffect(() => {
-    if (!audioRef.current) return
-    audioRef.current.volume = (volume / 100) * (bgmVolume / 100)
-    audioRef.current.muted = audioEffectivelyMuted || bgmEffectivelyMuted
-  }, [audioEffectivelyMuted, bgmEffectivelyMuted, volume, bgmVolume])
+  const volume = Math.round(musicVol * 100)
+  const bgmVolume = volume
+  const sfxVolume = Math.round(sfxVol * 100)
+  const audioEffectivelyMuted = musicMute || volume === 0
+  const bgmEffectivelyMuted = audioEffectivelyMuted
+  const sfxEffectivelyMuted = sfxMute || sfxVolume === 0
 
   useEffect(() => {
     if (!blackjackState?.bettingEndsAt && !blackjackState?.turnEndsAt && !blackjackState?.nextRoundStartsAt) return
@@ -383,21 +384,18 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     }
   }, [])
 
-  const startAudio = useCallback(() => {
-    if (!audioRef.current || audioMuted || volume === 0) return
-    void audioRef.current.play().catch(() => undefined)
-  }, [audioMuted, volume])
-
   const handleAudioToggle = () => {
-    const muted = audioMuted || volume === 0
-    setAudioMuted(!muted)
-    if (muted && volume === 0) setVolume(70)
-    window.setTimeout(startAudio, 0)
+    if (musicMute || musicVol === 0) {
+      setMusicVol(0.7)
+      if (musicMute) toggleMusic()
+      return
+    }
+
+    toggleMusic()
   }
 
   const handleChip = (amount: number) => {
     setSelectedChip(amount)
-    startAudio()
     if (canBet && me && me.stack >= amount && me.bet + amount <= blackjackState.maxBet) {
       if (chipAnimationTimeoutRef.current) window.clearTimeout(chipAnimationTimeoutRef.current)
       setChipAnimation({ id: Date.now(), value: amount })
@@ -449,7 +447,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
       setLeaveError('Leave timed out. Please try again.')
     }, 15000)
 
-    socket.emit('blackjack_leave_table', {}, (res?: { balance?: number; error?: string }) => {
+    socket.emit('blackjack_leave_table', { tableId }, (res?: { balance?: number; error?: string }) => {
       window.clearTimeout(timeout)
       setLeaving(false)
 
@@ -590,9 +588,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   return (
     <>
       <link rel="stylesheet" href={BLACKJACK_STYLESHEET} />
-      <audio ref={audioRef} id="bgmAudio" src="/blackjack/Audio/BGM/Jazz%20for%20Blackjack.mp3" loop preload="metadata" />
 
-      <main className="game-shell" onPointerDown={startAudio}>
+      <main className="game-shell">
         <header className="topbar">
           <section className="balance-panel">
             <span>BALANCE</span>
@@ -629,8 +626,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                   value={volume}
                   onChange={(event) => {
                     const nextVolume = Number(event.target.value)
-                    setVolume(nextVolume)
-                    if (nextVolume > 0) setAudioMuted(false)
+                    setMusicVol(nextVolume / 100)
+                    if (nextVolume > 0 && musicMute) toggleMusic()
                   }}
                 />
               </div>
@@ -920,10 +917,13 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                   id="bgmMuteBtn"
                   aria-pressed={bgmEffectivelyMuted}
                   onClick={() => {
-                    const muted = bgmMuted || bgmVolume === 0
-                    setBgmMuted(!muted)
-                    if (muted && bgmVolume === 0) setBgmVolume(100)
-                    window.setTimeout(startAudio, 0)
+                    if (musicMute || musicVol === 0) {
+                      setMusicVol(1)
+                      if (musicMute) toggleMusic()
+                      return
+                    }
+
+                    toggleMusic()
                   }}
                 >
                   {bgmEffectivelyMuted ? 'Unmute' : 'Mute'}
@@ -942,9 +942,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 value={bgmVolume}
                 onChange={(event) => {
                   const nextVolume = Number(event.target.value)
-                  setBgmVolume(nextVolume)
-                  if (nextVolume > 0) setBgmMuted(false)
-                  window.setTimeout(startAudio, 0)
+                  setMusicVol(nextVolume / 100)
+                  if (nextVolume > 0 && musicMute) toggleMusic()
                 }}
               />
             </section>
@@ -961,9 +960,13 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                   id="sfxMuteBtn"
                   aria-pressed={sfxEffectivelyMuted}
                   onClick={() => {
-                    const muted = sfxMuted || sfxVolume === 0
-                    setSfxMuted(!muted)
-                    if (muted && sfxVolume === 0) setSfxVolume(100)
+                    if (sfxMute || sfxVol === 0) {
+                      setSfxVol(1)
+                      if (sfxMute) toggleSfx()
+                      return
+                    }
+
+                    toggleSfx()
                   }}
                 >
                   {sfxEffectivelyMuted ? 'Unmute' : 'Mute'}
@@ -982,8 +985,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 value={sfxVolume}
                 onChange={(event) => {
                   const nextVolume = Number(event.target.value)
-                  setSfxVolume(nextVolume)
-                  if (nextVolume > 0) setSfxMuted(false)
+                  setSfxVol(nextVolume / 100)
+                  if (nextVolume > 0 && sfxMute) toggleSfx()
                 }}
               />
             </section>

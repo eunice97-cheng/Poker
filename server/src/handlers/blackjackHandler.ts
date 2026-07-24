@@ -197,12 +197,14 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
     callback?.({ ok: true })
   })
 
-  socket.on('blackjack_leave_table', async (_: unknown, callback) => {
+  socket.on('blackjack_leave_table', async (params: { tableId?: string } = {}, callback) => {
     try {
-      const room = blackjackRoomManager.getRoomBySocketId(socket.id)
+      const room = blackjackRoomManager.getRoomBySocketId(socket.id) ??
+        (params.tableId ? blackjackRoomManager.getRoom(params.tableId) : null) ??
+        blackjackRoomManager.getRoomByPlayerId(socket.userId)
       if (!room) return callback?.({ error: 'Not at a blackjack table' })
 
-      const observer = room.getObserverBySocketId(socket.id)
+      const observer = room.getObserverBySocketId(socket.id) ?? room.getObserverByPlayerId(socket.userId)
       if (observer) {
         room.removeObserver(observer.playerId)
         let balance: number | undefined
@@ -223,9 +225,10 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
         return
       }
 
-      const removed = await room.removePlayerBySocketId(socket.id)
-      if (!removed) return callback?.({ error: 'Player not found' })
+      const player = room.getPlayerBySocketId(socket.id) ?? room.getPlayerByPlayerId(socket.userId)
+      if (!player) return callback?.({ error: 'Player not found' })
 
+      const removed = await room.removePlayer(player)
       const result = await cashOutRemovedPlayer(io, room, removed.player, removed.cashout)
       callback?.(result)
     } catch (error) {
