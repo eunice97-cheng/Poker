@@ -138,6 +138,7 @@ export class BlackjackRoom {
       roundNumber: 0,
       message: 'Place your bets, please.',
       messageUpdatedAt: Date.now(),
+      dealerTips: {},
       bettingEndsAt: null,
       turnEndsAt: null,
       nextRoundStartsAt: null,
@@ -586,6 +587,17 @@ export class BlackjackRoom {
     }
     this.broadcastState()
     return { ok: true, stack: player.stack }
+  }
+
+  setDealerTips(dealerTips: Record<string, number>) {
+    this.state.dealerTips = { ...dealerTips }
+  }
+
+  addDealerTip(dealerId: string, amount: number) {
+    this.state.dealerTips = {
+      ...this.state.dealerTips,
+      [dealerId]: (this.state.dealerTips[dealerId] ?? 0) + amount,
+    }
   }
 
   getSnapshot(): BlackjackTableInfo {
@@ -1148,6 +1160,7 @@ export class BlackjackRoom {
       validActions: player ? this.getValidActionsForPlayer(player) : [],
       message: personalDealerMessage?.message ?? this.state.message,
       messageUpdatedAt: personalDealerMessage?.updatedAt ?? this.state.messageUpdatedAt,
+      dealerTips: { ...this.state.dealerTips },
       shoeCardsLeft: this.state.deck.length,
       bettingEndsAt: this.state.bettingEndsAt,
       turnEndsAt: this.state.turnEndsAt,

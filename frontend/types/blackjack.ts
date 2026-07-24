@@ -65,6 +65,7 @@ export interface BlackjackState {
   validActions: BlackjackAction[]
   message: string
   messageUpdatedAt: number
+  dealerTips: Record<string, number>
   shoeCardsLeft: number
   bettingEndsAt: number | null
   turnEndsAt: number | null

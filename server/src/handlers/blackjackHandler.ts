@@ -13,6 +13,7 @@ const DEFAULT_MAX_BET = 5000
 const DEFAULT_MIN_BUYIN = 1000
 const DEFAULT_MAX_BUYIN = 20000
 const DEFAULT_MAX_PLAYERS = 7
+const BLACKJACK_DEALER_TIP_AMOUNT = 10
 const pendingBlackjackLeaves = new Set<string>()
 
 function clampInteger(value: unknown, fallback: number, min: number, max: number) {
@@ -58,6 +59,42 @@ function cashoutForPlayer(room: BlackjackRoom, player: BlackjackServerPlayer) {
   return room.state.phase === 'betting' ? player.stack + player.bet : player.stack
 }
 
+function normalizeDealerId(value: unknown) {
+  const dealerId = String(value ?? 'chloe')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
+    .slice(0, 40)
+  return dealerId || 'chloe'
+}
+
+function dealerNameFromId(dealerId: string, value: unknown) {
+  const dealerName = String(value ?? '').trim().slice(0, 40)
+  if (dealerName) return dealerName
+  return dealerId
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ') || dealerId
+}
+
+async function syncBlackjackDealerTips(room: BlackjackRoom) {
+  try {
+    room.setDealerTips(await supabaseService.getBlackjackDealerTips())
+    room.broadcastState()
+  } catch (error) {
+    console.warn('blackjack dealer tips sync skipped:', error)
+  }
+}
+
+async function recordBlackjackDealerTip(room: BlackjackRoom, dealerId: string, dealerName: string, amount: number) {
+  try {
+    room.setDealerTips(await supabaseService.recordBlackjackDealerTip(dealerId, dealerName, amount))
+  } catch (error) {
+    console.warn('blackjack dealer tip persisted record skipped:', error)
+    room.addDealerTip(dealerId, amount)
+  }
+}
+
 export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocket) {
   socket.on('blackjack_create_table', async (params: {
     name?: string
@@ -99,6 +136,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
 
         const room = blackjackRoomManager.createRoom(tableInfo)
         room.addObserver(createObserver(socket, { avatar: socket.avatar ?? 'avatar_m1' }, buyIn, false))
+        void syncBlackjackDealerTips(room)
         io.emit('blackjack_table_created', room.getSnapshot())
         callback?.({ tableId: tableInfo.id, observer: true, stack: buyIn, balance: 100000 - buyIn })
         return
@@ -126,6 +164,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
 
       const room = blackjackRoomManager.createRoom(tableInfo)
       room.addObserver(createObserver(socket, profile, buyIn, false))
+      void syncBlackjackDealerTips(room)
 
       io.emit('blackjack_table_created', room.getSnapshot())
       callback?.({ tableId: tableInfo.id, observer: true, stack: buyIn, balance })
@@ -167,6 +206,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
       deducted = socket.userId === LOCAL_ADMIN_ID ? 0 : buyIn
 
       room.addObserver(createObserver(socket, profile, buyIn, false))
+      void syncBlackjackDealerTips(room)
       callback?.({ observer: true, stack: buyIn, balance })
     } catch (error) {
       console.error('blackjack_join_table error:', error)
@@ -180,6 +220,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
   socket.on('blackjack_reconnect_to_table', (params: { tableId: string }, callback) => {
     const room = blackjackRoomManager.getRoom(params.tableId)
     if (!room) return callback?.({ error: 'Blackjack table not found' })
+    void syncBlackjackDealerTips(room)
 
     const ok = room.reconnectPlayer(socket.userId, socket.id)
     if (!ok) {
@@ -289,6 +330,40 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
     const room = blackjackRoomManager.getRoomBySocketId(socket.id)
     if (!room) return callback?.({ error: 'Not at a blackjack table' })
     callback?.(room.clearBet(socket.id))
+  })
+
+  socket.on('blackjack_tip_dealer', async (params: { amount?: number; dealerId?: string; dealerName?: string }, callback) => {
+    try {
+      const room = blackjackRoomManager.getRoomBySocketId(socket.id)
+      if (!room) return callback?.({ error: 'Not at a blackjack table' })
+
+      const player = room.getPlayerBySocketId(socket.id)
+      if (!player) return callback?.({ error: 'Only seated players can tip the dealer' })
+
+      const amount = Number(params?.amount ?? BLACKJACK_DEALER_TIP_AMOUNT)
+      if (!Number.isInteger(amount) || amount !== BLACKJACK_DEALER_TIP_AMOUNT) {
+        return callback?.({ error: 'Invalid tip amount' })
+      }
+
+      if (player.stack < amount) {
+        return callback?.({ error: 'Not enough chips in your table stack' })
+      }
+
+      const dealerId = normalizeDealerId(params?.dealerId)
+      const dealerName = dealerNameFromId(dealerId, params?.dealerName)
+      const nextStack = player.stack - amount
+      if (!isLocalOnlyTable(room.tableId)) {
+        await supabaseService.updateTablePlayerStack(room.tableId, player.playerId, nextStack)
+      }
+
+      player.stack = nextStack
+      await recordBlackjackDealerTip(room, dealerId, dealerName, amount)
+      room.broadcastState()
+      callback?.({ ok: true, stack: player.stack })
+    } catch (error) {
+      console.error('blackjack_tip_dealer error:', error)
+      callback?.({ error: 'Dealer tip failed' })
+    }
   })
 
   socket.on('blackjack_deal', async (_: unknown, callback) => {

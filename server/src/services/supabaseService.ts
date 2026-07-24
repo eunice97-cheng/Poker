@@ -6,6 +6,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY! // service key bypasses RLS — server only!
 )
 
+type BlackjackDealerTipRow = {
+  dealer_id: string
+  total_tips: number | string
+}
+
+function dealerTipsMap(rows: BlackjackDealerTipRow[] | null | undefined) {
+  const tips: Record<string, number> = {}
+  for (const row of rows ?? []) {
+    tips[row.dealer_id] = Number(row.total_tips) || 0
+  }
+  return tips
+}
+
 export const supabaseService = {
   // ─── Tables ────────────────────────────────────────────────────────────
 
@@ -109,6 +122,26 @@ export const supabaseService = {
       throw new Error(`Failed to add chips: ${message}`)
     }
     return data as number
+  },
+
+  async getBlackjackDealerTips(): Promise<Record<string, number>> {
+    const { data, error } = await supabase
+      .from('blackjack_dealer_tips')
+      .select('dealer_id, total_tips')
+
+    if (error) throw new Error(`Failed to load blackjack dealer tips: ${error.message}`)
+    return dealerTipsMap(data as BlackjackDealerTipRow[])
+  },
+
+  async recordBlackjackDealerTip(dealerId: string, dealerName: string, amount: number): Promise<Record<string, number>> {
+    const { data, error } = await supabase.rpc('record_blackjack_dealer_tip', {
+      p_dealer_id: dealerId,
+      p_dealer_name: dealerName,
+      p_amount: amount,
+    })
+
+    if (error) throw new Error(`Failed to record blackjack dealer tip: ${error.message}`)
+    return dealerTipsMap(data as BlackjackDealerTipRow[])
   },
 
   async updateChipBalances(players: ServerPlayer[], tableId: string) {

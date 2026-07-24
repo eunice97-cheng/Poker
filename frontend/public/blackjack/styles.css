@@ -881,6 +881,174 @@ button { font: inherit; }
   text-shadow: 0 1px 0 rgba(0,0,0,.85), 0 0 12px rgba(243,212,125,.36);
 }
 
+.dealer-tip-board {
+  position: absolute;
+  left: calc(50% - 300px);
+  top: -31%;
+  z-index: 7;
+  width: 264px;
+  padding: 10px;
+  border: 1px solid rgba(214,173,72,.56);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(243,212,125,.18), transparent 38%),
+    linear-gradient(135deg, rgba(8,11,9,.96), rgba(2,5,4,.88) 56%, rgba(13,25,19,.92));
+  color: var(--cream);
+  font-family: var(--font-display);
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.07),
+    inset 0 0 0 1px rgba(0,0,0,.45),
+    0 14px 24px rgba(0,0,0,.42),
+    0 0 24px rgba(214,173,72,.12);
+}
+
+.dealer-tip-board::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(243,212,125,.14);
+  border-radius: 7px;
+}
+
+.dealer-tip-board::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,235,155,.86), transparent);
+  box-shadow: 0 0 12px rgba(243,212,125,.55);
+}
+
+.dealer-tip-board__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px 8px;
+  border-bottom: 1px solid rgba(214,173,72,.26);
+}
+
+.dealer-tip-board__header span {
+  color: var(--gold-light);
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0,0,0,.85);
+}
+
+.dealer-tip-board__header strong {
+  color: #fff;
+  font-family: var(--font-number);
+  font-size: .96rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(243,212,125,.28);
+}
+
+.dealer-tip-board__list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dealer-tip-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: 1px 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 7px 9px;
+  border: 1px solid rgba(214,173,72,.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(214,173,72,.08), rgba(0,0,0,.14) 42%, rgba(0,0,0,.24));
+  box-shadow: inset 0 1px rgba(255,255,255,.04);
+}
+
+.dealer-tip-row.is-leading {
+  border-color: rgba(243,212,125,.42);
+  background:
+    linear-gradient(90deg, rgba(214,173,72,.16), rgba(0,0,0,.14) 46%, rgba(7,33,22,.22));
+}
+
+.dealer-tip-row.is-active {
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.06),
+    0 0 14px rgba(58,198,153,.13);
+}
+
+.dealer-tip-row__rank {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(214,173,72,.34);
+  border-radius: 50%;
+  background: rgba(4, 8, 6, .74);
+  color: var(--gold-light);
+  font-family: var(--font-number);
+  font-size: .68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dealer-tip-row__name {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .03em;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0,0,0,.8);
+  white-space: nowrap;
+}
+
+.dealer-tip-row__label {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(247,240,215,.62);
+  font-size: .46rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dealer-tip-row strong {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  color: var(--gold-light);
+  font-family: var(--font-number);
+  font-size: .92rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+  text-shadow: 0 1px 0 rgba(0,0,0,.8), 0 0 10px rgba(243,212,125,.22);
+  white-space: nowrap;
+}
+
 .dealer-area { top: 24%; }
 .player-area { top: 46%; }
 
@@ -2303,6 +2471,29 @@ button { font: inherit; }
   .round-countdown strong {
     font-size: 1.38rem;
   }
+  .dealer-tip-board {
+    left: calc(50% - 270px);
+    top: -33%;
+    width: 238px;
+    padding: 8px;
+  }
+  .dealer-tip-board__header {
+    padding-bottom: 6px;
+  }
+  .dealer-tip-board__list {
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .dealer-tip-row {
+    min-height: 39px;
+    padding: 6px 8px;
+  }
+  .dealer-tip-row__name {
+    font-size: .66rem;
+  }
+  .dealer-tip-row strong {
+    font-size: .84rem;
+  }
   .bottom-console {
     grid-template-rows: 24px 76px;
     padding-top: 8px;
@@ -2426,6 +2617,29 @@ button { font: inherit; }
   }
   .round-countdown strong {
     font-size: 1.38rem;
+  }
+  .dealer-tip-board {
+    left: calc(50% - 270px);
+    top: -33%;
+    width: 238px;
+    padding: 8px;
+  }
+  .dealer-tip-board__header {
+    padding-bottom: 6px;
+  }
+  .dealer-tip-board__list {
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .dealer-tip-row {
+    min-height: 39px;
+    padding: 6px 8px;
+  }
+  .dealer-tip-row__name {
+    font-size: .66rem;
+  }
+  .dealer-tip-row strong {
+    font-size: .84rem;
   }
   .dealer-area { top: 24%; }
   .player-area { top: 46%; }

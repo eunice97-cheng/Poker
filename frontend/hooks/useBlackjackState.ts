@@ -100,6 +100,10 @@ export function useBlackjackState(socket: Socket | null, tableId: string) {
   const clearBet = useCallback(() => emitAck('blackjack_clear_bet'), [emitAck])
   const newRound = useCallback(() => emitAck('blackjack_new_round'), [emitAck])
   const rebuy = useCallback((amount: number) => emitAck('blackjack_rebuy', { amount }), [emitAck])
+  const tipDealer = useCallback(
+    (amount: number, dealerId: string, dealerName: string) => emitAck('blackjack_tip_dealer', { amount, dealerId, dealerName }),
+    [emitAck]
+  )
   const sitOut = useCallback(() => emitAck('blackjack_sit_out'), [emitAck])
   const sitIn = useCallback((seat?: number) => emitAck('blackjack_sit_in', { seat }), [emitAck])
   const sendAction = useCallback((action: BlackjackAction) => emitAck('blackjack_action', { action }), [emitAck])
@@ -121,6 +125,7 @@ export function useBlackjackState(socket: Socket | null, tableId: string) {
     clearBet,
     newRound,
     rebuy,
+    tipDealer,
     sitOut,
     sitIn,
     sendAction,

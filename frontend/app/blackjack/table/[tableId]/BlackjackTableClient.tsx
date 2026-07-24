@@ -45,6 +45,7 @@ type DealerPortraitKey = 'normal' | 'smiling' | 'blinking'
 
 type DealerAssets = {
   id: string
+  name: string
   portraits: Record<DealerPortraitKey, string>
   thankYou: {
     normal: string
@@ -63,11 +64,13 @@ const CHIP_STACK_OFFSETS = [
   [0, -5, 7],
 ] as const
 const SEAT_COUNT = 7
+const BLACKJACK_DEALER_TIP_AMOUNT = 10
 const MAX_CHAT_LENGTH = 200
 const DEALER_ROTATION_MS = 2 * 60 * 60 * 1000
 const DEALERS: DealerAssets[] = [
   {
     id: 'chloe',
+    name: 'Chloe',
     portraits: {
       normal: '/blackjack/Images/Dealers/Chloe.png',
       smiling: '/blackjack/Images/Dealers/Chloe%20-%20smiling.png',
@@ -80,6 +83,7 @@ const DEALERS: DealerAssets[] = [
   },
   {
     id: 'eunice',
+    name: 'Eunice',
     portraits: {
       normal: '/blackjack/Images/Dealers/Eunice4.png',
       smiling: '/blackjack/Images/Dealers/Eunice4%20-%20smiling.png',
@@ -97,7 +101,7 @@ const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
 const TRANSIENT_DEALER_LINE_MS = 4500
 const BLACKJACK_CELEBRATION_MS = 2350
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-10'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-11'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',
@@ -146,6 +150,17 @@ function secondsLeft(target: number | null | undefined, now: number) {
 
 function dealerForTime(time: number) {
   return DEALERS[Math.floor(time / DEALER_ROTATION_MS) % DEALERS.length] ?? DEALERS[0]
+}
+
+function dealerNameForId(dealerId: string) {
+  const dealer = DEALERS.find((item) => item.id === dealerId)
+  if (dealer) return dealer.name
+
+  return dealerId
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ') || dealerId
 }
 
 function money(value: number) {
@@ -260,6 +275,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const recordedRoundRef = useRef<number | null>(null)
   const [tipVisible, setTipVisible] = useState(false)
   const [tipImage, setTipImage] = useState(() => dealerForTime(Date.now()).thankYou.normal)
+  const [tipLoading, setTipLoading] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
   const [rebuyAmount, setRebuyAmount] = useState(1000)
@@ -285,6 +301,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     placeBet,
     clearBet,
     rebuy,
+    tipDealer,
     sitOut,
     sitIn,
     sendAction,
@@ -319,6 +336,20 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     () => messages.map((message) => ({ ...message, isSystem: false })),
     [messages]
   )
+  const dealerTipRows = useMemo(() => {
+    const totals = blackjackState?.dealerTips ?? {}
+    const dealerIds = Array.from(new Set([...DEALERS.map((dealer) => dealer.id), ...Object.keys(totals)]))
+
+    return dealerIds
+      .map((dealerId) => ({
+        id: dealerId,
+        name: dealerNameForId(dealerId),
+        total: totals[dealerId] ?? 0,
+        active: dealerId === activeDealer.id,
+      }))
+      .sort((a, b) => b.total - a.total || Number(b.active) - Number(a.active) || a.name.localeCompare(b.name))
+  }, [blackjackState?.dealerTips, activeDealer.id])
+  const totalDealerTips = dealerTipRows.reduce((sum, row) => sum + row.total, 0)
   const canBet = blackjackState?.phase === 'betting'
   const canSitAtSeat = Boolean(waitingMe && blackjackState && blackjackState.phase !== 'playing')
   const isMyTurn = Boolean(me?.isCurrentTurn)
@@ -345,6 +376,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const audioEffectivelyMuted = musicMute || volume === 0
   const bgmEffectivelyMuted = audioEffectivelyMuted
   const sfxEffectivelyMuted = sfxMute || sfxVolume === 0
+  const canTipDealer = Boolean(me && me.stack >= BLACKJACK_DEALER_TIP_AMOUNT && !tipLoading)
 
   useEffect(() => {
     if (!blackjackState?.bettingEndsAt && !blackjackState?.turnEndsAt && !blackjackState?.nextRoundStartsAt) return
@@ -499,8 +531,18 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     tipTimeoutsRef.current = []
   }
 
-  const handleTip = () => {
+  const handleTip = async () => {
     clearTipTimers()
+    clearLastError()
+    setTipVisible(false)
+
+    if (!canTipDealer) return
+
+    setTipLoading(true)
+    const result = await tipDealer(BLACKJACK_DEALER_TIP_AMOUNT, activeDealer.id, activeDealer.name)
+    setTipLoading(false)
+    if (result.error) return
+
     setTipImage(activeDealer.thankYou.normal)
     setTipVisible(true)
     tipTimeoutsRef.current = [
@@ -778,6 +820,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
           <div className="wood-rail">
             <img id="dealerPortrait" className="dealer-portrait" src={activeDealer.portraits[dealerPortrait]} alt="" aria-hidden="true" />
             <div className="dealer-speech" id="dealerSpeech" aria-live="polite" hidden={!visibleDealerLine}>{visibleDealerLine}</div>
+            <DealerTipBoard rows={dealerTipRows} total={totalDealerTips} />
             <div className="round-countdown" id="roundCountdown" aria-live="polite" hidden={!countdown}>
               <span>{countdown?.label ?? 'COUNTDOWN'}</span>
               <strong>{countdown?.value ?? 0}</strong>
@@ -786,7 +829,13 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               <img className="table-logo" src="/blackjack/Images/Table/table%20logo.png" alt="" aria-hidden="true" />
 
               <div className="tip-control table-tip-control">
-                <button type="button" id="tipBtn" className="tip-button action-button" onClick={handleTip}>
+                <button
+                  type="button"
+                  id="tipBtn"
+                  className="tip-button action-button"
+                  disabled={!canTipDealer}
+                  onClick={handleTip}
+                >
                   <b>TIP</b>
                   <span>TIP DEALER</span>
                 </button>
@@ -1102,6 +1151,33 @@ function SplitHand({ hand, index, active }: { hand: ClientBlackjackHand; index: 
       </div>
       <div className="split-hand-score">{handScore(hand)}</div>
     </div>
+  )
+}
+
+function DealerTipBoard({
+  rows,
+  total,
+}: {
+  rows: Array<{ id: string; name: string; total: number; active: boolean }>
+  total: number
+}) {
+  return (
+    <aside className="dealer-tip-board" aria-label="Dealer tip ranking">
+      <header className="dealer-tip-board__header">
+        <span>Dealer Support</span>
+        <strong>{money(total)}</strong>
+      </header>
+      <ol className="dealer-tip-board__list">
+        {rows.map((row, index) => (
+          <li key={row.id} className={classNames('dealer-tip-row', row.active && 'is-active', index === 0 && 'is-leading')}>
+            <span className="dealer-tip-row__rank">{String(index + 1).padStart(2, '0')}</span>
+            <span className="dealer-tip-row__name">Dealer {row.name}</span>
+            <span className="dealer-tip-row__label">Total Tip Received</span>
+            <strong>{money(row.total)}</strong>
+          </li>
+        ))}
+      </ol>
+    </aside>
   )
 }
 

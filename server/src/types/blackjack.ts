@@ -4,6 +4,7 @@ export type BlackjackPhase = 'betting' | 'playing' | 'settled'
 export type BlackjackAction = 'hit' | 'stand' | 'double' | 'split' | 'surrender'
 export type BlackjackHandStatus = 'playing' | 'stood' | 'busted' | 'blackjack' | 'surrendered' | 'settled'
 export type BlackjackTableStatus = 'waiting' | 'playing' | 'finished'
+export type BlackjackDealerTips = Record<string, number>
 
 export interface BlackjackCard {
   rank: BlackjackRank
@@ -68,6 +69,7 @@ export interface BlackjackServerState {
   roundNumber: number
   message: string
   messageUpdatedAt: number
+  dealerTips: BlackjackDealerTips
   bettingEndsAt: number | null
   turnEndsAt: number | null
   nextRoundStartsAt: number | null
@@ -126,6 +128,7 @@ export interface ClientBlackjackState {
   validActions: BlackjackAction[]
   message: string
   messageUpdatedAt: number
+  dealerTips: BlackjackDealerTips
   shoeCardsLeft: number
   bettingEndsAt: number | null
   turnEndsAt: number | null
