@@ -106,18 +106,23 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const bgAudio = useRef<HTMLAudioElement | null>(null)
   const playlistRef = useRef<string[]>([])
   const trackIndexRef = useRef(0)
+  const pathnameRef = useRef(pathname)
+  const musicVolRef = useRef(musicVol)
+  const musicMuteRef = useRef(musicMute)
 
   const syncPlayback = useCallback(() => {
-    if (!bgAudio.current) return
-    bgAudio.current.volume = musicMute ? 0 : musicVol
+    const audio = bgAudio.current
+    if (!audio) return
 
-    if (musicMute) {
-      bgAudio.current.pause()
+    audio.volume = musicMuteRef.current ? 0 : musicVolRef.current
+
+    if (musicMuteRef.current) {
+      audio.pause()
       return
     }
 
-    bgAudio.current.play().catch(() => {})
-  }, [musicMute, musicVol])
+    audio.play().catch(() => {})
+  }, [])
 
   const loadTrack = useCallback(
     (playlist: string[], index: number) => {
@@ -147,7 +152,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     audio.addEventListener('ended', onEnded)
 
     bgAudio.current = audio
-    playlistRef.current = getPlaylist(pathname)
+    playlistRef.current = getPlaylist(pathnameRef.current)
     loadTrack(playlistRef.current, 0)
 
     return () => {
@@ -155,9 +160,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('ended', onEnded)
       bgAudio.current = null
     }
-  }, [advanceTrack, loadTrack, pathname])
+  }, [advanceTrack, loadTrack])
 
   useEffect(() => {
+    pathnameRef.current = pathname
     const nextPlaylist = getPlaylist(pathname)
     const currentPlaylist = playlistRef.current
     const changed =
@@ -171,8 +177,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [loadTrack, pathname])
 
   useEffect(() => {
+    musicVolRef.current = musicVol
+    musicMuteRef.current = musicMute
     syncPlayback()
-  }, [syncPlayback])
+  }, [musicMute, musicVol, syncPlayback])
 
   useEffect(() => {
     if (musicMute) return

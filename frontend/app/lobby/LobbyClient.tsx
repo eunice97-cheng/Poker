@@ -345,8 +345,8 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               </div>
             </div>
 
-            <aside className="overflow-hidden rounded-[30px] border border-[#f3d2a2]/34 bg-black/26 shadow-[0_0_34px_rgba(243,210,162,0.24),0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md transition-shadow duration-300 hover:shadow-[0_0_48px_rgba(243,210,162,0.34),0_34px_90px_rgba(0,0,0,0.46)] md:rounded-[38px]">
-              <Link href="/blackjack" className="group block h-full min-h-[520px]" aria-label="Visit the ASL Blackjack Lounge">
+            <aside className="blackjack-promo-panel rounded-[30px] bg-black/26 backdrop-blur-md md:rounded-[38px]">
+              <Link href="/blackjack" className="blackjack-promo-panel__link group block h-full min-h-[520px]" aria-label="Visit the ASL Blackjack Lounge">
                 <img
                   src="/blackjack/Images/Promote%20ASL%20Blackjack.png"
                   alt="Visit the ASL Blackjack Lounge"
