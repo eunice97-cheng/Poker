@@ -444,14 +444,15 @@
     overflow: hidden;
     border: 1px solid transparent;
     background:
-      linear-gradient(rgba(6, 4, 12, 0.9), rgba(4, 10, 14, 0.9)) padding-box,
+      linear-gradient(rgba(5, 8, 18, 0.92), rgba(3, 14, 20, 0.92)) padding-box,
       conic-gradient(
         from 0deg,
-        rgba(45, 212, 191, 0.95),
-        rgba(129, 140, 248, 0.28),
-        rgba(168, 85, 247, 0.95),
-        rgba(59, 130, 246, 0.34),
-        rgba(45, 212, 191, 0.95)
+        #2dd4bf,
+        #38bdf8,
+        #818cf8,
+        #a855f7,
+        #60a5fa,
+        #2dd4bf
       ) border-box;
     color: #7dd3fc;
     text-shadow: 0 0 14px rgba(45, 212, 191, 0.42);
@@ -461,19 +462,20 @@
   .blackjack-return-button::before {
     content: "";
     position: absolute;
-    inset: -60%;
+    inset: -140%;
     z-index: -1;
     background:
       conic-gradient(
         from 0deg,
-        transparent,
-        rgba(168, 85, 247, 0.34),
-        transparent 32%,
-        rgba(45, 212, 191, 0.22),
-        transparent 68%,
-        rgba(96, 165, 250, 0.28),
-        transparent
+        #2dd4bf,
+        #38bdf8,
+        #818cf8,
+        #a855f7,
+        #60a5fa,
+        #2dd4bf
       );
+    opacity: 0.42;
+    filter: blur(4px);
     animation: blackjack-return-border 4.8s linear infinite;
   }
 
