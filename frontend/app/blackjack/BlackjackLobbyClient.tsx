@@ -252,7 +252,7 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-4">
             <div className="flex flex-wrap items-center gap-3">
               <img
-                src="/blackjack/Images/ASL%20BlackJack%20Lounge%20Logo.png"
+                src="/blackjack/Images/header%20logo%201.png"
                 alt="ASL BlackJack Lounge"
                 className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(245,199,109,0.2)]"
               />
