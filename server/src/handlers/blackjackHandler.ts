@@ -13,6 +13,7 @@ const DEFAULT_MAX_BET = 5000
 const DEFAULT_MIN_BUYIN = 1000
 const DEFAULT_MAX_BUYIN = 20000
 const DEFAULT_MAX_PLAYERS = 7
+const pendingBlackjackLeaves = new Set<string>()
 
 function clampInteger(value: unknown, fallback: number, min: number, max: number) {
   const number = Number(value)
@@ -46,21 +47,15 @@ async function deleteRoomIfEmpty(io: Server, room: BlackjackRoom) {
   io.emit('blackjack_table_deleted', { tableId: room.tableId })
 }
 
-async function cashOutRemovedPlayer(io: Server, room: BlackjackRoom, player: BlackjackServerPlayer, cashout: number) {
-  let balance: number | undefined
+async function cashOutBlackjackChips(room: BlackjackRoom, playerId: string, cashout: number) {
+  if (isLocalOnlyTable(room.tableId)) return 100000
+  if (cashout <= 0) return undefined
 
-  if (isLocalOnlyTable(room.tableId)) {
-    await deleteRoomIfEmpty(io, room)
-    return { cashout, balance: 100000 }
-  }
+  return supabaseService.addChips(playerId, room.tableId, cashout, 'cashout')
+}
 
-  if (cashout > 0) {
-    balance = await supabaseService.addChips(player.playerId, room.tableId, cashout, 'cashout')
-  }
-
-  await supabaseService.removeTablePlayer(room.tableId, player.playerId)
-  await deleteRoomIfEmpty(io, room)
-  return { cashout, balance }
+function cashoutForPlayer(room: BlackjackRoom, player: BlackjackServerPlayer) {
+  return room.state.phase === 'betting' ? player.stack + player.bet : player.stack
 }
 
 export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocket) {
@@ -198,42 +193,57 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
   })
 
   socket.on('blackjack_leave_table', async (params: { tableId?: string } = {}, callback) => {
+    let leaveKey = ''
+
     try {
       const room = blackjackRoomManager.getRoomBySocketId(socket.id) ??
         (params.tableId ? blackjackRoomManager.getRoom(params.tableId) : null) ??
         blackjackRoomManager.getRoomByPlayerId(socket.userId)
       if (!room) return callback?.({ error: 'Not at a blackjack table' })
 
+      leaveKey = `${room.tableId}:${socket.userId}`
+      if (pendingBlackjackLeaves.has(leaveKey)) {
+        return callback?.({ error: 'Cash out is already in progress' })
+      }
+      pendingBlackjackLeaves.add(leaveKey)
+
       const observer = room.getObserverBySocketId(socket.id) ?? room.getObserverByPlayerId(socket.userId)
       if (observer) {
-        room.removeObserver(observer.playerId)
+        const cashout = observer.stack
         let balance: number | undefined
 
         if (isLocalOnlyTable(room.tableId)) {
           balance = 100000
         } else {
-          if (observer.stack > 0) {
-            balance = await supabaseService.addChips(observer.playerId, room.tableId, observer.stack, 'cashout')
-          }
+          balance = await cashOutBlackjackChips(room, observer.playerId, cashout)
           if (observer.hasTableEntry) {
             await supabaseService.removeTablePlayer(room.tableId, observer.playerId)
           }
         }
 
+        room.removeObserver(observer.playerId)
         await deleteRoomIfEmpty(io, room)
-        callback?.({ cashout: observer.stack, balance })
+        callback?.({ cashout, balance })
         return
       }
 
       const player = room.getPlayerBySocketId(socket.id) ?? room.getPlayerByPlayerId(socket.userId)
       if (!player) return callback?.({ error: 'Player not found' })
 
+      const cashout = cashoutForPlayer(room, player)
+      const balance = await cashOutBlackjackChips(room, player.playerId, cashout)
+      if (!isLocalOnlyTable(room.tableId)) {
+        await supabaseService.removeTablePlayer(room.tableId, player.playerId)
+      }
+
       const removed = await room.removePlayer(player)
-      const result = await cashOutRemovedPlayer(io, room, removed.player, removed.cashout)
-      callback?.(result)
+      await deleteRoomIfEmpty(io, room)
+      callback?.({ cashout: removed.cashout, balance })
     } catch (error) {
       console.error('blackjack_leave_table error:', error)
-      callback?.({ error: 'Failed to leave blackjack table' })
+      callback?.({ error: 'Cashout failed. Your table chips were kept at the table.' })
+    } finally {
+      if (leaveKey) pendingBlackjackLeaves.delete(leaveKey)
     }
   })
 

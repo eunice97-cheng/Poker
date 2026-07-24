@@ -84,14 +84,30 @@ export const supabaseService = {
     return data as number
   },
 
-  async addChips(playerId: string, tableId: string, amount: number, type: string = 'cashout'): Promise<number> {
+  async addChips(playerId: string, tableId: string | null, amount: number, type: string = 'cashout'): Promise<number> {
     const { data, error } = await supabase.rpc('add_chips', {
       p_player_id: playerId,
       p_table_id: tableId,
       p_amount: amount,
       p_type: type,
     })
-    if (error) throw new Error(`Failed to add chips: ${error.message}`)
+    if (error) {
+      const message = error.message ?? ''
+      const missingTableReference = Boolean(tableId)
+        && /transactions_table_id_fkey|foreign key constraint|not present in table "tables"/i.test(message)
+
+      if (missingTableReference) {
+        const retry = await supabase.rpc('add_chips', {
+          p_player_id: playerId,
+          p_table_id: null,
+          p_amount: amount,
+          p_type: type,
+        })
+        if (!retry.error) return retry.data as number
+      }
+
+      throw new Error(`Failed to add chips: ${message}`)
+    }
     return data as number
   },
 
