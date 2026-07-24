@@ -942,7 +942,7 @@ button { font: inherit; }
 .dealer-tip-board {
   position: absolute;
   left: calc(50% - 380px);
-  top: -46%;
+  top: -30%;
   z-index: 7;
   width: 264px;
   padding: 10px;
@@ -2531,7 +2531,7 @@ button { font: inherit; }
   }
   .dealer-tip-board {
     left: calc(50% - 350px);
-    top: -50%;
+    top: -32%;
     width: 238px;
     padding: 8px;
   }
@@ -2678,7 +2678,7 @@ button { font: inherit; }
   }
   .dealer-tip-board {
     left: calc(50% - 350px);
-    top: -50%;
+    top: -32%;
     width: 238px;
     padding: 8px;
   }

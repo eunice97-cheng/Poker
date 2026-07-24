@@ -117,7 +117,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-16'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-18'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',
@@ -166,17 +166,6 @@ function secondsLeft(target: number | null | undefined, now: number) {
 
 function dealerForTime(time: number) {
   return DEALERS[Math.floor(time / DEALER_ROTATION_MS) % DEALERS.length] ?? DEALERS[0]
-}
-
-function dealerNameForId(dealerId: string) {
-  const dealer = DEALERS.find((item) => item.id === dealerId)
-  if (dealer) return dealer.name
-
-  return dealerId
-    .split(/[_-]+/)
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(' ') || dealerId
 }
 
 function dealerIntroLine(dealer: DealerAssets) {
@@ -335,6 +324,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     clearLastError,
     placeBet,
     clearBet,
+    buyInsurance,
     rebuy,
     tipDealer,
     sitOut,
@@ -371,33 +361,42 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     () => messages.map((message) => ({ ...message, isSystem: false })),
     [messages]
   )
-  const dealerTipRows = useMemo(() => {
-    const totals = blackjackState?.dealerTips ?? {}
-    const dealerIds = Array.from(new Set([...DEALERS.map((dealer) => dealer.id), ...Object.keys(totals)]))
-
-    return dealerIds
-      .map((dealerId) => ({
-        id: dealerId,
-        name: dealerNameForId(dealerId),
-        total: totals[dealerId] ?? 0,
-        active: dealerId === activeDealer.id,
-      }))
-      .sort((a, b) => b.total - a.total || Number(b.active) - Number(a.active) || a.name.localeCompare(b.name))
-  }, [blackjackState?.dealerTips, activeDealer.id])
-  const totalDealerTips = dealerTipRows.reduce((sum, row) => sum + row.total, 0)
+  const activeDealerTipTotal = blackjackState?.dealerTips?.[activeDealer.id] ?? 0
+  const activeDealerTipRows = useMemo(() => [
+    {
+      id: activeDealer.id,
+      name: activeDealer.name,
+      total: activeDealerTipTotal,
+      active: true,
+    },
+  ], [activeDealer.id, activeDealer.name, activeDealerTipTotal])
   const canBet = blackjackState?.phase === 'betting'
-  const canSitAtSeat = Boolean(waitingMe && blackjackState && blackjackState.phase !== 'playing')
+  const isRoundLocked = blackjackState?.phase === 'playing' || blackjackState?.phase === 'insurance'
+  const canSitAtSeat = Boolean(waitingMe && blackjackState && !isRoundLocked)
   const isMyTurn = Boolean(me?.isCurrentTurn)
   const bettingSecondsLeft = secondsLeft(blackjackState?.bettingEndsAt, now)
+  const insuranceSecondsLeft = secondsLeft(blackjackState?.insuranceEndsAt, now)
   const turnSecondsLeft = secondsLeft(blackjackState?.turnEndsAt, now)
   const nextRoundSecondsLeft = secondsLeft(blackjackState?.nextRoundStartsAt, now)
   const countdown = blackjackState?.bettingEndsAt
     ? { label: 'BETS CLOSE', value: bettingSecondsLeft }
-    : blackjackState?.turnEndsAt
-      ? { label: 'TURN', value: turnSecondsLeft }
-      : blackjackState?.nextRoundStartsAt
-        ? { label: 'NEXT ROUND', value: nextRoundSecondsLeft }
-        : null
+    : blackjackState?.insuranceEndsAt
+      ? { label: 'INSURANCE', value: insuranceSecondsLeft }
+      : blackjackState?.turnEndsAt
+        ? { label: 'TURN', value: turnSecondsLeft }
+        : blackjackState?.nextRoundStartsAt
+          ? { label: 'NEXT ROUND', value: nextRoundSecondsLeft }
+          : null
+  const dealerUpcard = blackjackState?.dealerCards[0] ?? null
+  const insuranceAmount = activeHand ? Math.floor(activeHand.bet / 2) : 0
+  const canBuyInsurance = Boolean(
+    blackjackState?.phase === 'insurance' &&
+    dealerUpcard?.rank === 'A' &&
+    me &&
+    insuranceAmount > 0 &&
+    (me.insuranceBet ?? 0) <= 0 &&
+    me.stack >= insuranceAmount
+  )
   const lastWin = blackjackState?.phase === 'settled' && me && me.lastNet > 0 ? me.lastNet : 0
   const historyWins = sessionHistory.filter((item) => item.type === 'win').length
   const historyLosses = sessionHistory.filter((item) => item.type === 'lose').length
@@ -405,21 +404,26 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const dealerLine = blackjackState?.message ?? ''
   const visibleDealerLine = showDealerLine ? dealerLine : ''
   const displayedDealerLine = dealerSwitchLine || visibleDealerLine
-  const displayMessage = leaveError || lastError || bustedInfo?.message || 'Click a chip to place your bet'
+  const tablePrompt = blackjackState?.phase === 'insurance'
+    ? me?.insuranceBet
+      ? `Insurance placed: ${money(me.insuranceBet)}`
+      : 'Dealer shows ace. Insurance is open.'
+    : 'Click a chip to place your bet'
+  const displayMessage = leaveError || lastError || bustedInfo?.message || tablePrompt
   const bgmVolume = Math.round(musicVol * 100)
   const sfxVolume = Math.round(sfxVol * 100)
   const bgmEffectivelyMuted = musicMute || bgmVolume === 0
   const sfxEffectivelyMuted = sfxMute || sfxVolume === 0
   const canTipDealer = Boolean(me && me.stack >= BLACKJACK_DEALER_TIP_AMOUNT && !tipLoading)
-  const dealerCanSwitch = !blackjackState || blackjackState.phase !== 'playing'
+  const dealerCanSwitch = !blackjackState || !isRoundLocked
 
   useEffect(() => {
-    if (!blackjackState?.bettingEndsAt && !blackjackState?.turnEndsAt && !blackjackState?.nextRoundStartsAt) return
+    if (!blackjackState?.bettingEndsAt && !blackjackState?.insuranceEndsAt && !blackjackState?.turnEndsAt && !blackjackState?.nextRoundStartsAt) return
 
     setNow(Date.now())
     const interval = window.setInterval(() => setNow(Date.now()), 250)
     return () => window.clearInterval(interval)
-  }, [blackjackState?.bettingEndsAt, blackjackState?.turnEndsAt, blackjackState?.nextRoundStartsAt])
+  }, [blackjackState?.bettingEndsAt, blackjackState?.insuranceEndsAt, blackjackState?.turnEndsAt, blackjackState?.nextRoundStartsAt])
 
   useEffect(() => {
     setSessionHistory([])
@@ -548,14 +552,14 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
 
     const previous = blackjackSfxRef.current
     if (previous.roundKey !== roundKey) {
-      if (blackjackState.phase === 'playing' && visibleCardCount > 0) {
+      if ((blackjackState.phase === 'playing' || blackjackState.phase === 'insurance') && visibleCardCount > 0) {
         playSfx('deal')
       }
       blackjackSfxRef.current = { roundKey, cardCount: visibleCardCount, resultKey: previous.resultKey }
       return
     }
 
-    if (blackjackState.phase === 'playing' && visibleCardCount > previous.cardCount) {
+    if ((blackjackState.phase === 'playing' || blackjackState.phase === 'insurance') && visibleCardCount > previous.cardCount) {
       playSfx('deal')
     }
 
@@ -676,6 +680,12 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     else if (action === 'double') playSfx('raise')
     else if (action === 'surrender') playSfx('fold')
     else playSfx('click')
+  }
+
+  const handleInsurance = async () => {
+    clearLastError()
+    const result = await buyInsurance()
+    if (!result.error) playSfx('click')
   }
 
   const clearTipTimers = () => {
@@ -999,7 +1009,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               aria-hidden="true"
             />
             <div className="dealer-speech" id="dealerSpeech" aria-live="polite" hidden={!displayedDealerLine}>{displayedDealerLine}</div>
-            <DealerTipBoard rows={dealerTipRows} total={totalDealerTips} />
+            <DealerTipBoard rows={activeDealerTipRows} total={activeDealerTipTotal} />
             <div className="round-countdown" id="roundCountdown" aria-live="polite" hidden={!countdown}>
               <span>{countdown?.label ?? 'COUNTDOWN'}</span>
               <strong>{countdown?.value ?? 0}</strong>
@@ -1110,7 +1120,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               <button
                 type="button"
                 className="table-status-button"
-                disabled={blackjackState.phase === 'playing'}
+                disabled={isRoundLocked}
                 onClick={handleSitOut}
               >
                 Stand Up
@@ -1120,7 +1130,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               <button
                 type="button"
                 className="table-status-button"
-                disabled={blackjackState.phase === 'playing' || blackjackState.players.length >= blackjackState.maxPlayers}
+                disabled={isRoundLocked || blackjackState.players.length >= blackjackState.maxPlayers}
                 onClick={() => handleSitIn()}
               >
                 Sit Down
@@ -1181,8 +1191,14 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 <span>{ACTION_LABELS[action]}</span>
               </button>
             ))}
-            <button type="button" id="insuranceBtn" className="insurance-button action-button" disabled>
-              <b>INS</b>
+            <button
+              type="button"
+              id="insuranceBtn"
+              className="insurance-button action-button"
+              disabled={!canBuyInsurance}
+              onClick={handleInsurance}
+            >
+              <b>{blackjackState.phase === 'insurance' && insuranceAmount > 0 ? money(insuranceAmount) : 'INS'}</b>
               <span>INSURANCE</span>
             </button>
             <button

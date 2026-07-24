@@ -2,7 +2,7 @@ import type { TableStatus } from './poker'
 
 export type BlackjackSuit = 'S' | 'H' | 'D' | 'C'
 export type BlackjackRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K'
-export type BlackjackPhase = 'betting' | 'playing' | 'settled'
+export type BlackjackPhase = 'betting' | 'insurance' | 'playing' | 'settled'
 export type BlackjackAction = 'hit' | 'stand' | 'double' | 'split' | 'surrender'
 export type BlackjackHandStatus = 'playing' | 'stood' | 'busted' | 'blackjack' | 'surrendered' | 'settled'
 
@@ -30,6 +30,7 @@ export interface ClientBlackjackPlayer {
   seat: number
   stack: number
   bet: number
+  insuranceBet: number
   hands: ClientBlackjackHand[]
   activeHandIndex: number
   isConnected: boolean
@@ -68,6 +69,7 @@ export interface BlackjackState {
   dealerTips: Record<string, number>
   shoeCardsLeft: number
   bettingEndsAt: number | null
+  insuranceEndsAt: number | null
   turnEndsAt: number | null
   nextRoundStartsAt: number | null
 }

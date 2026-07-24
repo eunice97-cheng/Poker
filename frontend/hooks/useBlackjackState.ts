@@ -17,6 +17,7 @@ type AckResponse = {
   balance?: number
   stack?: number
   bet?: number
+  insuranceBet?: number
 }
 
 export function useBlackjackState(socket: Socket | null, tableId: string) {
@@ -110,6 +111,7 @@ export function useBlackjackState(socket: Socket | null, tableId: string) {
 
   const placeBet = useCallback((amount: number) => emitAck('blackjack_place_bet', { amount }), [emitAck])
   const clearBet = useCallback(() => emitAck('blackjack_clear_bet'), [emitAck])
+  const buyInsurance = useCallback(() => emitAck('blackjack_insurance'), [emitAck])
   const newRound = useCallback(() => emitAck('blackjack_new_round'), [emitAck])
   const rebuy = useCallback((amount: number) => emitAck('blackjack_rebuy', { amount }), [emitAck])
   const tipDealer = useCallback(
@@ -135,6 +137,7 @@ export function useBlackjackState(socket: Socket | null, tableId: string) {
     clearLastError: () => setLastError(''),
     placeBet,
     clearBet,
+    buyInsurance,
     newRound,
     rebuy,
     tipDealer,

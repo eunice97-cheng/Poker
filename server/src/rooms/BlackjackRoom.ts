@@ -38,6 +38,7 @@ const CUT_CARD_THRESHOLD = 80
 const MAX_SPLIT_HANDS = 4
 const RECONNECT_GRACE_MS = 60_000
 const BETTING_WINDOW_MS = 10_000
+const INSURANCE_WINDOW_MS = 10_000
 const TURN_WINDOW_MS = 10_000
 const NEXT_ROUND_DELAY_MS = 5_000
 const BET_CLOSED_PAUSE_MS = 1_300
@@ -109,6 +110,7 @@ export class BlackjackRoom {
   public state: BlackjackServerState
   private io: Server
   private bettingTimer: NodeJS.Timeout | null = null
+  private insuranceTimer: NodeJS.Timeout | null = null
   private turnTimer: NodeJS.Timeout | null = null
   private nextRoundTimer: NodeJS.Timeout | null = null
   private settlingRound = false
@@ -140,6 +142,7 @@ export class BlackjackRoom {
       messageUpdatedAt: Date.now(),
       dealerTips: {},
       bettingEndsAt: null,
+      insuranceEndsAt: null,
       turnEndsAt: null,
       nextRoundStartsAt: null,
     }
@@ -210,7 +213,7 @@ export class BlackjackRoom {
   addObserver(observer: BlackjackServerObserver) {
     this.state.observers.set(observer.playerId, observer)
     this.io.sockets.sockets.get(observer.socketId)?.join(this.tableId)
-    this.setDealerMessage(this.state.phase === 'playing' ? 'Feel free to join the next round.' : this.welcomeLine(observer.username))
+    this.setDealerMessage(this.isRoundLocked() ? 'Feel free to join the next round.' : this.welcomeLine(observer.username))
     this.syncTableStatus()
     this.broadcastState()
     this.emitTableUpdated()
@@ -260,7 +263,7 @@ export class BlackjackRoom {
   standPlayerUp(socketId: string) {
     const player = this.getPlayerBySocketId(socketId)
     if (!player) return { error: 'Not seated at this blackjack table' }
-    if (this.state.phase === 'playing') return { error: 'Please wait for the current round to finish' }
+    if (this.isRoundLocked()) return { error: 'Please wait for the current round to finish' }
 
     const observer = this.movePlayerToObserver(player)
     if (!this.hasAnyBetOnTable()) this.clearBettingCountdown()
@@ -274,7 +277,7 @@ export class BlackjackRoom {
   seatObserver(socketId: string, requestedSeat?: number) {
     const observer = this.getObserverBySocketId(socketId)
     if (!observer) return { error: 'Not waiting at this blackjack table' }
-    if (this.state.phase === 'playing') return { error: 'Please wait for the current round to finish' }
+    if (this.isRoundLocked()) return { error: 'Please wait for the current round to finish' }
     if (this.isFull()) return { error: 'No seats available' }
 
     const requested = Number.isInteger(requestedSeat) ? Number(requestedSeat) : null
@@ -294,6 +297,7 @@ export class BlackjackRoom {
       seat,
       stack: observer.stack,
       bet: 0,
+      insuranceBet: 0,
       hands: [],
       activeHandIndex: 0,
       isConnected: true,
@@ -407,6 +411,28 @@ export class BlackjackRoom {
     return { ok: true, stack: player.stack, bet: 0 }
   }
 
+  buyInsurance(socketId: string) {
+    const player = this.getPlayerBySocketId(socketId)
+    if (!player) return { error: 'Not at this blackjack table' }
+    if (this.state.phase !== 'insurance') return { error: 'Insurance is not available' }
+
+    const dealerUpcard = this.state.dealerCards[0]
+    if (dealerUpcard?.rank !== 'A') return { error: 'Insurance is only available against a dealer Ace' }
+    if (player.insuranceBet > 0) return { error: 'Insurance already placed' }
+
+    const hand = player.hands[0]
+    if (!hand || hand.bet <= 0) return { error: 'No live hand to insure' }
+
+    const amount = Math.floor(hand.bet / 2)
+    if (amount <= 0) return { error: 'Insurance amount is too small' }
+    if (player.stack < amount) return { error: 'Not enough table chips for insurance' }
+
+    player.stack -= amount
+    player.insuranceBet = amount
+    this.broadcastState()
+    return { ok: true, stack: player.stack, insuranceBet: amount }
+  }
+
   async startRound(socketId?: string) {
     const caller = socketId ? this.getPlayerBySocketId(socketId) : null
     if (socketId && !caller) return { error: 'Not at this blackjack table' }
@@ -426,6 +452,7 @@ export class BlackjackRoom {
     }
 
     this.clearBettingCountdown()
+    this.clearInsuranceCountdown()
     this.clearTurnCountdown()
     this.clearNextRoundCountdown()
     this.applyMissedBetStandUps(activePlayers.map((player) => player.playerId))
@@ -444,6 +471,7 @@ export class BlackjackRoom {
     for (const player of this.state.players.values()) {
       player.hands = []
       player.activeHandIndex = 0
+      player.insuranceBet = 0
       player.lastNet = 0
       player.lastResult = ''
       if (player.bet >= this.state.minBet) {
@@ -477,10 +505,17 @@ export class BlackjackRoom {
     }
 
     const dealerNatural = scoreHand(this.state.dealerCards) === 21
-    if (!dealerNatural && naturalBlackjackPlayers.length > 0) {
+    const dealerShowsAce = this.state.dealerCards[0]?.rank === 'A'
+
+    if (naturalBlackjackPlayers.length > 0) {
       this.setDealerMessage(randomChoice(['Natural twenty-one.', 'Blackjack! Congratulations.']))
       this.broadcastState()
       await delay(PLAYER_BLACKJACK_PAUSE_MS)
+    }
+
+    if (dealerShowsAce) {
+      this.beginInsuranceCountdown(dealerNatural)
+      return { ok: true }
     }
 
     if (dealerNatural) {
@@ -488,10 +523,15 @@ export class BlackjackRoom {
       return { ok: true }
     }
 
+    await this.continueInitialDeal()
+    return { ok: true }
+  }
+
+  private async continueInitialDeal() {
     const firstSeat = this.nextActingSeat(-1)
     if (firstSeat === null) {
       await this.settleRound()
-      return { ok: true }
+      return
     }
 
     this.state.currentSeat = firstSeat
@@ -501,12 +541,12 @@ export class BlackjackRoom {
     this.syncTableStatus()
     this.broadcastState()
     this.emitTableUpdated()
-    return { ok: true }
   }
 
   async handleAction(socketId: string, action: BlackjackAction) {
     const player = this.getPlayerBySocketId(socketId)
     if (!player) return { error: 'Not at this blackjack table' }
+    if (this.state.phase === 'insurance') return { error: 'Insurance is still open' }
     if (this.state.phase !== 'playing') return { error: 'No blackjack round in progress' }
     if (player.seat !== this.state.currentSeat) return { error: 'It is not your turn' }
 
@@ -571,7 +611,7 @@ export class BlackjackRoom {
   async newRound(socketId: string) {
     const player = this.getPlayerBySocketId(socketId)
     if (!player) return { error: 'Not at this blackjack table' }
-    if (this.state.phase === 'playing') return { error: 'Finish the current round first' }
+    if (this.isRoundLocked()) return { error: 'Finish the current round first' }
 
     this.openBettingRound()
     return { ok: true }
@@ -627,6 +667,7 @@ export class BlackjackRoom {
 
   destroy() {
     this.clearBettingCountdown()
+    this.clearInsuranceCountdown()
     this.clearTurnCountdown()
     this.clearNextRoundCountdown()
     for (const player of this.state.players.values()) {
@@ -739,6 +780,7 @@ export class BlackjackRoom {
     try {
       this.clearTurnCountdown()
       this.clearBettingCountdown()
+      this.clearInsuranceCountdown()
       this.state.hideHoleCard = false
       this.state.currentSeat = -1
 
@@ -816,6 +858,15 @@ export class BlackjackRoom {
 
           net += hand.net
           resultLabels.push(hand.result)
+        }
+
+        if (player.insuranceBet > 0) {
+          if (dealerNatural) {
+            player.stack += player.insuranceBet * 3
+            net += player.insuranceBet * 2
+          } else {
+            net -= player.insuranceBet
+          }
         }
 
         player.lastNet = net
@@ -980,6 +1031,47 @@ export class BlackjackRoom {
     this.state.bettingEndsAt = null
   }
 
+  private beginInsuranceCountdown(dealerNatural: boolean) {
+    this.clearTurnCountdown()
+    this.state.phase = 'insurance'
+    this.state.status = 'playing'
+    this.state.currentSeat = -1
+    this.state.insuranceEndsAt = Date.now() + INSURANCE_WINDOW_MS
+    this.syncTableStatus()
+    this.broadcastState()
+    this.emitTableUpdated()
+
+    this.insuranceTimer = setTimeout(() => {
+      this.insuranceTimer = null
+      void this.resolveInsuranceCountdown(dealerNatural)
+    }, INSURANCE_WINDOW_MS)
+  }
+
+  private async resolveInsuranceCountdown(dealerNatural: boolean) {
+    this.state.insuranceEndsAt = null
+
+    if (this.state.phase !== 'insurance') {
+      this.broadcastState()
+      return
+    }
+
+    if (dealerNatural) {
+      await this.settleRound()
+      return
+    }
+
+    this.state.phase = 'playing'
+    await this.continueInitialDeal()
+  }
+
+  private clearInsuranceCountdown() {
+    if (this.insuranceTimer) {
+      clearTimeout(this.insuranceTimer)
+      this.insuranceTimer = null
+    }
+    this.state.insuranceEndsAt = null
+  }
+
   private beginTurnCountdown() {
     this.clearTurnCountdown()
     const player = this.state.players.get(this.state.currentSeat)
@@ -1033,13 +1125,15 @@ export class BlackjackRoom {
   }
 
   private openBettingRound() {
-    if (this.state.phase === 'playing') return
+    if (this.isRoundLocked()) return
 
     this.clearBettingCountdown()
+    this.clearInsuranceCountdown()
     this.clearTurnCountdown()
     this.clearNextRoundCountdown()
     for (const seated of this.state.players.values()) {
       seated.bet = 0
+      seated.insuranceBet = 0
       seated.hands = []
       seated.activeHandIndex = 0
     }
@@ -1087,6 +1181,10 @@ export class BlackjackRoom {
     return randomChoice([`Welcome, ${username}.`, `Glad you can join us, ${username}.`])
   }
 
+  private isRoundLocked() {
+    return this.state.phase === 'playing' || this.state.phase === 'insurance'
+  }
+
   private setDealerMessage(message: string) {
     this.personalDealerMessages.clear()
     this.state.message = message
@@ -1132,6 +1230,7 @@ export class BlackjackRoom {
             seat: seated.seat,
             stack: seated.stack,
             bet: seated.bet,
+            insuranceBet: seated.insuranceBet,
             hands: seated.hands.map((hand) => ({
               cards: isViewer ? hand.cards : [],
               cardCount: hand.cards.length,
@@ -1163,6 +1262,7 @@ export class BlackjackRoom {
       dealerTips: { ...this.state.dealerTips },
       shoeCardsLeft: this.state.deck.length,
       bettingEndsAt: this.state.bettingEndsAt,
+      insuranceEndsAt: this.state.insuranceEndsAt,
       turnEndsAt: this.state.turnEndsAt,
       nextRoundStartsAt: this.state.nextRoundStartsAt,
     }
@@ -1173,7 +1273,7 @@ export class BlackjackRoom {
   }
 
   private syncTableStatus() {
-    const status = this.state.phase === 'playing' ? 'playing' : 'waiting'
+    const status = this.isRoundLocked() ? 'playing' : 'waiting'
     this.state.status = status
     if (isLocalOnlyTable(this.tableId)) return
     supabaseService.updateTableStatus(this.tableId, status, this.getPlayerCount()).catch(console.error)

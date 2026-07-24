@@ -352,6 +352,12 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
     callback?.(room.clearBet(socket.id))
   })
 
+  socket.on('blackjack_insurance', (_: unknown, callback) => {
+    const room = blackjackRoomManager.getRoomBySocketId(socket.id)
+    if (!room) return callback?.({ error: 'Not at a blackjack table' })
+    callback?.(room.buyInsurance(socket.id))
+  })
+
   socket.on('blackjack_tip_dealer', async (params: { amount?: number; dealerId?: string; dealerName?: string }, callback) => {
     try {
       const room = blackjackRoomManager.getRoomBySocketId(socket.id)
