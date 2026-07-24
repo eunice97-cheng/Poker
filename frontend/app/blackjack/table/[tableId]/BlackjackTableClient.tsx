@@ -100,8 +100,11 @@ const BLINK_DURATION_RANGE_MS = [100, 400] as const
 const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
 const TRANSIENT_DEALER_LINE_MS = 4500
 const BLACKJACK_CELEBRATION_MS = 2350
+const DEALER_SWITCH_THANK_MS = 3200
+const DEALER_SWITCH_GAP_MS = 650
+const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-13'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-15'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',
@@ -161,6 +164,18 @@ function dealerNameForId(dealerId: string) {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(' ') || dealerId
+}
+
+function dealerIntroLine(dealer: DealerAssets) {
+  return `Good evening, I'm Dealer ${dealer.name}. Place your bets when you're ready.`
+}
+
+function dealerThankLine(dealer: DealerAssets, totalTips: number) {
+  if (totalTips > 0) {
+    return `Thank you for the tips and support. Dealer ${dealer.name} is signing off.`
+  }
+
+  return `Thank you for playing. Dealer ${dealer.name} is signing off.`
 }
 
 function money(value: number) {
@@ -263,6 +278,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     setSfxVol,
     toggleMusic,
     toggleSfx,
+    playSfx,
   } = useAudio()
   const [accountBalance, setAccountBalance] = useState(initialChipBalance)
   const [selectedChip, setSelectedChip] = useState(10)
@@ -271,6 +287,9 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeDealer, setActiveDealer] = useState(() => dealerForTime(Date.now()))
   const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
+  const [pendingDealer, setPendingDealer] = useState<DealerAssets | null>(null)
+  const [dealerSwitchLine, setDealerSwitchLine] = useState('')
+  const [dealerTransitionState, setDealerTransitionState] = useState<'stable' | 'leaving' | 'away' | 'arriving'>('stable')
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([])
   const recordedRoundRef = useRef<number | null>(null)
   const [tipVisible, setTipVisible] = useState(false)
@@ -288,6 +307,9 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const blackjackCelebrationTimeoutRef = useRef<number | null>(null)
   const seenBlackjackCelebrationsRef = useRef<Set<string>>(new Set())
   const tipTimeoutsRef = useRef<number[]>([])
+  const dealerSwitchTimeoutsRef = useRef<number[]>([])
+  const activeDealerRef = useRef(activeDealer)
+  const blackjackSfxRef = useRef({ roundKey: '', cardCount: 0, resultKey: '' })
 
   const {
     blackjackState,
@@ -369,14 +391,14 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const historyPushes = sessionHistory.filter((item) => item.type === 'push').length
   const dealerLine = blackjackState?.message ?? ''
   const visibleDealerLine = showDealerLine ? dealerLine : ''
+  const displayedDealerLine = dealerSwitchLine || visibleDealerLine
   const displayMessage = leaveError || lastError || bustedInfo?.message || 'Click a chip to place your bet'
-  const volume = Math.round(musicVol * 100)
-  const bgmVolume = volume
+  const bgmVolume = Math.round(musicVol * 100)
   const sfxVolume = Math.round(sfxVol * 100)
-  const audioEffectivelyMuted = musicMute || volume === 0
-  const bgmEffectivelyMuted = audioEffectivelyMuted
+  const bgmEffectivelyMuted = musicMute || bgmVolume === 0
   const sfxEffectivelyMuted = sfxMute || sfxVolume === 0
   const canTipDealer = Boolean(me && me.stack >= BLACKJACK_DEALER_TIP_AMOUNT && !tipLoading)
+  const dealerCanSwitch = !blackjackState || blackjackState.phase !== 'playing'
 
   useEffect(() => {
     if (!blackjackState?.bettingEndsAt && !blackjackState?.turnEndsAt && !blackjackState?.nextRoundStartsAt) return
@@ -395,13 +417,54 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   useEffect(() => {
     const syncDealer = () => {
       const nextDealer = dealerForTime(Date.now())
-      setActiveDealer((currentDealer) => currentDealer.id === nextDealer.id ? currentDealer : nextDealer)
+      if (activeDealerRef.current.id !== nextDealer.id) {
+        setPendingDealer(nextDealer)
+      }
     }
 
     syncDealer()
     const interval = window.setInterval(syncDealer, 60_000)
     return () => window.clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    activeDealerRef.current = activeDealer
+  }, [activeDealer])
+
+  useEffect(() => {
+    if (!pendingDealer || !dealerCanSwitch || dealerTransitionState !== 'stable') return
+
+    const previousDealer = activeDealerRef.current
+    if (previousDealer.id === pendingDealer.id) {
+      setPendingDealer(null)
+      return
+    }
+
+    dealerSwitchTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout))
+    dealerSwitchTimeoutsRef.current = []
+
+    setDealerPortrait('normal')
+    setDealerTransitionState('leaving')
+    setDealerSwitchLine(dealerThankLine(previousDealer, blackjackState?.dealerTips?.[previousDealer.id] ?? 0))
+
+    dealerSwitchTimeoutsRef.current = [
+      window.setTimeout(() => {
+        setDealerSwitchLine('')
+        setDealerTransitionState('away')
+      }, DEALER_SWITCH_THANK_MS),
+      window.setTimeout(() => {
+        setActiveDealer(pendingDealer)
+        setPendingDealer(null)
+        setDealerPortrait('normal')
+        setDealerTransitionState('arriving')
+        setDealerSwitchLine(dealerIntroLine(pendingDealer))
+      }, DEALER_SWITCH_THANK_MS + DEALER_SWITCH_GAP_MS),
+      window.setTimeout(() => {
+        setDealerSwitchLine('')
+        setDealerTransitionState('stable')
+      }, DEALER_SWITCH_THANK_MS + DEALER_SWITCH_GAP_MS + DEALER_SWITCH_INTRO_MS),
+    ]
+  }, [blackjackState?.dealerTips, dealerCanSwitch, dealerTransitionState, pendingDealer])
 
   useEffect(() => {
     setDealerPortrait('normal')
@@ -414,6 +477,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
       if (blackjackCelebrationTimeoutRef.current) window.clearTimeout(blackjackCelebrationTimeoutRef.current)
       tipTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout))
       tipTimeoutsRef.current = []
+      dealerSwitchTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout))
+      dealerSwitchTimeoutsRef.current = []
     }
   }, [])
 
@@ -461,6 +526,42 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   }, [blackjackState, me])
 
   useEffect(() => {
+    if (!blackjackState) return
+
+    const roundKey = `${blackjackState.tableId}:${blackjackState.roundNumber}`
+    const visibleCardCount = blackjackState.dealerCards.length + blackjackState.players.reduce((playerTotal, player) => (
+      playerTotal + player.hands.reduce((handTotal, hand) => handTotal + (hand.cardCount ?? hand.cards.length), 0)
+    ), 0)
+
+    const previous = blackjackSfxRef.current
+    if (previous.roundKey !== roundKey) {
+      if (blackjackState.phase === 'playing' && visibleCardCount > 0) {
+        playSfx('deal')
+      }
+      blackjackSfxRef.current = { roundKey, cardCount: visibleCardCount, resultKey: previous.resultKey }
+      return
+    }
+
+    if (blackjackState.phase === 'playing' && visibleCardCount > previous.cardCount) {
+      playSfx('deal')
+    }
+
+    previous.cardCount = visibleCardCount
+  }, [blackjackState, playSfx])
+
+  useEffect(() => {
+    if (!blackjackState || !me || blackjackState.phase !== 'settled' || !me.lastResult) return
+
+    const resultKey = `${blackjackState.tableId}:${blackjackState.roundNumber}:${me.lastResult}:${me.lastNet}`
+    if (blackjackSfxRef.current.resultKey === resultKey) return
+
+    blackjackSfxRef.current.resultKey = resultKey
+    if (me.lastNet > 0) playSfx('win')
+    else if (me.lastNet < 0) playSfx('lose')
+    else playSfx('click')
+  }, [blackjackState, me, playSfx])
+
+  useEffect(() => {
     let blinkTimer: number | undefined
     let blinkRestoreTimer: number | undefined
     let smileTimer: number | undefined
@@ -496,7 +597,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     }
   }, [])
 
-  const handleAudioToggle = () => {
+  const handleBgmToggle = () => {
     if (musicMute || musicVol === 0) {
       setMusicVol(0.7)
       if (musicMute) toggleMusic()
@@ -506,24 +607,62 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     toggleMusic()
   }
 
-  const handleChip = (amount: number) => {
+  const handleSfxToggle = () => {
+    if (sfxMute || sfxVol === 0) {
+      setSfxVol(0.6)
+      if (sfxMute) toggleSfx()
+      return
+    }
+
+    toggleSfx()
+  }
+
+  const handleBgmVolumeChange = (nextVolume: number) => {
+    setMusicVol(nextVolume / 100)
+    if (nextVolume > 0 && musicMute) toggleMusic()
+  }
+
+  const handleSfxVolumeChange = (nextVolume: number) => {
+    setSfxVol(nextVolume / 100)
+    if (nextVolume > 0 && sfxMute) toggleSfx()
+  }
+
+  const handleChip = async (amount: number) => {
     setSelectedChip(amount)
     if (canBet && me && me.stack >= amount && me.bet + amount <= blackjackState.maxBet) {
       if (chipAnimationTimeoutRef.current) window.clearTimeout(chipAnimationTimeoutRef.current)
       setChipAnimation({ id: Date.now(), value: amount })
       chipAnimationTimeoutRef.current = window.setTimeout(() => setChipAnimation(null), 520)
-      void placeBet(amount)
+      const result = await placeBet(amount)
+      if (!result.error) playSfx('raise')
     }
   }
 
   const handleSitOut = async () => {
     clearLastError()
-    await sitOut()
+    const result = await sitOut()
+    if (!result.error) playSfx('sitStand')
   }
 
   const handleSitIn = async (seat?: number) => {
     clearLastError()
-    await sitIn(seat)
+    const result = await sitIn(seat)
+    if (!result.error) playSfx('sitStand')
+  }
+
+  const handleClearBet = async () => {
+    const result = await clearBet()
+    if (!result.error) playSfx('click')
+  }
+
+  const handleBlackjackAction = async (action: BlackjackAction) => {
+    const result = await sendAction(action)
+    if (result.error) return
+
+    if (action === 'hit') playSfx('deal')
+    else if (action === 'double') playSfx('raise')
+    else if (action === 'surrender') playSfx('fold')
+    else playSfx('click')
   }
 
   const clearTipTimers = () => {
@@ -543,6 +682,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     setTipLoading(false)
     if (result.error) return
 
+    playSfx('click')
     setTipImage(activeDealer.thankYou.normal)
     setTipVisible(true)
     tipTimeoutsRef.current = [
@@ -579,9 +719,10 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
       }
 
       if (res?.balance !== undefined) setAccountBalance(res.balance)
+      playSfx('joinLeave')
       router.push('/blackjack')
     })
-  }, [socket, router])
+  }, [socket, tableId, playSfx, router])
 
   const handleRebuy = async () => {
     if (!blackjackState) return
@@ -593,6 +734,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     if (!res.error) {
       setSettingsOpen(false)
       clearBusted()
+      playSfx('joinLeave')
     }
 
     setRebuyLoading(false)
@@ -725,35 +867,53 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 type="button"
                 className={classNames(
                   'utility-button audio-toggle',
-                  audioEffectivelyMuted && 'is-muted',
-                  !audioEffectivelyMuted && volume > 0 && volume < 35 && 'is-low'
+                  bgmEffectivelyMuted && 'is-muted',
+                  !bgmEffectivelyMuted && bgmVolume > 0 && bgmVolume < 35 && 'is-low'
                 )}
                 id="audioToggle"
-                aria-label={audioEffectivelyMuted ? 'Unmute audio' : `Mute audio. Volume ${volume}%`}
-                aria-pressed={audioEffectivelyMuted}
+                aria-label={bgmEffectivelyMuted ? 'Unmute BGM' : `Mute BGM. Volume ${bgmVolume}%`}
+                aria-pressed={bgmEffectivelyMuted}
                 aria-expanded="false"
                 aria-controls="audioPanel"
-                onClick={handleAudioToggle}
+                onClick={handleBgmToggle}
               >
                 <span id="audioIcon" className="utility-label" aria-hidden="true">Audio</span>
               </button>
               <div className="audio-panel" id="audioPanel" role="group" aria-label="Volume controls">
-                <label className="volume-label" htmlFor="volumeSlider">
-                  <span>MASTER</span>
-                  <strong id="volumeValue">{volume}%</strong>
-                </label>
-                <input
-                  type="range"
-                  id="volumeSlider"
-                  min="0"
-                  max="100"
-                  value={volume}
-                  onChange={(event) => {
-                    const nextVolume = Number(event.target.value)
-                    setMusicVol(nextVolume / 100)
-                    if (nextVolume > 0 && musicMute) toggleMusic()
-                  }}
-                />
+                <div className="audio-panel-row">
+                  <label className="volume-label" htmlFor="bgmQuickVolumeSlider">
+                    <span>BGM</span>
+                    <strong>{bgmEffectivelyMuted ? 'OFF' : `${bgmVolume}%`}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    id="bgmQuickVolumeSlider"
+                    min="0"
+                    max="100"
+                    value={bgmVolume}
+                    onChange={(event) => handleBgmVolumeChange(Number(event.target.value))}
+                  />
+                  <button type="button" className={classNames('quick-sound-mute', bgmEffectivelyMuted && 'is-muted')} onClick={handleBgmToggle}>
+                    {bgmEffectivelyMuted ? 'BGM Off' : 'BGM On'}
+                  </button>
+                </div>
+                <div className="audio-panel-row">
+                  <label className="volume-label" htmlFor="sfxQuickVolumeSlider">
+                    <span>SFX</span>
+                    <strong>{sfxEffectivelyMuted ? 'OFF' : `${sfxVolume}%`}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    id="sfxQuickVolumeSlider"
+                    min="0"
+                    max="100"
+                    value={sfxVolume}
+                    onChange={(event) => handleSfxVolumeChange(Number(event.target.value))}
+                  />
+                  <button type="button" className={classNames('quick-sound-mute', sfxEffectivelyMuted && 'is-muted')} onClick={handleSfxToggle}>
+                    {sfxEffectivelyMuted ? 'SFX Off' : 'SFX On'}
+                  </button>
+                </div>
               </div>
             </div>
             <button type="button" className="utility-button" id="helpBtn" aria-label="Help" onClick={() => setRulesOpen(true)}>
@@ -818,8 +978,14 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
           </aside>
 
           <div className="wood-rail">
-            <img id="dealerPortrait" className="dealer-portrait" src={activeDealer.portraits[dealerPortrait]} alt="" aria-hidden="true" />
-            <div className="dealer-speech" id="dealerSpeech" aria-live="polite" hidden={!visibleDealerLine}>{visibleDealerLine}</div>
+            <img
+              id="dealerPortrait"
+              className={classNames('dealer-portrait', `is-${dealerTransitionState}`)}
+              src={activeDealer.portraits[dealerPortrait]}
+              alt=""
+              aria-hidden="true"
+            />
+            <div className="dealer-speech" id="dealerSpeech" aria-live="polite" hidden={!displayedDealerLine}>{displayedDealerLine}</div>
             <DealerTipBoard rows={dealerTipRows} total={totalDealerTips} />
             <div className="round-countdown" id="roundCountdown" aria-live="polite" hidden={!countdown}>
               <span>{countdown?.label ?? 'COUNTDOWN'}</span>
@@ -981,11 +1147,11 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
           </div>
 
           <div className="action-row">
-            <button type="button" id="undoBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={() => clearBet()}>
+            <button type="button" id="undoBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet}>
               <b>Undo</b>
               <span>UNDO</span>
             </button>
-            <button type="button" id="clearBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={() => clearBet()}>
+            <button type="button" id="clearBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet}>
               <b>X</b>
               <span>CLEAR BET</span>
             </button>
@@ -996,7 +1162,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 id={`${action}Btn`}
                 className="action-button"
                 disabled={!isMyTurn || !blackjackState.validActions.includes(action)}
-                onClick={() => sendAction(action)}
+                onClick={() => handleBlackjackAction(action)}
               >
                 <b>{ACTION_LABELS[action]}</b>
                 <span>{ACTION_LABELS[action]}</span>
@@ -1011,7 +1177,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               id="surrenderBtn"
               className="action-button"
               disabled={!isMyTurn || !blackjackState.validActions.includes('surrender')}
-              onClick={() => sendAction('surrender')}
+              onClick={() => handleBlackjackAction('surrender')}
             >
               <b>1/2</b>
               <span>SURRENDER</span>
@@ -1047,15 +1213,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                   className={classNames('sound-mute', bgmEffectivelyMuted && 'is-muted')}
                   id="bgmMuteBtn"
                   aria-pressed={bgmEffectivelyMuted}
-                  onClick={() => {
-                    if (musicMute || musicVol === 0) {
-                      setMusicVol(1)
-                      if (musicMute) toggleMusic()
-                      return
-                    }
-
-                    toggleMusic()
-                  }}
+                  onClick={handleBgmToggle}
                 >
                   {bgmEffectivelyMuted ? 'Unmute' : 'Mute'}
                 </button>
@@ -1071,11 +1229,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 min="0"
                 max="100"
                 value={bgmVolume}
-                onChange={(event) => {
-                  const nextVolume = Number(event.target.value)
-                  setMusicVol(nextVolume / 100)
-                  if (nextVolume > 0 && musicMute) toggleMusic()
-                }}
+                onChange={(event) => handleBgmVolumeChange(Number(event.target.value))}
               />
             </section>
 
@@ -1090,15 +1244,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                   className={classNames('sound-mute', sfxEffectivelyMuted && 'is-muted')}
                   id="sfxMuteBtn"
                   aria-pressed={sfxEffectivelyMuted}
-                  onClick={() => {
-                    if (sfxMute || sfxVol === 0) {
-                      setSfxVol(1)
-                      if (sfxMute) toggleSfx()
-                      return
-                    }
-
-                    toggleSfx()
-                  }}
+                  onClick={handleSfxToggle}
                 >
                   {sfxEffectivelyMuted ? 'Unmute' : 'Mute'}
                 </button>
@@ -1114,11 +1260,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 min="0"
                 max="100"
                 value={sfxVolume}
-                onChange={(event) => {
-                  const nextVolume = Number(event.target.value)
-                  setSfxVol(nextVolume / 100)
-                  if (nextVolume > 0 && sfxMute) toggleSfx()
-                }}
+                onChange={(event) => handleSfxVolumeChange(Number(event.target.value))}
               />
             </section>
           </div>

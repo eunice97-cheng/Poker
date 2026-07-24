@@ -140,7 +140,35 @@ export const supabaseService = {
       p_amount: amount,
     })
 
-    if (error) throw new Error(`Failed to record blackjack dealer tip: ${error.message}`)
+    if (error) {
+      const { data: existing, error: readError } = await supabase
+        .from('blackjack_dealer_tips')
+        .select('total_tips, tip_count')
+        .eq('dealer_id', dealerId)
+        .maybeSingle()
+
+      if (readError && readError.code !== 'PGRST116') {
+        throw new Error(`Failed to record blackjack dealer tip: ${error.message}; fallback read failed: ${readError.message}`)
+      }
+
+      const totalTips = Number(existing?.total_tips ?? 0) + amount
+      const tipCount = Number(existing?.tip_count ?? 0) + 1
+      const { error: upsertError } = await supabase
+        .from('blackjack_dealer_tips')
+        .upsert({
+          dealer_id: dealerId,
+          dealer_name: dealerName,
+          total_tips: totalTips,
+          tip_count: tipCount,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'dealer_id' })
+
+      if (upsertError) {
+        throw new Error(`Failed to record blackjack dealer tip: ${error.message}; fallback write failed: ${upsertError.message}`)
+      }
+
+      return this.getBlackjackDealerTips()
+    }
     return dealerTipsMap(data as BlackjackDealerTipRow[])
   },
 

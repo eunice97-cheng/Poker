@@ -15,6 +15,7 @@ const DEFAULT_MAX_BUYIN = 20000
 const DEFAULT_MAX_PLAYERS = 7
 const BLACKJACK_DEALER_TIP_AMOUNT = 10
 const pendingBlackjackLeaves = new Set<string>()
+let cachedBlackjackDealerTips: Record<string, number> = {}
 
 function clampInteger(value: unknown, fallback: number, min: number, max: number) {
   const number = Number(value)
@@ -77,21 +78,40 @@ function dealerNameFromId(dealerId: string, value: unknown) {
     .join(' ') || dealerId
 }
 
+function cacheDealerTips(tips: Record<string, number>) {
+  const merged = { ...cachedBlackjackDealerTips }
+  for (const [dealerId, amount] of Object.entries(tips)) {
+    merged[dealerId] = Math.max(merged[dealerId] ?? 0, amount)
+  }
+  cachedBlackjackDealerTips = merged
+  return { ...cachedBlackjackDealerTips }
+}
+
+function addCachedDealerTip(dealerId: string, amount: number) {
+  cachedBlackjackDealerTips = {
+    ...cachedBlackjackDealerTips,
+    [dealerId]: (cachedBlackjackDealerTips[dealerId] ?? 0) + amount,
+  }
+  return { ...cachedBlackjackDealerTips }
+}
+
 async function syncBlackjackDealerTips(room: BlackjackRoom) {
   try {
-    room.setDealerTips(await supabaseService.getBlackjackDealerTips())
+    room.setDealerTips(cacheDealerTips(await supabaseService.getBlackjackDealerTips()))
     room.broadcastState()
   } catch (error) {
     console.warn('blackjack dealer tips sync skipped:', error)
+    room.setDealerTips({ ...cachedBlackjackDealerTips })
+    room.broadcastState()
   }
 }
 
 async function recordBlackjackDealerTip(room: BlackjackRoom, dealerId: string, dealerName: string, amount: number) {
   try {
-    room.setDealerTips(await supabaseService.recordBlackjackDealerTip(dealerId, dealerName, amount))
+    room.setDealerTips(cacheDealerTips(await supabaseService.recordBlackjackDealerTip(dealerId, dealerName, amount)))
   } catch (error) {
     console.warn('blackjack dealer tip persisted record skipped:', error)
-    room.addDealerTip(dealerId, amount)
+    room.setDealerTips(addCachedDealerTip(dealerId, amount))
   }
 }
 
