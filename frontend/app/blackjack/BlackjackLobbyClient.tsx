@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { createClient } from '@/lib/supabase/client'
 import { useSocket } from '@/hooks/useSocket'
 import type { BlackjackTableInfo } from '@/types/blackjack'
@@ -17,6 +18,7 @@ interface BlackjackLobbyClientProps {
   initialTables: BlackjackTableInfo[]
   profile: Profile
   token: string
+  hasVipEmojis: boolean
   isLocalAdmin?: boolean
 }
 
@@ -87,7 +89,7 @@ function tableLimitLabel(table: BlackjackTableInfo) {
   return `${table.small_blind.toLocaleString()}-${table.big_blind.toLocaleString()}`
 }
 
-export function BlackjackLobbyClient({ initialTables, profile, token, isLocalAdmin = false }: BlackjackLobbyClientProps) {
+export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmojis, isLocalAdmin = false }: BlackjackLobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { socket, connected, error: socketError, socketUrl } = useSocket(token)
@@ -355,6 +357,8 @@ export function BlackjackLobbyClient({ initialTables, profile, token, isLocalAdm
               </div>
             )}
           </section>
+
+          <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />
         </main>
 
         <CreateBlackjackModal
