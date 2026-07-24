@@ -345,49 +345,46 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                 </Button>
                 <Link
                   href="/lobby"
-                  className="rounded-full border border-[#f5c76d]/[0.18] bg-black/[0.24] px-6 py-3 text-center text-sm font-semibold text-white/[0.8] transition-colors hover:border-amber-200/[0.35] hover:text-white"
+                  className="blackjack-return-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-colors"
                 >
-                  Back to Poker
+                  <span>Back to Poker</span>
                 </Link>
               </div>
             </div>
 
-            <aside className="rounded-[20px] border border-[#f5c76d]/[0.16] bg-black/[0.38] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.42)] backdrop-blur-sm">
-              <div className="flex items-start gap-4">
+            <aside className="blackjack-promo-panel rounded-[20px] bg-black/[0.38] backdrop-blur-sm">
+              <div className="blackjack-promo-panel__surface h-full min-h-[430px]">
                 <img
-                  src="/blackjack/Images/Dealers/Eunice4%20-%20smiling.png"
-                  alt=""
-                  className="h-28 w-20 rounded-2xl border border-[#f5c76d]/[0.18] object-cover object-top"
+                  src="/blackjack/Images/Promo.png"
+                  alt="ASL BlackJack Lounge promotion"
+                  className="block h-full w-full object-cover"
                 />
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.3em] text-[#f5c76d]/[0.58]">Dealer floor</div>
-                  <p className="mt-3 text-lg font-semibold leading-7 text-[#fff7df]">
-                    {featuredTable ? `${featuredTable.name} has the warmest rail.` : 'Open a table and the room will follow.'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 rounded-2xl border border-[#f5c76d]/[0.16] bg-[#f5c76d]/[0.08] p-4 text-sm leading-6 text-[#fff0c7]/[0.74]">
-                Shared account chips move only when you buy in, rebuy, or cash out. Round bets happen inside your table stack.
               </div>
             </aside>
           </section>
 
-          <section className="mt-7 rounded-[20px] border border-[#f5c76d]/[0.16] bg-black/[0.38] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.36)] backdrop-blur-sm md:p-6">
-            <div className="mb-5 flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <section className="mt-8 rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:rounded-[38px] md:p-6">
+            <div className="mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.32em] text-[#f5c76d]/[0.58]">Live blackjack</div>
-                <h2 className="mt-2 font-serif text-3xl text-[#fff7df] md:text-4xl">Choose a dealer table</h2>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
+                <h2 className="mt-2 font-serif text-3xl text-[#fff3e2] md:text-4xl">Choose a dealer table</h2>
+                <p className="mt-2 text-sm text-white/58">Watch the lounge, join a warm blackjack table, or open one for the next hand.</p>
               </div>
-              {socketUrl && <div className="text-xs uppercase tracking-[0.2em] text-white/[0.36]">Socket {socketUrl}</div>}
+              <div className="rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
+                Live updates enabled
+              </div>
             </div>
 
             {activeTables.length === 0 ? (
-              <div className="rounded-2xl border border-[#f5c76d]/[0.14] bg-black/[0.26] px-6 py-14 text-center">
-                <p className="text-lg font-semibold text-[#fff7df]">No Blackjack table is open yet.</p>
-                <p className="mt-2 text-sm text-white/[0.58]">Open the first table and keep the chips moving.</p>
+              <div className="rounded-[30px] border border-white/10 bg-black/28 px-6 py-16 text-center shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#f3d2a2]/25 bg-[#f1b45b]/10 text-3xl text-[#f7dfba]">
+                  &#9824;
+                </div>
+                <p className="text-lg font-semibold text-white">The blackjack lounge is open, but no table is drawing a crowd yet.</p>
+                <p className="mt-2 text-sm text-white/60">Open the first table, send an invite, and give players somewhere to gather.</p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 md:gap-5 xl:grid-cols-3">
                 {activeTables.map((table) => (
                   <BlackjackTableCard
                     key={table.id}
