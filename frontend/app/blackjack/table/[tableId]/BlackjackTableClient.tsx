@@ -868,7 +868,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     if (!res.error) {
       setSettingsOpen(false)
       clearBusted()
-      playSfx('joinLeave')
+      playSfx('raise')
     }
 
     setRebuyLoading(false)

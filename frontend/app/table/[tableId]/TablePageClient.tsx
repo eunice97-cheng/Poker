@@ -136,7 +136,7 @@ export function TablePageClient({
         return
       }
       clearBusted()
-      playSfx('joinLeave')
+      playSfx('raise')
       if (res.balance !== undefined) setChipBalance(res.balance)
     })
   }, [socket, tableId, clearBusted, playSfx])
