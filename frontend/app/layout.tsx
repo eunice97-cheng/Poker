@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import { FloatingButtons } from '@/components/ui/FloatingButtons'
+import { LandscapeOnlyGuard } from '@/components/ui/LandscapeOnlyGuard'
 import { MainSiteLink } from '@/components/ui/MainSiteLink'
 import { AudioProvider } from '@/hooks/useAudio'
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AudioProvider>
           <MainSiteLink />
           {children}
+          <LandscapeOnlyGuard />
           <FloatingButtons />
         </AudioProvider>
       </body>

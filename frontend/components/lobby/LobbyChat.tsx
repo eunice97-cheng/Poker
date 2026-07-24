@@ -38,6 +38,11 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const shouldCollapseOnPhone = window.matchMedia('(max-width: 940px), (max-height: 560px)').matches
+    if (shouldCollapseOnPhone) setOpen(false)
+  }, [])
+
+  useEffect(() => {
     if (!socket) return
 
     const onHistory = (history: ChatMessage[]) => setMessages(history)
@@ -92,7 +97,8 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
 
   return (
     <div
-      className={`fixed bottom-3 z-30 transition-all md:bottom-6 md:right-6 ${
+      data-open={open ? 'true' : 'false'}
+      className={`casino-lobby-chat fixed bottom-3 z-30 transition-all md:bottom-6 md:right-6 ${
         open ? 'left-3 right-3 md:left-auto md:w-[360px] xl:w-[390px]' : 'right-3 left-auto md:w-auto'
       }`}
     >
@@ -108,7 +114,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
         >
           <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">Lounge chat</div>
-            <div className={open ? 'mt-1 font-serif text-lg text-[#fff3e2] md:text-xl' : 'text-sm font-semibold text-[#fff3e2]'}>
+            <div className={`casino-lobby-chat__title ${open ? 'mt-1 font-serif text-lg text-[#fff3e2] md:text-xl' : 'text-sm font-semibold text-[#fff3e2]'}`}>
               Hear the room
             </div>
           </div>
@@ -123,8 +129,8 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
         </button>
 
         {open && (
-          <div className="border-t border-white/8 px-3 pb-3 pt-3 md:px-4 md:pb-4">
-            <div ref={scrollRef} className="h-[48vh] max-h-72 space-y-3 overflow-y-auto pr-1 md:h-72">
+          <div className="casino-lobby-chat__body border-t border-white/8 px-3 pb-3 pt-3 md:px-4 md:pb-4">
+            <div ref={scrollRef} className="casino-lobby-chat__messages h-[48vh] max-h-72 space-y-3 overflow-y-auto pr-1 md:h-72">
               {messages.length === 0 ? (
                 <div className="rounded-2xl border border-white/8 bg-black/18 px-4 py-5 text-sm text-white/55">
                   No one has said anything yet. Start the first table or break the silence.
@@ -150,14 +156,14 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
               )}
             </div>
 
-            <form onSubmit={submit} className="mt-3 space-y-2">
+            <form onSubmit={submit} className="casino-lobby-chat__form mt-3 space-y-2">
               <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value.slice(0, MAX_LOBBY_CHAT_LENGTH))}
                 rows={2}
                 placeholder={placeholder}
-                className="w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
+                className="casino-lobby-chat__input w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
               />
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/${MAX_LOBBY_CHAT_LENGTH}`}</div>

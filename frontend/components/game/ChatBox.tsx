@@ -43,7 +43,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis }: ChatBoxP
   }
 
   return (
-    <div className={`flex flex-col rounded-xl border border-gray-700 bg-black/70 shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-all ${collapsed ? 'h-10' : 'h-72 sm:h-80'}`}>
+    <div className={`casino-table-chat flex flex-col rounded-xl border border-gray-700 bg-black/70 shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-all ${collapsed ? 'h-10' : 'h-72 sm:h-80'}`}>
       <button
         onClick={() => setCollapsed((current) => !current)}
         className="flex items-center justify-between border-b border-gray-700/50 px-3 py-2 text-sm text-gray-400 hover:text-white"
@@ -54,7 +54,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis }: ChatBoxP
 
       {!collapsed && (
         <>
-          <div className="min-h-[5rem] flex-1 space-y-1.5 overflow-y-auto px-3 py-2 text-sm leading-5">
+          <div className="casino-table-chat__messages min-h-[5rem] flex-1 space-y-1.5 overflow-y-auto px-3 py-2 text-sm leading-5">
             {messages.map((msg, i) => (
               msg.isSystem ? (
                 <div key={i} className="py-0.5 text-xs italic leading-5 text-gray-500">
@@ -77,7 +77,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis }: ChatBoxP
               </div>
             )}
 
-            <div className="flex items-center gap-2 px-2 py-2">
+            <div className="casino-table-chat__compose flex items-center gap-2 px-2 py-2">
               <button
                 type="button"
                 onClick={() => setShowEmojiTray((current) => !current)}

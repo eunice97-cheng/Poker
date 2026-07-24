@@ -500,6 +500,235 @@
     position: relative;
     z-index: 1;
   }
+
+  .landscape-only-guard {
+    display: none;
+  }
+
+  @media (max-width: 900px) and (orientation: portrait) {
+    .landscape-only-guard {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(247, 213, 122, 0.18), transparent 30%),
+        radial-gradient(circle at 20% 80%, rgba(45, 212, 191, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(10, 6, 4, 0.98), rgba(3, 3, 3, 0.99));
+      color: #fff3e2;
+      touch-action: none;
+    }
+
+    .landscape-only-guard::before,
+    .landscape-only-guard::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .landscape-only-guard::before {
+      inset: 12px;
+      border: 1px solid rgba(247, 213, 122, 0.22);
+      box-shadow: inset 0 0 40px rgba(247, 213, 122, 0.08);
+    }
+
+    .landscape-only-guard::after {
+      left: 50%;
+      top: 50%;
+      height: 62vh;
+      width: 62vh;
+      max-height: 520px;
+      max-width: 520px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      border: 1px solid rgba(247, 213, 122, 0.13);
+      box-shadow:
+        0 0 80px rgba(247, 213, 122, 0.08),
+        inset 0 0 60px rgba(45, 212, 191, 0.06);
+    }
+
+    .landscape-only-guard__panel {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 360px);
+      border: 1px solid rgba(247, 213, 122, 0.32);
+      background:
+        linear-gradient(180deg, rgba(21, 14, 8, 0.96), rgba(6, 8, 8, 0.96)),
+        rgba(0, 0, 0, 0.84);
+      padding: 28px 22px;
+      text-align: center;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.58),
+        0 0 36px rgba(247, 213, 122, 0.14);
+    }
+
+    .landscape-only-guard__device {
+      position: relative;
+      margin: 0 auto 20px;
+      height: 94px;
+      width: 154px;
+      transform: rotate(90deg);
+      border-radius: 22px;
+      border: 2px solid rgba(255, 239, 188, 0.86);
+      background: linear-gradient(135deg, rgba(7, 10, 14, 0.96), rgba(14, 34, 31, 0.94));
+      box-shadow:
+        0 0 24px rgba(45, 212, 191, 0.16),
+        0 0 34px rgba(247, 213, 122, 0.18);
+    }
+
+    .landscape-only-guard__screen {
+      position: absolute;
+      inset: 11px 14px;
+      border-radius: 13px;
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      background:
+        linear-gradient(90deg, rgba(247, 213, 122, 0.12), transparent 34% 66%, rgba(45, 212, 191, 0.12)),
+        rgba(0, 0, 0, 0.48);
+    }
+
+    .landscape-only-guard__shine {
+      position: absolute;
+      left: 22px;
+      top: 16px;
+      height: 1px;
+      width: 58px;
+      background: linear-gradient(90deg, transparent, rgba(255, 244, 191, 0.9), transparent);
+    }
+
+    .landscape-only-guard__eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(247, 213, 122, 0.72);
+    }
+
+    .landscape-only-guard h2 {
+      margin-top: 12px;
+      font-family: Georgia, serif;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: #fff7db;
+    }
+
+    .landscape-only-guard p {
+      margin: 14px auto 0;
+      max-width: 300px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.55;
+      color: rgba(255, 243, 226, 0.78);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .landscape-only-guard__device {
+        animation: casino-rotate-phone 2.8s ease-in-out infinite;
+      }
+    }
+  }
+
+  @keyframes casino-rotate-phone {
+    0%, 100% {
+      transform: rotate(90deg) translate3d(0, 0, 0);
+    }
+
+    50% {
+      transform: rotate(90deg) translate3d(0, -4px, 0);
+    }
+  }
+
+  @media (max-width: 940px) and (orientation: landscape), (max-height: 560px) and (orientation: landscape) {
+    .casino-lobby-chat[data-open="true"] {
+      left: auto !important;
+      right: 8px !important;
+      bottom: 8px !important;
+      width: min(300px, 40vw) !important;
+      max-width: calc(100vw - 16px);
+    }
+
+    .casino-lobby-chat[data-open="false"] {
+      right: 8px !important;
+      bottom: 8px !important;
+    }
+
+    .casino-lobby-chat__title {
+      display: none;
+    }
+
+    .casino-lobby-chat__body {
+      padding: 8px !important;
+    }
+
+    .casino-lobby-chat__messages {
+      height: min(23vh, 96px) !important;
+      min-height: 54px;
+      max-height: 96px !important;
+    }
+
+    .casino-lobby-chat__form {
+      margin-top: 6px !important;
+      gap: 6px !important;
+    }
+
+    .casino-lobby-chat__form > div:first-child {
+      max-height: 76px;
+      overflow-y: auto;
+    }
+
+    .casino-lobby-chat__input {
+      height: 38px !important;
+      min-height: 38px !important;
+      padding: 8px 10px !important;
+      border-radius: 12px !important;
+    }
+
+    .casino-mobile-table-panel {
+      right: 8px !important;
+      bottom: 76px !important;
+    }
+
+    .casino-mobile-table-panel__content {
+      width: min(300px, 42vw) !important;
+      max-height: calc(100vh - 92px);
+      overflow: hidden;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-observers,
+    .casino-mobile-table-panel__content .casino-table-log {
+      display: none;
+    }
+
+    .casino-table-chat {
+      height: min(34vh, 150px) !important;
+    }
+
+    .casino-table-chat__messages {
+      min-height: 42px !important;
+      padding: 6px 8px !important;
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    .casino-table-chat__compose {
+      gap: 4px !important;
+      padding: 5px !important;
+    }
+
+    .casino-table-chat__compose button {
+      padding-left: 6px !important;
+      padding-right: 6px !important;
+      font-size: 11px !important;
+    }
+
+    .casino-table-chat__compose input {
+      font-size: 12px !important;
+    }
+  }
 }
 
 ::-webkit-scrollbar {

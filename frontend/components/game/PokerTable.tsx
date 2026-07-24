@@ -123,7 +123,7 @@ function ObserverPanel({ observers, panelClassName, bodyMaxHeightClass = 'max-h-
   if (observers.length === 0) return null
 
   return (
-    <div className={`flex flex-col rounded-xl border shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-sm ${panelClassName}`}>
+    <div className={`casino-table-observers flex flex-col rounded-xl border shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-sm ${panelClassName}`}>
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-sm text-gray-300">
         <span>Observers</span>
         <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/80">
@@ -642,9 +642,9 @@ export function PokerTable({
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
       </div>
 
-      <div className="absolute bottom-24 right-3 z-20 lg:hidden">
+      <div className="casino-mobile-table-panel absolute bottom-24 right-3 z-20 lg:hidden">
         {showMobilePanel ? (
-          <div className="w-[min(22rem,calc(100vw-1rem))] space-y-2">
+          <div className="casino-mobile-table-panel__content w-[min(22rem,calc(100vw-1rem))] space-y-2">
             <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-32" />
             <ActionLog logs={actionLogs} />
             <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />

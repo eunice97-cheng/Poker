@@ -16,7 +16,7 @@ export function ActionLog({ logs }: ActionLogProps) {
 
   return (
     <div
-      className={`flex flex-col rounded-xl border border-gray-700 bg-black/70 shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-all ${
+      className={`casino-table-log flex flex-col rounded-xl border border-gray-700 bg-black/70 shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-all ${
         collapsed ? 'h-10' : 'h-48'
       }`}
     >
