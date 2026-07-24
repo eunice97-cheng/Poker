@@ -186,20 +186,40 @@ function dealerAudioSrc(fileName: string) {
   return `${DEALER_AUDIO_BASE}${fileName.split('/').map(encodeURIComponent).join('/')}`
 }
 
-function dealerAudioForLine(line: string) {
+function isAddressedToViewer(addressedName: string, viewerName: string) {
+  return addressedName.trim().toLowerCase() === viewerName.trim().toLowerCase()
+}
+
+function addressedDealerAudioSrc(addressedName: string, viewerName: string, fileName: string) {
+  return isAddressedToViewer(addressedName, viewerName) ? dealerAudioSrc(fileName) : null
+}
+
+function dealerAudioForLine(line: string, viewerName: string, isMyTurn: boolean) {
   const trimmed = line.trim()
   if (!trimmed) return null
 
   const exactFile = DEALER_AUDIO_FILES[trimmed]
   if (exactFile) return dealerAudioSrc(exactFile)
 
-  if (/^Welcome, .+\.$/.test(trimmed)) return dealerAudioSrc('Welcome.mp3')
-  if (/^Glad you can join us, .+\.$/.test(trimmed)) return dealerAudioSrc('Glad you can join us.mp3')
-  if (/^Thanks for playing, .+\.$/.test(trimmed)) return dealerAudioSrc('Thanks for playing.mp3')
-  if (/^See you next time, .+\.$/.test(trimmed)) return dealerAudioSrc('See you next time.mp3')
-  if (/^Well played, .+\.$/.test(trimmed)) return dealerAudioSrc('Well played.mp3')
-  if (/^Close one, .+\.$/.test(trimmed)) return dealerAudioSrc('Close one.mp3')
-  if (/^.+'s turn\.$/.test(trimmed)) return dealerAudioSrc('Your turn.mp3')
+  const welcomeMatch = trimmed.match(/^Welcome, (.+)\.$/)
+  if (welcomeMatch?.[1]) return addressedDealerAudioSrc(welcomeMatch[1], viewerName, 'Welcome.mp3')
+
+  const gladMatch = trimmed.match(/^Glad you can join us, (.+)\.$/)
+  if (gladMatch?.[1]) return addressedDealerAudioSrc(gladMatch[1], viewerName, 'Glad you can join us.mp3')
+
+  const thanksMatch = trimmed.match(/^Thanks for playing, (.+)\.$/)
+  if (thanksMatch?.[1]) return addressedDealerAudioSrc(thanksMatch[1], viewerName, 'Thanks for playing.mp3')
+
+  const goodbyeMatch = trimmed.match(/^See you next time, (.+)\.$/)
+  if (goodbyeMatch?.[1]) return addressedDealerAudioSrc(goodbyeMatch[1], viewerName, 'See you next time.mp3')
+
+  const winMatch = trimmed.match(/^Well played, (.+)\.$/)
+  if (winMatch?.[1]) return addressedDealerAudioSrc(winMatch[1], viewerName, 'Well played.mp3')
+
+  const loseMatch = trimmed.match(/^Close one, (.+)\.$/)
+  if (loseMatch?.[1]) return addressedDealerAudioSrc(loseMatch[1], viewerName, 'Close one.mp3')
+
+  if (/^.+'s turn\.$/.test(trimmed)) return isMyTurn ? dealerAudioSrc('Your turn.mp3') : null
 
   const introMatch = trimmed.match(/^Good evening, I'm Dealer (.+)\. Place your bets when you're ready\.$/)
   if (introMatch?.[1]) {
@@ -398,6 +418,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     () => blackjackState?.observers?.find((observer) => observer.playerId === blackjackState.myPlayerId) ?? null,
     [blackjackState]
   )
+  const viewerName = me?.username ?? waitingMe?.username ?? ''
   const visualSeatPlayers = useMemo(() => {
     const seats: Array<ClientBlackjackPlayer | undefined> = Array.from({ length: SEAT_COUNT })
     if (!blackjackState) return seats
@@ -583,7 +604,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   }, [blackjackState?.message, blackjackState?.messageUpdatedAt])
 
   useEffect(() => {
-    const src = dealerAudioForLine(displayedDealerLine)
+    const src = dealerAudioForLine(displayedDealerLine, viewerName, isMyTurn)
     if (!src) return
 
     const voiceKey = dealerSwitchLine
@@ -593,7 +614,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     if (dealerVoiceKeyRef.current === voiceKey) return
     dealerVoiceKeyRef.current = voiceKey
     playDealerVoice(src)
-  }, [blackjackState?.messageUpdatedAt, dealerSwitchLine, dealerTransitionState, displayedDealerLine, playDealerVoice])
+  }, [blackjackState?.messageUpdatedAt, dealerSwitchLine, dealerTransitionState, displayedDealerLine, isMyTurn, playDealerVoice, viewerName])
 
   useEffect(() => {
     if (!blackjackState || !me || blackjackState.phase !== 'settled' || !me.lastResult) return
