@@ -263,7 +263,7 @@ export class BlackjackRoom {
   standPlayerUp(socketId: string) {
     const player = this.getPlayerBySocketId(socketId)
     if (!player) return { error: 'Not seated at this blackjack table' }
-    if (this.isRoundLocked()) return { error: 'Please wait for the current round to finish' }
+    if (this.isRoundLocked() && this.hasRoundHand(player)) return { error: 'Please wait for the current round to finish' }
 
     const observer = this.movePlayerToObserver(player)
     if (!this.hasAnyBetOnTable()) this.clearBettingCountdown()
@@ -277,7 +277,6 @@ export class BlackjackRoom {
   seatObserver(socketId: string, requestedSeat?: number) {
     const observer = this.getObserverBySocketId(socketId)
     if (!observer) return { error: 'Not waiting at this blackjack table' }
-    if (this.isRoundLocked()) return { error: 'Please wait for the current round to finish' }
     if (this.isFull()) return { error: 'No seats available' }
 
     const requested = Number.isInteger(requestedSeat) ? Number(requestedSeat) : null
@@ -309,7 +308,7 @@ export class BlackjackRoom {
     this.state.players.set(seat, player)
     this.state.socketToSeat.set(player.socketId, seat)
     this.io.sockets.sockets.get(player.socketId)?.join(this.tableId)
-    this.setDealerMessage(this.hasAnyBetOnTable() ? 'Betting is now open.' : 'Place your bets, please.')
+    this.setDealerMessage(this.isRoundLocked() ? 'Feel free to join the next round.' : this.hasAnyBetOnTable() ? 'Betting is now open.' : 'Place your bets, please.')
     this.syncTableStatus()
     this.broadcastState()
     this.emitTableUpdated()
@@ -734,6 +733,10 @@ export class BlackjackRoom {
 
   private anyHandsInPlay() {
     return Array.from(this.state.players.values()).some(hasPlayableHand)
+  }
+
+  private hasRoundHand(player: BlackjackServerPlayer) {
+    return player.hands.some((hand) => hand.bet > 0)
   }
 
   private nextActingSeat(fromSeat: number) {

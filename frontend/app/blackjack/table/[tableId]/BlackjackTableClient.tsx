@@ -429,7 +429,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   ], [activeDealer.id, activeDealer.name, activeDealerTipTotal])
   const canBet = blackjackState?.phase === 'betting'
   const isRoundLocked = blackjackState?.phase === 'playing' || blackjackState?.phase === 'insurance'
-  const canSitAtSeat = Boolean(waitingMe && blackjackState && !isRoundLocked)
+  const canSitAtSeat = Boolean(waitingMe && blackjackState && blackjackState.players.length < blackjackState.maxPlayers)
   const isMyTurn = Boolean(me?.isCurrentTurn)
   const bettingSecondsLeft = secondsLeft(blackjackState?.bettingEndsAt, now)
   const insuranceSecondsLeft = secondsLeft(blackjackState?.insuranceEndsAt, now)
@@ -1190,7 +1190,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               <button
                 type="button"
                 className="table-status-button"
-                disabled={isRoundLocked}
+                disabled={isRoundLocked && playerHands.length > 0}
                 onClick={handleSitOut}
               >
                 Stand Up
@@ -1200,7 +1200,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               <button
                 type="button"
                 className="table-status-button"
-                disabled={isRoundLocked || blackjackState.players.length >= blackjackState.maxPlayers}
+                disabled={blackjackState.players.length >= blackjackState.maxPlayers}
                 onClick={() => handleSitIn()}
               >
                 Sit Down
