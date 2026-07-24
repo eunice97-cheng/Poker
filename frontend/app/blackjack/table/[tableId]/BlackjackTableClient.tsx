@@ -94,6 +94,19 @@ const DEALERS: DealerAssets[] = [
       wink: '/blackjack/Images/Dealers/thank%20you%20wink.png',
     },
   },
+  {
+    id: 'julie',
+    name: 'Julie',
+    portraits: {
+      normal: '/blackjack/Images/Dealers/Julie.png',
+      smiling: '/blackjack/Images/Dealers/Julie%20-%20smiling.png',
+      blinking: '/blackjack/Images/Dealers/Julie%20-%20blinking.png',
+    },
+    thankYou: {
+      normal: '/blackjack/Images/Dealers/Julie%20-%20thank%20you.png',
+      wink: '/blackjack/Images/Dealers/Julie%20-%20thank%20you%20wink.png',
+    },
+  },
 ]
 const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
@@ -104,7 +117,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-15'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-16'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
   H: '\u2665',

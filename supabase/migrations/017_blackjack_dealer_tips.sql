@@ -13,7 +13,8 @@ ALTER TABLE public.blackjack_dealer_tips ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.blackjack_dealer_tips (dealer_id, dealer_name)
 VALUES
   ('chloe', 'Chloe'),
-  ('eunice', 'Eunice')
+  ('eunice', 'Eunice'),
+  ('julie', 'Julie')
 ON CONFLICT (dealer_id) DO NOTHING;
 
 CREATE OR REPLACE FUNCTION public.record_blackjack_dealer_tip(
