@@ -307,18 +307,6 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                 </div>
 
                 <div className="flex flex-col items-stretch gap-3">
-                  <Link
-                    href="/blackjack"
-                    className="group flex min-h-[76px] w-full max-w-[176px] items-center gap-3 rounded-[16px] border border-[#f3d2a2]/25 bg-[linear-gradient(180deg,rgba(19,34,23,0.78),rgba(8,14,10,0.88))] px-4 py-3 text-left shadow-[0_18px_44px_rgba(0,0,0,0.3)] transition-colors hover:border-[#f3d2a2]/55 hover:bg-[linear-gradient(180deg,rgba(28,48,32,0.84),rgba(10,20,13,0.92))]"
-                    aria-label="Visit the new Blackjack Lounge"
-                  >
-                    <img
-                      src="/blackjack/Images/ASL%20BlackJack%20Lounge%20Logo.png"
-                      alt=""
-                      className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_0_14px_rgba(243,210,162,0.18)] transition-transform group-hover:scale-105"
-                    />
-                    <span className="min-w-0 text-sm font-bold leading-5 text-[#fff3e2]">Visit the new Blackjack Lounge</span>
-                  </Link>
                   <Button
                     variant="primary"
                     size="lg"
@@ -357,34 +345,14 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               </div>
             </div>
 
-            <aside className="flex flex-col gap-4 rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,10,8,0.82),rgba(20,10,8,0.46))] p-5 shadow-[0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md md:rounded-[38px] md:p-6">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/45">By the bar</div>
-                <div className="mt-3 font-serif text-2xl text-[#fff3e2] md:text-3xl">{featuredTable ? 'People are already drifting toward a game.' : 'The room is open, but nobody has called first deal yet.'}</div>
-                <p className="mt-3 text-sm leading-6 text-white/68 md:leading-7">
-                  {featuredTable
-                    ? `${featuredTable.name} has ${featuredTable.player_count} out of ${featuredTable.max_players} seats taken. Good table if you want to step in without the awkward wait.`
-                    : 'Start one soft table and the rest of the room usually follows. Empty lobbies die when nobody wants to be first.'}
-                </p>
-              </div>
-
-              <div className="rounded-[24px] border border-[#f3d2a2]/12 bg-black/18 p-4 md:rounded-[28px] md:p-5">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">House chatter</div>
-                <div className="mt-3 space-y-3 text-sm text-white/70">
-                  <p>Use this page like a drinking spot. Linger, watch who joins, then move when the energy feels right.</p>
-                  <p className="hidden sm:block">The invite button works better once there is already one live table on the board.</p>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 md:rounded-[28px] md:p-5">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/42">Tonight&apos;s pour</div>
-                <div className="mt-3 flex items-center justify-between text-sm text-white/72">
-                  <span>Realtime room sync</span>
-                  <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-emerald-200">
-                    Fresh
-                  </span>
-                </div>
-              </div>
+            <aside className="overflow-hidden rounded-[30px] border border-[#f3d2a2]/34 bg-black/26 shadow-[0_0_34px_rgba(243,210,162,0.24),0_34px_90px_rgba(0,0,0,0.42)] backdrop-blur-md transition-shadow duration-300 hover:shadow-[0_0_48px_rgba(243,210,162,0.34),0_34px_90px_rgba(0,0,0,0.46)] md:rounded-[38px]">
+              <Link href="/blackjack" className="group block h-full min-h-[520px]" aria-label="Visit the ASL Blackjack Lounge">
+                <img
+                  src="/blackjack/Images/Promote%20ASL%20Blackjack.png"
+                  alt="Visit the ASL Blackjack Lounge"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+                />
+              </Link>
             </aside>
           </section>
 
