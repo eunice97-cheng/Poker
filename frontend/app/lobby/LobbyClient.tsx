@@ -277,12 +277,6 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               >
                 {inviteLabel === 'done' ? 'Copied' : 'Invite'}
               </button>
-              <Link
-                href="/blackjack"
-                className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-200/40 hover:bg-emerald-400/15"
-              >
-                Blackjack
-              </Link>
               {isAdmin && (
                 <Link
                   href="/gm"
@@ -312,24 +306,32 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+                <div className="flex flex-col items-stretch gap-3">
+                  <Link
+                    href="/blackjack"
+                    className="group flex aspect-square w-full max-w-[176px] flex-col items-center justify-center gap-3 self-stretch rounded-[18px] border border-[#f3d2a2]/25 bg-[linear-gradient(180deg,rgba(22,49,31,0.82),rgba(10,22,14,0.9))] p-4 text-center shadow-[0_20px_52px_rgba(0,0,0,0.32)] transition-colors hover:border-[#f3d2a2]/55 hover:bg-[linear-gradient(180deg,rgba(32,72,45,0.88),rgba(12,28,18,0.94))]"
+                    aria-label="Visit the new Blackjack Lounge"
+                  >
+                    <img
+                      src="/blackjack/Images/ASL%20BlackJack%20Lounge%20Logo.png"
+                      alt=""
+                      className="h-16 w-16 rounded-full border border-[#f3d2a2]/20 object-cover shadow-[0_0_24px_rgba(243,210,162,0.18)] transition-transform group-hover:scale-105"
+                    />
+                    <span className="max-w-[8.5rem] text-sm font-bold leading-5 text-[#fff3e2]">
+                      Visit the new Blackjack Lounge
+                    </span>
+                  </Link>
                   <Button
                     variant="primary"
                     size="lg"
-                    className="w-full rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)] sm:w-auto"
+                    className="w-full max-w-[176px] rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)]"
                     onClick={() => setShowCreate(true)}
                   >
                     Start a table
                   </Button>
-                  <Link
-                    href="/blackjack"
-                    className="w-full rounded-full border border-emerald-300/20 bg-emerald-400/10 px-6 py-3 text-center text-sm font-semibold text-emerald-100 transition-colors hover:border-emerald-200/40 hover:bg-emerald-400/15 sm:w-auto"
-                  >
-                    Blackjack room
-                  </Link>
                   <button
                     onClick={handleInvite}
-                    className="w-full rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white sm:w-auto"
+                    className="w-full max-w-[176px] rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
                   >
                     {inviteLabel === 'done' ? 'Copied to clipboard' : 'Text the crew'}
                   </button>
