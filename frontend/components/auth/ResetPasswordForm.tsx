@@ -9,6 +9,8 @@ import { getAuthErrorMessage } from '@/lib/auth-errors'
 
 const RECOVERY_SESSION_KEY = 'poker_password_recovery_ready'
 const RECOVERY_SESSION_MAX_AGE_MS = 30 * 60 * 1000
+const RECOVERY_SESSION_ATTEMPTS = 12
+const RECOVERY_SESSION_RETRY_MS = 250
 
 function readRecoverySessionFlag() {
   if (typeof window === 'undefined') return false
@@ -25,6 +27,10 @@ function readRecoverySessionFlag() {
 function writeRecoverySessionFlag() {
   if (typeof window === 'undefined') return
   sessionStorage.setItem(RECOVERY_SESSION_KEY, String(Date.now()))
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
 export function ResetPasswordForm() {
@@ -49,6 +55,7 @@ export function ResetPasswordForm() {
       try {
         let recoveryReady = readRecoverySessionFlag()
         const recoveryMarker = searchParams.get('recovery') === '1'
+        const code = searchParams.get('code')
 
         if (recoveryMarker && typeof window !== 'undefined') {
           recoveryReady = true
@@ -79,22 +86,27 @@ export function ResetPasswordForm() {
           }
         }
 
-        const code = searchParams.get('code')
+        let session = null
+        const attempts = code ? RECOVERY_SESSION_ATTEMPTS : 1
 
-        if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-          if (exchangeError) throw exchangeError
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
+          const {
+            data: { session: nextSession },
+            error: sessionError,
+          } = await supabase.auth.getSession()
+
+          if (sessionError) throw sessionError
+          session = nextSession
+          if (session) break
+          if (attempt < attempts - 1) await wait(RECOVERY_SESSION_RETRY_MS)
+        }
+
+        if (session && code) {
           recoveryReady = true
           writeRecoverySessionFlag()
           router.replace('/auth/reset-password')
         }
 
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession()
-
-        if (sessionError) throw sessionError
         if (!cancelled) setHasRecoverySession(Boolean(session) && recoveryReady)
       } catch (err) {
         if (!cancelled) {

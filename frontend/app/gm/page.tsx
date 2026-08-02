@@ -10,7 +10,7 @@ export default async function GMPage() {
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login')
-  if (!isAdminEmail(user.email)) redirect('/lobby')
+  if (!isAdminEmail(user.email)) redirect('/')
 
   return <GMClient />
 }

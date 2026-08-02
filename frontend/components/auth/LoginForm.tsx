@@ -84,7 +84,7 @@ export function LoginForm() {
       } else {
         localStorage.removeItem(REMEMBERED_EMAIL_KEY)
       }
-      window.location.assign('/lobby')
+      window.location.assign('/')
     } catch (err: unknown) {
       const nextError = getAuthErrorMessage(err, 'Login failed')
       setError(nextError)

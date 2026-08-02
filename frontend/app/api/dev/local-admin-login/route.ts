@@ -6,7 +6,7 @@ export function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const response = NextResponse.redirect(new URL('/blackjack', request.url))
+  const response = NextResponse.redirect(new URL('/', request.url))
   response.cookies.set(LOCAL_ADMIN_COOKIE, 'true', {
     httpOnly: true,
     sameSite: 'lax',

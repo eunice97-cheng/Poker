@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const type = searchParams.get('type')
+  const next = searchParams.get('next')
   const siteUrl = getServerSiteUrl(origin)
+  const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : '/'
 
   if (code) {
     const supabase = createClient()
@@ -22,10 +24,14 @@ export async function GET(request: NextRequest) {
       })
 
       if (type === 'recovery') {
-        return NextResponse.redirect(`${siteUrl}/auth/reset-password?recovery=1`)
+        return NextResponse.redirect(`${siteUrl}${safeNext}?recovery=1`)
       }
 
       return NextResponse.redirect(`${siteUrl}/auth/login?${params.toString()}`)
+    }
+
+    if (type === 'recovery') {
+      return NextResponse.redirect(`${siteUrl}/auth/reset-password?recovery=failed`)
     }
   }
 

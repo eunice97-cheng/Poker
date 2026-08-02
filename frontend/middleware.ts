@@ -26,9 +26,9 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { session } } = await supabase.auth.getSession()
-  const protectedPaths = ['/lobby', '/table', '/profile']
+  const protectedPaths = ['/lobby', '/blackjack', '/table', '/profile']
   const authPaths = ['/auth/login', '/auth/register']
-  const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
+  const isProtected = request.nextUrl.pathname === '/' || protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p))
   const isAuthPage = authPaths.some((p) => request.nextUrl.pathname.startsWith(p))
   const isLocalAdmin = isLocalAdminEnabled()
     && isLocalHost(request.nextUrl.hostname)
@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthPage && session && isVerified) {
-    return NextResponse.redirect(new URL('/lobby', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return response

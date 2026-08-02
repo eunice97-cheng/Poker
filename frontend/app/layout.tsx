@@ -7,8 +7,8 @@ import { MainSiteLink } from '@/components/ui/MainSiteLink'
 import { AudioProvider } from '@/hooks/useAudio'
 
 export const metadata: Metadata = {
-  title: 'ASL Basement Poker',
-  description: 'Multiplayer Texas Hold\'em Poker',
+  title: 'Arcana Casino',
+  description: 'Arcana Studio Labs casino lobby for Poker and BlackJack Lounge',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

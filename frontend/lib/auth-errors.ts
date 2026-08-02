@@ -22,6 +22,10 @@ export function getAuthErrorMessage(error: unknown, fallback: string) {
     return 'This password reset link has expired. Request a new reset link.'
   }
 
+  if (normalized.includes('code verifier') || normalized.includes('pkce')) {
+    return 'This password reset session could not be verified. Request a new reset link from this browser.'
+  }
+
   if (normalized.includes('email not confirmed')) {
     return 'Please verify your email before signing in.'
   }
