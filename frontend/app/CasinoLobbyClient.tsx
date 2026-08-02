@@ -187,7 +187,7 @@ export function CasinoLobbyClient({
               />
               <div>
                 <div className="bg-gradient-to-r from-[#f8e7b2] via-[#d9ad5a] to-[#fff8df] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_14px_rgba(217,173,90,0.18)]">
-                  ASL Casino
+                  ASL Gaming Casino
                 </div>
                 <h1 className="mt-1 bg-gradient-to-r from-[#fffaf0] via-[#f6d47e] to-[#c8923a] bg-clip-text font-serif text-3xl font-black uppercase tracking-[0.08em] text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
                   GAME LOBBY
@@ -268,10 +268,6 @@ export function CasinoLobbyClient({
             <GameCard game={gameCards[0]} />
             <ComingSoonCard />
             <GameCard game={gameCards[1]} />
-          </div>
-
-          <div className="mt-5 rounded-xl border border-dashed border-[#d9ad5a]/22 bg-black/28 px-4 py-4 text-sm text-[#f7dfae]/70 backdrop-blur-md">
-            More casino rooms can be added here as they come online.
           </div>
         </section>
 
