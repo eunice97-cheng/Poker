@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { CasinoLobbyClient, type CasinoGameStats } from './CasinoLobbyClient'
-import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled } from '@/lib/local-admin'
+import { hasVipEmojiAccess } from '@/lib/supporter-access'
+import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
 import type { Profile } from '@/types/poker'
 
 type CasinoTableRow = {
@@ -59,13 +60,15 @@ export default async function HomePage() {
         pokerStats={buildGameStats([])}
         blackjackStats={buildGameStats([])}
         unreadMailCount={0}
+        token={LOCAL_ADMIN_TOKEN}
+        hasVipEmojis
         isLocalAdmin
       />
     )
   }
 
   const user = session!.user
-  const [{ data: pokerTables }, { data: blackjackTables }, { data: profile }, { count: unreadMailCount }] =
+  const [{ data: pokerTables }, { data: blackjackTables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] =
     await Promise.all([
       supabase
         .from('tables')
@@ -79,6 +82,7 @@ export default async function HomePage() {
         .eq('game_type', 'blackjack')
         .neq('status', 'finished'),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
+      hasVipEmojiAccess(supabase, user.id, user.email),
       supabase
         .from('player_mail')
         .select('id', { count: 'exact', head: true })
@@ -92,6 +96,8 @@ export default async function HomePage() {
       pokerStats={buildGameStats(pokerTables as CasinoTableRow[])}
       blackjackStats={buildGameStats(blackjackTables as CasinoTableRow[])}
       unreadMailCount={unreadMailCount ?? 0}
+      token={session!.access_token}
+      hasVipEmojis={canUseVipEmojis}
       isLocalAdmin={false}
     />
   )

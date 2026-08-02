@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
 import { MailIcon } from '@/components/ui/MailIcon'
+import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { useAudio } from '@/hooks/useAudio'
+import { useSocket } from '@/hooks/useSocket'
 import type { Profile } from '@/types/poker'
 
 export interface CasinoGameStats {
@@ -21,6 +23,8 @@ interface CasinoLobbyClientProps {
   pokerStats: CasinoGameStats
   blackjackStats: CasinoGameStats
   unreadMailCount: number
+  token: string | null
+  hasVipEmojis: boolean
   isLocalAdmin?: boolean
 }
 
@@ -41,7 +45,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     title: 'Basement Poker',
     roomLabel: 'Texas Holdem',
     href: '/lobby',
-    image: '/lobby-background/ASL Dungeon Poker.png',
+    image: '/casino-lobby/poker-poster.png',
     mark: 'P',
     tone: 'gold',
   },
@@ -50,7 +54,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     title: 'BlackJack Lounge',
     roomLabel: 'House Dealer',
     href: '/blackjack',
-    image: '/blackjack/Images/Promote ASL Blackjack.png',
+    image: '/casino-lobby/blackjack-poster.png',
     mark: 'B',
     tone: 'teal',
   },
@@ -75,47 +79,44 @@ function GameCard({ game }: { game: CasinoGameCard }) {
     <Link
       href={game.href}
       onClick={() => playSfx('click')}
-      className="group relative flex min-h-[28rem] overflow-hidden rounded-[24px] border border-white/10 bg-black/34 shadow-[0_30px_90px_rgba(0,0,0,0.36)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
+      className="group relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
       aria-label={`Enter ${game.title}`}
     >
       <img
         src={game.image}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]"
+        className="absolute inset-0 h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.018]"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.28)_34%,rgba(4,7,10,0.86)_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.54),transparent_52%,rgba(0,0,0,0.2))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,transparent_34%,rgba(0,0,0,0.18)_64%,rgba(0,0,0,0.74)_100%)]" />
+      <div className="pointer-events-none absolute inset-[10px] rounded-[16px] border border-[#f5d07c]/18" />
 
-      <div className="relative z-10 flex w-full flex-col justify-between p-5 sm:p-6">
+      <div className="relative z-10 flex w-full flex-col justify-between p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className={`rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] ${badge}`}>
+          <div className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] backdrop-blur-md ${badge}`}>
             {game.roomLabel}
           </div>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${accent} text-lg font-black text-black shadow-[0_18px_36px_rgba(0,0,0,0.32)]`}>
+          <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${accent} text-base font-black text-black shadow-[0_18px_36px_rgba(0,0,0,0.32)]`}>
             {game.mark}
           </div>
         </div>
 
-        <div>
-          <h2 className="font-serif text-4xl font-bold leading-none text-[#fff8df] sm:text-5xl">
-            {game.title}
-          </h2>
-          <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-xl border border-white/10 bg-black/38 px-2 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">{game.stats.tableCount}</div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/48">Tables</div>
+        <div className="rounded-[18px] border border-[#f5d07c]/18 bg-black/68 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.36)] backdrop-blur-md">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5">
+              <div className="text-xl font-bold text-white">{game.stats.tableCount}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-white/48">Tables</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/38 px-2 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">{game.stats.playerCount}</div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/48">Players</div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5">
+              <div className="text-xl font-bold text-white">{game.stats.playerCount}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-white/48">Players</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/38 px-2 py-3 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">{game.stats.openSeats}</div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/48">Seats</div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5">
+              <div className="text-xl font-bold text-white">{game.stats.openSeats}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-white/48">Seats</div>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/42 px-4 py-3 text-sm backdrop-blur-sm">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
             <span className="font-semibold text-white/72">{game.stats.featuredLimit}</span>
             <span className="font-bold text-[#fff2bf]">Enter Room</span>
           </div>
@@ -130,11 +131,14 @@ export function CasinoLobbyClient({
   pokerStats,
   blackjackStats,
   unreadMailCount,
+  token,
+  hasVipEmojis,
   isLocalAdmin = false,
 }: CasinoLobbyClientProps) {
   const router = useRouter()
   const supabase = createClient()
   const { playSfx } = useAudio()
+  const { socket, connected, error: socketError } = useSocket(token)
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
   const playerName = profile?.username ?? 'Player'
   const gameCards: CasinoGameCard[] = games.map((game) => ({
@@ -157,18 +161,23 @@ export function CasinoLobbyClient({
       <div className="pointer-events-none fixed inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/lobby-background/ASL Dungeon Poker.png')" }}
+          style={{ backgroundImage: "url('/casino-lobby/lobby-background.png')" }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,10,0.94)_0%,rgba(18,7,8,0.72)_42%,rgba(5,26,26,0.76)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[linear-gradient(180deg,transparent,rgba(8,11,13,0.98))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,5,6,0.82)_0%,rgba(5,8,10,0.38)_28%,rgba(9,7,6,0.28)_58%,rgba(4,5,6,0.86)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.16)_30%,rgba(3,5,6,0.78)_78%,rgba(3,5,6,0.98)_100%)]" />
       </div>
 
       <div className="relative z-10">
-        <header className="border-b border-white/10 bg-black/42 backdrop-blur-xl">
+        <header className="border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#78f4df]/70">Arcana Casino</div>
-              <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 overflow-hidden rounded-2xl border border-[#d9ad5a]/34 bg-black shadow-[0_16px_40px_rgba(0,0,0,0.38)]">
+                <img src="/casino-lobby/logo.png" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#d9ad5a]/82">Arcana Casino</div>
+                <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -201,6 +210,18 @@ export function CasinoLobbyClient({
                 )}
               </Link>
               <AudioControls />
+              <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/24 px-3 py-3 text-xs font-semibold text-white/62 xl:flex">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    connected
+                      ? 'bg-emerald-400'
+                      : socketError
+                        ? 'bg-red-400'
+                        : 'animate-pulse bg-amber-300'
+                  }`}
+                />
+                <span>{connected ? 'Chat live' : socketError ? 'Chat waking' : 'Connecting'}</span>
+              </div>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -212,7 +233,7 @@ export function CasinoLobbyClient({
           </div>
         </header>
 
-        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
+        <section className="mx-auto max-w-6xl px-4 pb-36 pt-8 sm:px-6 lg:pb-40 lg:pt-10">
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-black/28 p-4 backdrop-blur-md">
               <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/42">Casino Balance</div>
@@ -228,16 +249,18 @@ export function CasinoLobbyClient({
             </div>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid justify-center gap-5 sm:grid-cols-2 lg:gap-7">
             {gameCards.map((game) => (
               <GameCard key={game.id} game={game} />
             ))}
           </div>
 
-          <div className="mt-5 rounded-xl border border-dashed border-white/14 bg-black/20 px-4 py-4 text-sm text-white/58 backdrop-blur-md">
+          <div className="mt-5 rounded-xl border border-dashed border-[#d9ad5a]/22 bg-black/28 px-4 py-4 text-sm text-[#f7dfae]/70 backdrop-blur-md">
             More casino rooms can be added here as they come online.
           </div>
         </section>
+
+        <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />
       </div>
     </main>
   )
