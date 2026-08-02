@@ -98,8 +98,8 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   return (
     <div
       data-open={open ? 'true' : 'false'}
-      className={`casino-lobby-chat fixed bottom-3 z-30 transition-all md:bottom-6 md:right-6 ${
-        open ? 'left-3 right-3 md:left-auto md:w-[360px] xl:w-[390px]' : 'right-3 left-auto md:w-auto'
+      className={`casino-lobby-chat fixed bottom-3 z-[10000] transition-all md:bottom-6 md:right-6 ${
+        open ? 'left-3 right-3 md:left-auto md:w-[360px]' : 'right-3 left-auto md:w-auto'
       }`}
     >
       <div

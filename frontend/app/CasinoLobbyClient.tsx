@@ -34,7 +34,7 @@ type CasinoGameCard = {
   roomLabel: string
   href: string
   image: string
-  mark: string
+  aspectRatio: string
   tone: 'gold' | 'teal'
   stats: CasinoGameStats
 }
@@ -46,7 +46,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'Texas Holdem',
     href: '/lobby',
     image: '/casino-lobby/poker-poster.png',
-    mark: 'P',
+    aspectRatio: '941 / 1672',
     tone: 'gold',
   },
   {
@@ -55,7 +55,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'House Dealer',
     href: '/blackjack',
     image: '/casino-lobby/blackjack-poster.png',
-    mark: 'B',
+    aspectRatio: '992 / 1586',
     tone: 'teal',
   },
 ]
@@ -66,10 +66,6 @@ function formatChips(value: number | undefined) {
 
 function GameCard({ game }: { game: CasinoGameCard }) {
   const { playSfx } = useAudio()
-  const accent =
-    game.tone === 'gold'
-      ? 'from-[#f8d86a] via-[#d1902e] to-[#823d1d]'
-      : 'from-[#76f4dc] via-[#1da58e] to-[#183e73]'
   const badge =
     game.tone === 'gold'
       ? 'border-[#f8d86a]/45 bg-[#f8d86a]/14 text-[#fff0be]'
@@ -79,14 +75,15 @@ function GameCard({ game }: { game: CasinoGameCard }) {
     <Link
       href={game.href}
       onClick={() => playSfx('click')}
-      className="group relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
+      className="group relative flex min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
+      style={{ aspectRatio: game.aspectRatio }}
       aria-label={`Enter ${game.title}`}
     >
       <img
         src={game.image}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-contain transition-transform duration-700 group-hover:scale-[1.018]"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.018]"
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,transparent_34%,rgba(0,0,0,0.18)_64%,rgba(0,0,0,0.74)_100%)]" />
       <div className="pointer-events-none absolute inset-[10px] rounded-[16px] border border-[#f5d07c]/18" />
@@ -95,9 +92,6 @@ function GameCard({ game }: { game: CasinoGameCard }) {
         <div className="flex items-start justify-between gap-3">
           <div className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] backdrop-blur-md ${badge}`}>
             {game.roomLabel}
-          </div>
-          <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${accent} text-base font-black text-black shadow-[0_18px_36px_rgba(0,0,0,0.32)]`}>
-            {game.mark}
           </div>
         </div>
 
@@ -170,14 +164,9 @@ export function CasinoLobbyClient({
       <div className="relative z-10">
         <header className="border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 overflow-hidden rounded-2xl border border-[#d9ad5a]/34 bg-black shadow-[0_16px_40px_rgba(0,0,0,0.38)]">
-                <img src="/casino-lobby/logo.png" alt="" aria-hidden="true" className="h-full w-full object-cover" />
-              </div>
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#d9ad5a]/82">Arcana Casino</div>
-                <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
-              </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#d9ad5a]/82">Arcana Casino</div>
+              <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -249,10 +238,10 @@ export function CasinoLobbyClient({
             </div>
           </div>
 
-          <div className="grid justify-center gap-5 sm:grid-cols-2 lg:gap-7">
-            {gameCards.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <GameCard game={gameCards[0]} />
+            <div className="hidden sm:block" aria-hidden="true" />
+            <GameCard game={gameCards[1]} />
           </div>
 
           <div className="mt-5 rounded-xl border border-dashed border-[#d9ad5a]/22 bg-black/28 px-4 py-4 text-sm text-[#f7dfae]/70 backdrop-blur-md">
