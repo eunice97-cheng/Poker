@@ -78,7 +78,7 @@ export function FloatingButtons() {
   }
 
   return (
-    <div className="fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 md:right-5 md:top-24">
+    <div className="casino-floating-buttons fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 transition-[opacity,transform] duration-200 md:right-5 md:top-24">
       <div className="floating-attention-chip">
         <Link
           href="/redeem"

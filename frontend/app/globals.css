@@ -309,6 +309,12 @@
     transform-origin: right center;
   }
 
+  .casino-lobby-chat-open .casino-floating-buttons {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.96);
+  }
+
   .main-site-flame {
     display: inline-flex;
     height: 2rem;

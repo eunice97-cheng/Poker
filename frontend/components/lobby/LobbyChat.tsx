@@ -43,6 +43,11 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   }, [])
 
   useEffect(() => {
+    document.body.classList.toggle('casino-lobby-chat-open', open)
+    return () => document.body.classList.remove('casino-lobby-chat-open')
+  }, [open])
+
+  useEffect(() => {
     if (!socket) return
 
     const onHistory = (history: ChatMessage[]) => setMessages(history)
@@ -98,8 +103,8 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   return (
     <div
       data-open={open ? 'true' : 'false'}
-      className={`casino-lobby-chat fixed bottom-3 z-[10000] transition-all md:bottom-6 md:right-6 ${
-        open ? 'left-3 right-3 md:left-auto md:w-[360px]' : 'right-3 left-auto md:w-auto'
+      className={`casino-lobby-chat fixed bottom-3 right-1 z-[10000] max-w-[calc(100vw-0.5rem)] transition-all md:bottom-6 md:right-3 ${
+        open ? 'w-[336px]' : 'left-auto w-auto'
       }`}
     >
       <div

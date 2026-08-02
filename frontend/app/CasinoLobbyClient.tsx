@@ -116,6 +116,24 @@ function GameCard({ game }: { game: CasinoGameCard }) {
   )
 }
 
+function ComingSoonCard() {
+  return (
+    <div
+      className="relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/18 bg-black/60 shadow-[0_30px_90px_rgba(0,0,0,0.36)]"
+      aria-label="Coming soon"
+    >
+      <img
+        src="/casino-lobby/coming-soon.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.08)_54%,rgba(0,0,0,0.5)_100%)]" />
+      <div className="pointer-events-none absolute inset-[10px] rounded-[16px] border border-[#f5d07c]/14" />
+    </div>
+  )
+}
+
 export function CasinoLobbyClient({
   profile,
   pokerStats,
@@ -168,11 +186,11 @@ export function CasinoLobbyClient({
                 className="h-16 w-24 object-contain drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)] sm:h-20 sm:w-28"
               />
               <div>
-                <div className="bg-gradient-to-r from-[#76f4dc] via-[#fff0b8] to-[#d9ad5a] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_18px_rgba(118,244,220,0.18)]">
-                  Arcana Casino
+                <div className="bg-gradient-to-r from-[#f8e7b2] via-[#d9ad5a] to-[#fff8df] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_14px_rgba(217,173,90,0.18)]">
+                  ASL Casino
                 </div>
-                <h1 className="mt-1 bg-gradient-to-r from-[#fff8df] via-[#f8d86a] to-[#76f4dc] bg-clip-text font-serif text-3xl font-bold text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
-                  Game Lobby
+                <h1 className="mt-1 bg-gradient-to-r from-[#fffaf0] via-[#f6d47e] to-[#c8923a] bg-clip-text font-serif text-3xl font-black uppercase tracking-[0.08em] text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
+                  GAME LOBBY
                 </h1>
               </div>
             </div>
@@ -248,7 +266,7 @@ export function CasinoLobbyClient({
 
           <div className="grid gap-3 sm:grid-cols-3">
             <GameCard game={gameCards[0]} />
-            <div className="hidden sm:block" aria-hidden="true" />
+            <ComingSoonCard />
             <GameCard game={gameCards[1]} />
           </div>
 
