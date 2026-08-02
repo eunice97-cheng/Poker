@@ -34,7 +34,6 @@ type CasinoGameCard = {
   roomLabel: string
   href: string
   image: string
-  aspectRatio: string
   tone: 'gold' | 'teal'
   stats: CasinoGameStats
 }
@@ -46,7 +45,6 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'Texas Holdem',
     href: '/lobby',
     image: '/casino-lobby/poker-poster.png',
-    aspectRatio: '941 / 1672',
     tone: 'gold',
   },
   {
@@ -55,7 +53,6 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'House Dealer',
     href: '/blackjack',
     image: '/casino-lobby/blackjack-poster.png',
-    aspectRatio: '992 / 1586',
     tone: 'teal',
   },
 ]
@@ -75,8 +72,7 @@ function GameCard({ game }: { game: CasinoGameCard }) {
     <Link
       href={game.href}
       onClick={() => playSfx('click')}
-      className="group relative flex min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
-      style={{ aspectRatio: game.aspectRatio }}
+      className="group relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
       aria-label={`Enter ${game.title}`}
     >
       <img
@@ -164,9 +160,17 @@ export function CasinoLobbyClient({
       <div className="relative z-10">
         <header className="border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div className="flex items-center gap-4">
+              <img
+                src="/casino-lobby/logo.png"
+                alt=""
+                aria-hidden="true"
+                className="h-16 w-16 scale-125 rounded-2xl object-cover drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)]"
+              />
+              <div>
               <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#d9ad5a]/82">Arcana Casino</div>
               <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
