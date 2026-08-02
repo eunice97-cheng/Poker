@@ -165,11 +165,15 @@ export function CasinoLobbyClient({
                 src="/casino-lobby/logo.png"
                 alt=""
                 aria-hidden="true"
-                className="h-16 w-16 scale-125 rounded-2xl object-cover drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)]"
+                className="h-16 w-24 object-contain drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)] sm:h-20 sm:w-28"
               />
               <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.34em] text-[#d9ad5a]/82">Arcana Casino</div>
-              <h1 className="mt-1 font-serif text-3xl font-bold text-[#fff8df] sm:text-4xl">Game Lobby</h1>
+                <div className="bg-gradient-to-r from-[#76f4dc] via-[#fff0b8] to-[#d9ad5a] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_18px_rgba(118,244,220,0.18)]">
+                  Arcana Casino
+                </div>
+                <h1 className="mt-1 bg-gradient-to-r from-[#fff8df] via-[#f8d86a] to-[#76f4dc] bg-clip-text font-serif text-3xl font-bold text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
+                  Game Lobby
+                </h1>
               </div>
             </div>
 
