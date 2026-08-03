@@ -356,12 +356,6 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                 >
                   Open Blackjack Table
                 </Button>
-                <Link
-                  href="/lobby"
-                  className="blackjack-return-button rounded-full px-6 py-3 text-center text-sm font-semibold transition-colors"
-                >
-                  <span>Back to Poker</span>
-                </Link>
               </div>
             </div>
 

@@ -60,7 +60,7 @@ export default async function BlackjackLobbyPage() {
       <main className="flex min-h-screen items-center justify-center bg-gray-950 px-4 text-center text-white">
         <div>
           <p className="mb-4 text-lg text-red-300">Profile not found.</p>
-          <Link href="/lobby" className="text-amber-300 hover:underline">Back to Poker Lounge</Link>
+          <Link href="/" className="text-amber-300 hover:underline">Main Lobby</Link>
         </div>
       </main>
     )
