@@ -1554,6 +1554,10 @@
       gap: 4px !important;
     }
 
+    .casino-floating-buttons[data-table-page="true"] {
+      z-index: 28 !important;
+    }
+
     .casino-floating-buttons__tray > div > a,
     .casino-floating-buttons__tray > div > button {
       height: 42px !important;
@@ -1737,7 +1741,7 @@
 
     .casino-mobile-table-panel {
       left: 0 !important;
-      top: 72px !important;
+      top: 58px !important;
     }
 
     .casino-mobile-table-panel__content {
@@ -1798,9 +1802,10 @@
 
     .casino-mobile-table-chat {
       right: 8px !important;
-      bottom: 76px !important;
+      bottom: 12px !important;
       width: min(300px, 42vw) !important;
       max-width: calc(100vw - 16px);
+      z-index: 70 !important;
     }
 
     .casino-poker-table[data-mobile-actions="false"] .casino-mobile-table-chat {
@@ -1966,18 +1971,18 @@
     }
 
     .casino-poker-table__topbar {
-      min-height: 54px !important;
+      min-height: 46px !important;
       flex-direction: row !important;
       flex-wrap: nowrap !important;
       align-items: center !important;
       justify-content: space-between !important;
-      gap: 7px !important;
-      padding: 6px 8px !important;
+      gap: 5px !important;
+      padding: 4px 7px !important;
     }
 
     .casino-poker-table__topbar > div:first-child {
-      max-width: 132px !important;
-      flex: 0 1 132px !important;
+      max-width: 118px !important;
+      flex: 0 1 118px !important;
       font-size: 13px !important;
       line-height: 1.1 !important;
     }
@@ -2005,37 +2010,37 @@
       flex: 0 1 auto !important;
       flex-wrap: nowrap !important;
       justify-content: flex-end !important;
-      gap: 5px !important;
+      gap: 4px !important;
       min-width: 0 !important;
     }
 
     .casino-poker-table__topbar button,
     .casino-poker-table__topbar a {
-      min-height: 34px !important;
+      min-height: 32px !important;
       border-radius: 10px !important;
-      padding: 0 9px !important;
+      padding: 0 8px !important;
       font-size: 11px !important;
       line-height: 1 !important;
       white-space: nowrap !important;
     }
 
     .casino-poker-table__topbar [aria-label="Audio settings"] {
-      height: 34px !important;
-      width: 34px !important;
-      min-height: 34px !important;
+      height: 32px !important;
+      width: 32px !important;
+      min-height: 32px !important;
       padding: 0 !important;
     }
 
     .casino-poker-table__icon-button {
-      height: 34px !important;
-      width: 34px !important;
-      min-width: 34px !important;
+      height: 32px !important;
+      width: 32px !important;
+      min-width: 32px !important;
       padding: 0 !important;
     }
 
     .casino-poker-table__topbar button svg {
-      height: 13px !important;
-      width: 13px !important;
+      height: 12px !important;
+      width: 12px !important;
     }
 
     .casino-poker-table__scene {
@@ -2044,17 +2049,39 @@
     }
 
     .casino-poker-table__scene-shell {
-      margin-top: -18px !important;
+      margin-top: -24px !important;
     }
 
     .casino-poker-table__actionbar {
-      min-height: 58px !important;
-      padding: 6px 8px !important;
-      gap: 7px !important;
+      position: absolute !important;
+      top: 54px !important;
+      right: 48px !important;
+      left: auto !important;
+      bottom: auto !important;
+      z-index: 45 !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      pointer-events: none !important;
     }
 
     .casino-poker-table__actionbar[data-mobile-active="false"] {
       display: none !important;
+    }
+
+    .casino-poker-table__actionbar .casino-action-panel {
+      pointer-events: auto !important;
+    }
+
+    .casino-poker-table__actionbar .casino-action-panel__slider {
+      top: calc(100% + 6px) !important;
+      right: 0 !important;
+      bottom: auto !important;
+      left: auto !important;
+      margin-bottom: 0 !important;
+      transform: none !important;
     }
 
     .casino-poker-table__actionbar > p,
@@ -2065,7 +2092,7 @@
     .casino-action-panel__controls {
       gap: 6px !important;
       border-radius: 14px !important;
-      padding: 7px !important;
+      padding: 6px !important;
     }
 
     .casino-action-panel__timer {
@@ -2078,12 +2105,49 @@
     }
 
     .casino-action-panel button {
-      min-height: 34px !important;
+      min-height: 32px !important;
       border-radius: 10px !important;
-      padding: 0 11px !important;
-      font-size: 12px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
       line-height: 1 !important;
       white-space: nowrap !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 > div {
+      gap: 1px !important;
+      padding: 3px !important;
+      border-radius: 10px !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 > div > .h-5 {
+      height: 14px !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 > div > .h-5 span {
+      padding: 0 4px !important;
+      font-size: 9px !important;
+      line-height: 14px !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 .w-12.h-12 {
+      height: 40px !important;
+      width: 40px !important;
+      border-width: 1px !important;
+      border-radius: 9px !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 .text-xs {
+      font-size: 9px !important;
+      line-height: 1.05 !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 .text-\[10px\] {
+      font-size: 8px !important;
+      line-height: 1.05 !important;
+    }
+
+    .casino-poker-table__scene-world > .absolute.z-10 [class*="max-w-[88px]"] {
+      display: none !important;
     }
 
     .casino-action-panel__slider {

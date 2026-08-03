@@ -309,7 +309,7 @@ export function PokerTable({
         window.innerWidth <= 940 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
 
       if (isCompactLandscape) {
-        const verticalChrome = hasPlayableActions ? 122 : 64
+        const verticalChrome = hasPlayableActions ? 58 : 44
         const horizontalScale = (window.innerWidth - 24) / SCENE_W
         const verticalScale = (window.innerHeight - verticalChrome) / 470
         setSceneScale(Math.min(0.62, Math.max(0.5, Math.min(horizontalScale, verticalScale))))

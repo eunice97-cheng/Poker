@@ -64,6 +64,7 @@ function GoldRim() {
 
 export function FloatingButtons() {
   const pathname = usePathname()
+  const isTablePage = pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')
   const [supportOpen, setSupportOpen] = useState(false)
   const [buttonsOpen, setButtonsOpen] = useState(false)
   const supportRef = useRef<HTMLDivElement | null>(null)
@@ -99,6 +100,7 @@ export function FloatingButtons() {
   return (
     <div
       data-open={buttonsOpen ? 'true' : 'false'}
+      data-table-page={isTablePage ? 'true' : 'false'}
       className="casino-floating-buttons fixed right-0 top-16 z-[9999] flex select-none items-start gap-1 transition-[opacity,transform] duration-200 md:top-24"
     >
       <div
