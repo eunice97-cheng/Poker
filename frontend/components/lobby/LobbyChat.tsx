@@ -161,6 +161,12 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
         open ? 'w-[336px]' : 'left-auto w-auto'
       }`}
     >
+      {open && showEmojiTray && (
+        <div className="casino-lobby-chat__emoji-popover">
+          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
+        </div>
+      )}
+
       <div
         className={`casino-lobby-chat__panel overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
           open ? 'rounded-[30px]' : 'rounded-full'
@@ -230,11 +236,6 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
             </div>
 
             <form onSubmit={submit} className="casino-lobby-chat__form mt-3 space-y-2">
-              {showEmojiTray && (
-                <div className="casino-lobby-chat__emoji-tray">
-                  <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
-                </div>
-              )}
               <div className="casino-lobby-chat__compose flex items-start gap-2">
                 <button
                   type="button"
