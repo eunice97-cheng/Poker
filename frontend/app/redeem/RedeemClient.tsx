@@ -81,10 +81,10 @@ export function RedeemClient() {
                 Redeem another
               </button>
               <Link
-                href="/lobby"
+                href="/"
                 className="px-4 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-sm transition-colors"
               >
-                Back to Lobby
+                Back to Main Lobby
               </Link>
             </div>
           </div>
@@ -115,8 +115,8 @@ export function RedeemClient() {
         )}
 
         <div className="mt-6 text-center">
-          <Link href="/lobby" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-            ← Back to Lobby
+          <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
+            ← Back to Main Lobby
           </Link>
         </div>
       </div>

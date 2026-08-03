@@ -334,6 +334,12 @@
     box-shadow: 0 0 14px rgba(241, 180, 91, 0.42);
   }
 
+  @media (max-width: 940px), (max-height: 560px) {
+    .main-site-link {
+      display: none !important;
+    }
+  }
+
   .main-site-flame {
     display: inline-flex;
     height: 2rem;
@@ -629,6 +635,42 @@
   }
 
   @media (max-width: 940px) and (orientation: landscape), (max-height: 560px) and (orientation: landscape) {
+    .casino-floating-buttons {
+      right: 0 !important;
+      top: 72px !important;
+      z-index: 10001 !important;
+      gap: 4px !important;
+    }
+
+    .casino-floating-buttons__tray > div > a,
+    .casino-floating-buttons__tray > div > button {
+      height: 42px !important;
+      width: 42px !important;
+      padding: 0 !important;
+      justify-content: center !important;
+    }
+
+    .casino-floating-buttons__tray > div > a img,
+    .casino-floating-buttons__tray > div > button img {
+      height: 44px !important;
+      width: 44px !important;
+    }
+
+    .casino-floating-buttons__label {
+      display: none !important;
+    }
+
+    .casino-floating-buttons__toggle {
+      height: 44px !important;
+      width: 28px !important;
+    }
+
+    .casino-floating-buttons #support-pill {
+      right: 0 !important;
+      top: 46px !important;
+      width: min(280px, calc(100vw - 16px)) !important;
+    }
+
     .casino-lobby-chat[data-open="true"] {
       left: auto !important;
       right: 8px !important;
@@ -640,7 +682,19 @@
     .casino-lobby-chat[data-open="false"] {
       right: 8px !important;
       bottom: 8px !important;
+      width: 48px !important;
       max-width: 48px !important;
+    }
+
+    .casino-lobby-chat[data-open="false"] > div {
+      border-radius: 9999px !important;
+    }
+
+    .casino-lobby-chat[data-open="false"] .casino-lobby-chat__toggle {
+      height: 48px !important;
+      width: 48px !important;
+      justify-content: center !important;
+      padding: 0 !important;
     }
 
     .casino-lobby-chat__title {
@@ -928,6 +982,7 @@
     .casino-lobby-chat[data-open="false"] {
       right: 8px !important;
       bottom: 8px !important;
+      width: 48px !important;
       max-width: 48px !important;
     }
 

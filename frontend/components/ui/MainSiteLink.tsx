@@ -9,9 +9,9 @@ function normalizeUrl(value: string | undefined) {
   return value?.trim().replace(/\/+$/, '') ?? ''
 }
 
-function isCompactLandscapeViewport() {
+function isMobileViewport() {
   if (typeof window === 'undefined') return false
-  return window.innerWidth <= 900 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
+  return window.innerWidth <= 940 || (window.innerWidth <= 1024 && window.innerHeight <= 560)
 }
 
 function FlameIcon() {
@@ -72,17 +72,17 @@ function FlameIcon() {
 export function MainSiteLink() {
   const pathname = usePathname()
   const href = normalizeUrl(process.env.NEXT_PUBLIC_MAIN_SITE_URL) || DEFAULT_MAIN_SITE_URL
-  const [compactLandscape, setCompactLandscape] = useState(false)
+  const [mobileViewport, setMobileViewport] = useState(false)
 
   useEffect(() => {
-    const updateCompactLandscape = () => setCompactLandscape(isCompactLandscapeViewport())
+    const updateMobileViewport = () => setMobileViewport(isMobileViewport())
 
-    updateCompactLandscape()
-    window.addEventListener('resize', updateCompactLandscape)
-    window.addEventListener('orientationchange', updateCompactLandscape)
+    updateMobileViewport()
+    window.addEventListener('resize', updateMobileViewport)
+    window.addEventListener('orientationchange', updateMobileViewport)
     return () => {
-      window.removeEventListener('resize', updateCompactLandscape)
-      window.removeEventListener('orientationchange', updateCompactLandscape)
+      window.removeEventListener('resize', updateMobileViewport)
+      window.removeEventListener('orientationchange', updateMobileViewport)
     }
   }, [])
 
@@ -90,7 +90,7 @@ export function MainSiteLink() {
     return null
   }
 
-  if (pathname === '/' && compactLandscape) {
+  if (mobileViewport) {
     return null
   }
 

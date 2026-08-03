@@ -24,7 +24,7 @@ const redeemClasses =
 const buttonImageClasses = 'relative z-10 h-14 w-14 flex-shrink-0 object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.38)]'
 
 const buttonLabelClasses =
-  'relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 [text-shadow:0_2px_10px_rgba(0,0,0,0.55)] md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:translate-x-0 md:group-hover:opacity-100'
+  'casino-floating-buttons__label relative z-10 hidden whitespace-nowrap pl-2 opacity-0 transition-all duration-300 [text-shadow:0_2px_10px_rgba(0,0,0,0.55)] md:inline md:max-w-0 md:translate-x-1 md:overflow-hidden md:group-hover:translate-x-0 md:group-hover:opacity-100'
 
 const DONATION_REWARDS = [
   { amount: '$5', reward: '5,000 chips' },
@@ -39,6 +39,11 @@ const MEMBERSHIP_REWARDS = [
   { amount: '$10/mo', reward: '15,000 chips' },
   { amount: '$25/mo', reward: '45,000 chips' },
 ]
+
+function shouldCollapseFloatingButtons() {
+  if (typeof window === 'undefined') return true
+  return window.matchMedia('(max-width: 940px) and (orientation: landscape), (max-height: 560px) and (orientation: landscape)').matches
+}
 
 function ButtonIcon({ src }: { src: string }) {
   return (
@@ -60,7 +65,20 @@ function GoldRim() {
 export function FloatingButtons() {
   const pathname = usePathname()
   const [supportOpen, setSupportOpen] = useState(false)
+  const [buttonsOpen, setButtonsOpen] = useState(false)
   const supportRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const updateButtonsOpen = () => setButtonsOpen(!shouldCollapseFloatingButtons())
+
+    updateButtonsOpen()
+    window.addEventListener('resize', updateButtonsOpen)
+    window.addEventListener('orientationchange', updateButtonsOpen)
+    return () => {
+      window.removeEventListener('resize', updateButtonsOpen)
+      window.removeEventListener('orientationchange', updateButtonsOpen)
+    }
+  }, [])
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -77,121 +95,149 @@ export function FloatingButtons() {
     return null
   }
 
+  const toggleButtons = () => {
+    if (buttonsOpen) setSupportOpen(false)
+    setButtonsOpen((open) => !open)
+  }
+
   return (
-    <div className="casino-floating-buttons fixed right-3 top-16 z-[9999] flex select-none flex-col items-end gap-2 transition-[opacity,transform] duration-200 md:right-5 md:top-24">
-      <div className="floating-attention-chip">
-        <Link
-          href="/redeem"
-          className={redeemClasses}
-          title="Redeem a chip code"
-        >
-          <GoldRim />
-          <ButtonIcon src="/buttons/chip.png" />
-          <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
-            Redeem Code
-          </span>
-        </Link>
-      </div>
-
-      <div className="floating-attention-bell">
-        <a
-          href={getDiscordUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={discordClasses}
-          title="Join the Discord server"
-        >
-          <GoldRim />
-          <ButtonIcon src="/buttons/bell.png" />
-          <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
-            Join Discord
-          </span>
-        </a>
-      </div>
-
+    <div
+      data-open={buttonsOpen ? 'true' : 'false'}
+      className="casino-floating-buttons fixed right-0 top-16 z-[9999] flex select-none items-start gap-1 transition-[opacity,transform] duration-200 md:top-24"
+    >
       <div
-        ref={supportRef}
-        className="floating-attention-drink relative flex flex-col items-end"
+        className={`casino-floating-buttons__tray flex flex-col items-end gap-2 transition-all duration-200 ${
+          buttonsOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'
+        }`}
+        aria-hidden={!buttonsOpen}
       >
-        <button
-          type="button"
-          className={supportButtonClasses}
-          title="Support the host on Ko-fi"
-          onClick={() => setSupportOpen((open) => !open)}
-          aria-expanded={supportOpen}
-          aria-controls="support-pill"
-        >
-          <GoldRim />
-          <ButtonIcon src="/buttons/drink.png" />
-          <span className={`${buttonLabelClasses} md:group-hover:max-w-[124px]`}>
-            Tip the Host
-          </span>
-        </button>
+        <div className="floating-attention-chip">
+          <Link
+            href="/redeem"
+            className={redeemClasses}
+            title="Redeem a chip code"
+          >
+            <GoldRim />
+            <ButtonIcon src="/buttons/chip.png" />
+            <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
+              Redeem Code
+            </span>
+          </Link>
+        </div>
 
-        <div
-          id="support-pill"
-          className={`absolute right-0 top-14 max-h-[min(78vh,38rem)] w-[320px] overflow-y-auto rounded-[28px] border border-[#f7d57a]/20 bg-[linear-gradient(180deg,rgba(17,24,39,0.96),rgba(10,15,24,0.98))] p-4 text-left shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-200 ${
-            supportOpen ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
-          }`}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.28em] text-[#9cead8]">Support rewards</div>
-              <h3 className="mt-2 font-serif text-2xl text-[#fff3e2]">Tip the host, get a code by email.</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSupportOpen(false)}
-              className="rounded-full border border-white/10 px-2 py-1 text-xs text-white/55 transition-colors hover:text-white"
-            >
-              Close
-            </button>
-          </div>
-
-          <p className="mt-3 text-sm leading-6 text-white/70">
-            Support on Ko-fi, then redeem the emailed code in the poker room. Use support language in public copy, not chip purchase language.
-          </p>
-
-          <div className="mt-4 grid gap-3">
-            <div className="rounded-[22px] border border-white/8 bg-black/20 p-3">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-[#f3d2a2]/48">One-time support</div>
-              <div className="mt-3 space-y-2">
-                {DONATION_REWARDS.map((tier) => (
-                  <div key={tier.amount} className="flex items-center justify-between rounded-full border border-white/6 bg-white/[0.03] px-3 py-2 text-sm">
-                    <span className="font-semibold text-[#fff3e2]">{tier.amount}</span>
-                    <span className="text-[#9cead8]">{tier.reward}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[22px] border border-white/8 bg-black/20 p-3">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-[#f3d2a2]/48">Monthly membership</div>
-              <div className="mt-3 space-y-2">
-                {MEMBERSHIP_REWARDS.map((tier) => (
-                  <div key={tier.amount} className="flex items-center justify-between rounded-full border border-white/6 bg-white/[0.03] px-3 py-2 text-sm">
-                    <span className="font-semibold text-[#fff3e2]">{tier.amount}</span>
-                    <span className="text-[#9cead8]">{tier.reward}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-[22px] border border-[#f7d57a]/12 bg-[#f1b45b]/[0.08] p-3 text-sm text-[#ffe9bf]">
-            After support is confirmed, a redeem code is emailed to you. Enter it on the <Link href="/redeem" className="font-semibold text-[#fff3e2] underline decoration-[#f7d57a]/50 underline-offset-4">Redeem page</Link>.
-          </div>
-
+        <div className="floating-attention-bell">
           <a
-            href="https://ko-fi.com/eunicecheng"
+            href={getDiscordUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#f3c667,#e39a2f)] px-4 py-3 text-sm font-bold text-[#1d1208] transition-transform duration-200 hover:scale-[1.02]"
+            className={discordClasses}
+            title="Join the Discord server"
           >
-            Open Ko-fi
+            <GoldRim />
+            <ButtonIcon src="/buttons/bell.png" />
+            <span className={`${buttonLabelClasses} md:group-hover:max-w-[120px]`}>
+              Join Discord
+            </span>
           </a>
         </div>
+
+        <div
+          ref={supportRef}
+          className="floating-attention-drink relative flex flex-col items-end"
+        >
+          <button
+            type="button"
+            className={supportButtonClasses}
+            title="Support the host on Ko-fi"
+            onClick={() => setSupportOpen((open) => !open)}
+            aria-expanded={supportOpen}
+            aria-controls="support-pill"
+          >
+            <GoldRim />
+            <ButtonIcon src="/buttons/drink.png" />
+            <span className={`${buttonLabelClasses} md:group-hover:max-w-[124px]`}>
+              Tip the Host
+            </span>
+          </button>
+
+          <div
+            id="support-pill"
+            className={`absolute right-0 top-14 max-h-[min(78vh,38rem)] w-[320px] overflow-y-auto rounded-[28px] border border-[#f7d57a]/20 bg-[linear-gradient(180deg,rgba(17,24,39,0.96),rgba(10,15,24,0.98))] p-4 text-left shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-200 ${
+              supportOpen ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.28em] text-[#9cead8]">Support rewards</div>
+                <h3 className="mt-2 font-serif text-2xl text-[#fff3e2]">Tip the host, get a code by email.</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSupportOpen(false)}
+                className="rounded-full border border-white/10 px-2 py-1 text-xs text-white/55 transition-colors hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              Support on Ko-fi, then redeem the emailed code in the poker room. Use support language in public copy, not chip purchase language.
+            </p>
+
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-[22px] border border-white/8 bg-black/20 p-3">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-[#f3d2a2]/48">One-time support</div>
+                <div className="mt-3 space-y-2">
+                  {DONATION_REWARDS.map((tier) => (
+                    <div key={tier.amount} className="flex items-center justify-between rounded-full border border-white/6 bg-white/[0.03] px-3 py-2 text-sm">
+                      <span className="font-semibold text-[#fff3e2]">{tier.amount}</span>
+                      <span className="text-[#9cead8]">{tier.reward}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[22px] border border-white/8 bg-black/20 p-3">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-[#f3d2a2]/48">Monthly membership</div>
+                <div className="mt-3 space-y-2">
+                  {MEMBERSHIP_REWARDS.map((tier) => (
+                    <div key={tier.amount} className="flex items-center justify-between rounded-full border border-white/6 bg-white/[0.03] px-3 py-2 text-sm">
+                      <span className="font-semibold text-[#fff3e2]">{tier.amount}</span>
+                      <span className="text-[#9cead8]">{tier.reward}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[22px] border border-[#f7d57a]/12 bg-[#f1b45b]/[0.08] p-3 text-sm text-[#ffe9bf]">
+              After support is confirmed, a redeem code is emailed to you. Enter it on the <Link href="/redeem" className="font-semibold text-[#fff3e2] underline decoration-[#f7d57a]/50 underline-offset-4">Redeem page</Link>.
+            </div>
+
+            <a
+              href="https://ko-fi.com/eunicecheng"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#f3c667,#e39a2f)] px-4 py-3 text-sm font-bold text-[#1d1208] transition-transform duration-200 hover:scale-[1.02]"
+            >
+              Open Ko-fi
+            </a>
+          </div>
+        </div>
       </div>
+
+      <button
+        type="button"
+        onClick={toggleButtons}
+        className="casino-floating-buttons__toggle flex h-12 w-8 items-center justify-center rounded-l-full border border-r-0 border-[#f3d2a2]/18 bg-[linear-gradient(180deg,rgba(18,10,8,0.92),rgba(10,7,6,0.72))] text-[#fff3e2]/78 shadow-[0_12px_34px_rgba(0,0,0,0.38)] backdrop-blur-xl transition-colors hover:border-[#f1b45b]/52 hover:text-[#fff3e2]"
+        aria-expanded={buttonsOpen}
+        aria-label={buttonsOpen ? 'Hide quick buttons' : 'Show quick buttons'}
+        title={buttonsOpen ? 'Hide quick buttons' : 'Show quick buttons'}
+      >
+        <svg className={`h-4 w-4 transition-transform duration-200 ${buttonsOpen ? '' : 'rotate-180'}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M14.5 6.5 9 12l5.5 5.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </div>
   )
 }

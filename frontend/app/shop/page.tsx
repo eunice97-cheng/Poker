@@ -31,8 +31,8 @@ export default function ShopPage() {
             <p className="text-gray-400 text-sm">
               The chip shop is not open yet. Check back later!
             </p>
-            <Link href="/lobby" className="inline-block mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">
-              ← Back to Lobby
+            <Link href="/" className="inline-block mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">
+              ← Back to Main Lobby
             </Link>
           </div>
         ) : (
@@ -83,8 +83,8 @@ export default function ShopPage() {
               <Link href="/redeem" className="inline-block px-6 py-3 rounded-xl border border-yellow-600 text-yellow-400 hover:bg-yellow-500/10 font-semibold text-sm transition-colors mr-4">
                 Redeem a Code
               </Link>
-              <Link href="/lobby" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-                ← Back to Lobby
+              <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
+                ← Back to Main Lobby
               </Link>
             </div>
           </>

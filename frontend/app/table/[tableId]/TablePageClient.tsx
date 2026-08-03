@@ -266,7 +266,7 @@ export function TablePageClient({
           <p className="text-red-400 text-xl mb-4">{tableError ?? `Connection error: ${socketError}`}</p>
           {socketUrl && <p className="text-gray-500 text-sm mb-4">Socket URL: {socketUrl}</p>}
           <button onClick={() => router.push('/lobby')} className="text-yellow-400 hover:underline">
-            Back to Lobby
+            Back to Poker Lobby
           </button>
         </div>
       </div>

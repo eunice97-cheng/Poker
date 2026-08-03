@@ -289,8 +289,8 @@ export function ProfileClient({
     <div className="min-h-screen bg-gray-950">
       <header className="sticky top-0 z-20 border-b border-gray-800 bg-gray-900/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <Link href="/lobby" className="text-sm text-gray-400 transition-colors hover:text-white">
-            Back to Lobby
+          <Link href="/" className="text-sm text-gray-400 transition-colors hover:text-white">
+            Back to Main Lobby
           </Link>
           <h1 className="text-lg font-bold text-white">My Profile</h1>
           <Link
