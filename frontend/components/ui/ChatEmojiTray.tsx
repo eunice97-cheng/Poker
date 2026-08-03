@@ -27,12 +27,14 @@ export function ChatEmojiTray({
   const gridGapClassName = isVip ? 'gap-2' : 'gap-1.5'
   const gridClassName = isTable
     ? `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-4' : 'grid-cols-5'} ${gridGapClassName}`
-    : `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-5' : 'grid-cols-7'} ${gridGapClassName}`
-  const buttonClassName = isTable
-    ? `group flex ${isVip ? 'h-14' : 'h-12'} w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10`
-    : `group flex ${isVip ? 'h-12' : 'h-10'} w-full items-center justify-center rounded-[1rem] border border-white/10 bg-black/24 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40`
+    : `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-4' : 'grid-cols-7'} ${gridGapClassName}`
+  const buttonClassName = isVip
+    ? `group flex ${isTable ? 'min-h-[4rem]' : 'min-h-[4.8rem]'} w-full flex-col items-center justify-center gap-1 rounded-[1rem] border border-white/10 bg-black/24 px-1.5 py-1.5 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40`
+    : isTable
+      ? 'group flex h-12 w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10'
+      : 'group flex h-10 w-full items-center justify-center rounded-[1rem] border border-white/10 bg-black/24 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40'
   const emojiClassName = isTable ? 'text-[28px] leading-none' : 'text-[24px] leading-none'
-  const imageClassName = isTable ? 'h-11 w-11 object-contain' : 'h-12 w-12 object-contain'
+  const imageClassName = isTable ? 'h-11 w-11 object-contain' : 'h-14 w-14 object-contain'
 
   return (
     <div className={trayClassName}>
@@ -49,14 +51,19 @@ export function ChatEmojiTray({
               title={emoji.label}
             >
               {emoji.imageSrc ? (
-                <Image
-                  src={emoji.imageSrc}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className={imageClassName}
-                  aria-hidden="true"
-                />
+                <>
+                  <Image
+                    src={emoji.imageSrc}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className={imageClassName}
+                    aria-hidden="true"
+                  />
+                  <small className="max-w-full truncate text-[9px] font-semibold uppercase leading-none tracking-[0.08em] text-[#f3d2a2]/68">
+                    {emoji.label}
+                  </small>
+                </>
               ) : (
                 <span className={emojiClassName} aria-hidden="true">{emoji.symbol}</span>
               )}
