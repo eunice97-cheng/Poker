@@ -49,7 +49,7 @@ button { font: inherit; }
   top: 14px;
   left: 16px;
   right: 16px;
-  z-index: 9;
+  z-index: 50;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -201,7 +201,7 @@ button { font: inherit; }
   position: absolute;
   right: 0;
   top: calc(100% + 10px);
-  z-index: 20;
+  z-index: 55;
   width: 220px;
   padding: 12px;
   border: 1px solid rgba(214,173,72,.52);

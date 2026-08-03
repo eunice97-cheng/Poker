@@ -36,6 +36,7 @@ type CasinoGameCard = {
   roomLabel: string
   href: string
   image: string
+  mobileImage: string
   tone: 'gold' | 'teal'
   stats: CasinoGameStats
 }
@@ -47,6 +48,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'Texas Holdem',
     href: '/lobby',
     image: '/casino-lobby/poker-poster.png',
+    mobileImage: '/casino-lobby/poker-poster-mobile.png',
     tone: 'gold',
   },
   {
@@ -55,6 +57,7 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     roomLabel: 'House Dealer',
     href: '/blackjack',
     image: '/casino-lobby/blackjack-poster.png',
+    mobileImage: '/casino-lobby/blackjack-poster-mobile.png',
     tone: 'teal',
   },
 ]
@@ -155,7 +158,7 @@ function CompactGameCard({ game }: { game: CasinoGameCard }) {
       className="relative flex h-full min-h-0 overflow-hidden rounded-xl border border-[#d9ad5a]/26 bg-black/74 shadow-[0_18px_44px_rgba(0,0,0,0.36)] outline-none focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
       aria-label={`Enter ${game.title}`}
     >
-      <img src={game.image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-[center_42%]" />
+      <img src={game.mobileImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.12)_52%,rgba(0,0,0,0.78)_100%)]" />
       <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#f5d07c]/18" />
 
@@ -192,7 +195,7 @@ function CompactGameCard({ game }: { game: CasinoGameCard }) {
 function CompactComingSoonCard() {
   return (
     <div className="relative h-full min-h-0 overflow-hidden rounded-xl border border-[#d9ad5a]/18 bg-black/60 shadow-[0_18px_44px_rgba(0,0,0,0.32)]" aria-label="Coming soon">
-      <img src="/casino-lobby/coming-soon.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-[center_45%]" />
+      <img src="/casino-lobby/coming-soon-mobile.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.08)_54%,rgba(0,0,0,0.48)_100%)]" />
       <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#f5d07c]/14" />
     </div>

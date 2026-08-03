@@ -63,7 +63,7 @@ export function AudioControls({ buttonClassName }: AudioControlsProps = {}) {
   const allMuted = musicMute && sfxMute
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative z-[10040]" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
         className={
@@ -78,7 +78,7 @@ export function AudioControls({ buttonClassName }: AudioControlsProps = {}) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] rounded-xl border border-gray-700 bg-gray-800 p-3 shadow-2xl md:w-52">
+        <div className="absolute right-0 top-full z-[10050] mt-2 w-[min(20rem,calc(100vw-1.5rem))] rounded-xl border border-gray-700 bg-gray-800 p-3 shadow-2xl md:w-52">
           <div className="mb-3 rounded-lg border border-white/8 bg-black/20 p-2.5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-gray-500">Now playing</div>
             <div className="mt-1 text-sm font-semibold text-white">{currentTrackLabel}</div>

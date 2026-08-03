@@ -234,7 +234,7 @@ export function FloatingButtons() {
         aria-label={buttonsOpen ? 'Hide quick buttons' : 'Show quick buttons'}
         title={buttonsOpen ? 'Hide quick buttons' : 'Show quick buttons'}
       >
-        <svg className={`h-4 w-4 transition-transform duration-200 ${buttonsOpen ? '' : 'rotate-180'}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg className={`h-4 w-4 transition-transform duration-200 ${buttonsOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M14.5 6.5 9 12l5.5 5.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
