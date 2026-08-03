@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { TableInfo, Profile } from '@/types/poker'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { ExitIcon } from '@/components/ui/ExitIcon'
 import { MailIcon } from '@/components/ui/MailIcon'
 import { getTableTheme } from '@/lib/table-theme'
 import { buildLobbyInvite, getDiscordUrl, shareInvite } from '@/lib/invite'
@@ -227,49 +228,35 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {profile && (
-                <div className="col-span-2 rounded-full border border-[#f3d2a2]/10 bg-black/20 px-4 py-2 text-left sm:col-span-1 md:text-right">
-                  <div className="text-sm font-semibold text-[#fff3e2]">{profile.username}</div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-[#f3d2a2]/64">{profile.chip_balance.toLocaleString()} chips</div>
-                </div>
+                <Link
+                  href="/profile"
+                  onClick={() => playSfx('click')}
+                  className="flex min-w-[10.5rem] items-center gap-3 rounded-full border border-[#f3d2a2]/10 bg-black/24 px-3 py-2 text-left transition-colors hover:border-[#f3d2a2]/28 hover:bg-black/34"
+                >
+                  <AvatarDisplay avatarId={profile.avatar ?? 'avatar_m1'} size="sm" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-[#fff3e2]">{profile.username}</span>
+                    <span className="block text-[10px] uppercase tracking-[0.2em] text-[#f3d2a2]/64">{profile.chip_balance.toLocaleString()} chips</span>
+                  </span>
+                </Link>
               )}
               {isUsingDefaultAvatar && (
                 <Link
                   href="/profile"
-                  className="col-span-2 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-left text-sm text-sky-100 transition-colors hover:border-sky-300/35 hover:bg-sky-400/15 sm:col-span-1"
+                  className="rounded-full border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-sm text-sky-100 transition-colors hover:border-sky-300/35 hover:bg-sky-400/15"
                 >
-                  Using the default avatar. Open Profile to change it.
+                  Update Avatar
                 </Link>
               )}
               <Link
-                href="/profile?tab=mail"
-                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
-                title="Open mailbox"
-                aria-label="Open mailbox"
+                href="/"
+                onClick={() => playSfx('click')}
+                className="rounded-full border border-[#f3d2a2]/16 bg-black/24 px-4 py-2 text-sm font-semibold text-[#fff3e2]/82 transition-colors hover:border-[#f3d2a2]/34 hover:bg-[#f1b45b]/10 hover:text-white"
               >
-                <MailIcon className="h-5 w-5" />
-                <span className="sr-only">Mailbox</span>
-                {unreadMailCount > 0 && (
-                  <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
-                    {unreadMailLabel}
-                  </span>
-                )}
+                Main Lobby
               </Link>
-              <button
-                onClick={() => router.push('/profile')}
-                className="flex h-12 items-center justify-center justify-self-start transition-all hover:scale-105 sm:justify-self-auto"
-                title="My Profile"
-              >
-                {profile?.avatar ? (
-                  <AvatarDisplay avatarId={profile.avatar} size="md" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/28 text-xs font-medium text-white/62">
-                    Profile
-                  </div>
-                )}
-              </button>
-              <AudioControls />
               <button
                 onClick={handleInvite}
                 className="rounded-full border border-[#f3d2a2]/14 bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
@@ -285,7 +272,30 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   GM
                 </Link>
               )}
-              <Button variant="ghost" size="sm" className="rounded-full" onClick={handleSignOut}>Sign Out</Button>
+              <Link
+                href="/profile?tab=mail"
+                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                title="Open mailbox"
+                aria-label="Open mailbox"
+              >
+                <MailIcon className="h-5 w-5" />
+                <span className="sr-only">Mailbox</span>
+                {unreadMailCount > 0 && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-[#ef4444] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_0_18px_rgba(239,68,68,0.35)]">
+                    {unreadMailLabel}
+                  </span>
+                )}
+              </Link>
+              <AudioControls />
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/76 transition-colors hover:border-red-200/35 hover:bg-red-500/10 hover:text-red-100"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <ExitIcon />
+              </button>
             </div>
           </div>
         </header>

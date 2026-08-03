@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { ExitIcon } from '@/components/ui/ExitIcon'
 import { MailIcon } from '@/components/ui/MailIcon'
 import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { createClient } from '@/lib/supabase/client'
@@ -266,14 +267,48 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-full border border-[#f5c76d]/[0.16] bg-black/[0.32] px-4 py-2 text-right">
-                <div className="text-sm font-semibold text-[#fff0c7]">{profile.username}</div>
-                <div className="text-xs uppercase tracking-[0.22em] text-[#f5c76d]/[0.64]">{profile.chip_balance.toLocaleString()} chips</div>
-              </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Link
+                href="/profile"
+                className="flex min-w-[10.5rem] items-center gap-3 rounded-full border border-[#f5c76d]/[0.16] bg-black/[0.32] px-3 py-2 text-left transition-colors hover:border-[#f5c76d]/[0.35] hover:bg-black/[0.42]"
+                title="My Profile"
+              >
+                <AvatarDisplay avatarId={profile.avatar} size="sm" />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-[#fff0c7]">{profile.username}</span>
+                  <span className="block text-[10px] uppercase tracking-[0.2em] text-[#f5c76d]/[0.64]">{profile.chip_balance.toLocaleString()} chips</span>
+                </span>
+              </Link>
+              <Link
+                href="/"
+                className="rounded-full border border-[#f5c76d]/[0.16] bg-black/[0.24] px-4 py-2 text-sm font-semibold text-[#fff0c7]/[0.84] transition-colors hover:border-[#f5c76d]/[0.35] hover:bg-[#f5c76d]/[0.1] hover:text-white"
+              >
+                Main Lobby
+              </Link>
+              <Link
+                href="/lobby"
+                className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-amber-200/[0.35] hover:text-white"
+              >
+                Poker Lounge
+              </Link>
+              <button
+                onClick={handleInvite}
+                className="rounded-full border border-[#f5c76d]/[0.14] bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f6cd75]"
+                title="Copy blackjack invite and open Discord"
+              >
+                {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+              </button>
+              {isAdmin && (
+                <Link
+                  href="/gm"
+                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
+                >
+                  GM
+                </Link>
+              )}
               <Link
                 href="/profile?tab=mail"
-                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/[0.24] text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
+                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/[0.24] text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
                 title="Open mailbox"
                 aria-label="Open mailbox"
               >
@@ -285,32 +320,16 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                   </span>
                 )}
               </Link>
-              <Link href="/profile" className="transition-transform hover:scale-105" title="My Profile">
-                <AvatarDisplay avatarId={profile.avatar} size="md" />
-              </Link>
               <AudioControls />
               <button
-                onClick={handleInvite}
-                className="rounded-full border border-[#f5c76d]/[0.14] bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f6cd75]"
-                title="Copy blackjack invite and open Discord"
+                type="button"
+                onClick={handleSignOut}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/[0.24] text-white/[0.78] transition-colors hover:border-red-200/[0.35] hover:bg-red-500/[0.1] hover:text-red-100"
+                title="Sign out"
+                aria-label="Sign out"
               >
-                {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+                <ExitIcon />
               </button>
-              <Link
-                href="/lobby"
-                className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-amber-200/[0.35] hover:text-white"
-              >
-                Poker Lounge
-              </Link>
-              {isAdmin && (
-                <Link
-                  href="/gm"
-                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/[0.78] transition-colors hover:border-[#f5c76d]/[0.35] hover:text-white"
-                >
-                  GM
-                </Link>
-              )}
-              <Button variant="ghost" size="sm" className="rounded-full" onClick={handleSignOut}>Sign Out</Button>
             </div>
           </div>
         </header>
