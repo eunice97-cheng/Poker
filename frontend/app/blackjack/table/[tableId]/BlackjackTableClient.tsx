@@ -117,7 +117,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-20'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-21'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -171,6 +171,10 @@ const DEALER_AUDIO_FILES: Record<string, string> = {
 
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
+}
+
+function tableMessage(message: string) {
+  return message.replace(/\s*\(https?:\/\/[^)]+\)/gi, '').trim()
 }
 
 function randomMs([min, max]: readonly [number, number]) {
@@ -350,7 +354,7 @@ function chipFacesForBet(value: number) {
 
 export function BlackjackTableClient({ tableId, token, chipBalance: initialChipBalance }: BlackjackTableClientProps) {
   const router = useRouter()
-  const { socket, connected, error: socketError, socketUrl } = useSocket(token)
+  const { socket, connected, error: socketError } = useSocket(token)
   const {
     musicVol,
     sfxVol,
@@ -500,7 +504,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     : needsTableBuyIn
       ? 'Buy in to continue playing.'
     : 'Click a chip to place your bet'
-  const displayMessage = leaveError || lastError || bustedInfo?.message || tablePrompt
+  const displayMessage = tableMessage(leaveError || lastError || bustedInfo?.message || tablePrompt)
   const bgmVolume = Math.round(musicVol * 100)
   const sfxVolume = Math.round(sfxVol * 100)
   const bgmEffectivelyMuted = musicMute || bgmVolume === 0
@@ -875,6 +879,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   }
 
   if (socketError || tableError) {
+    const errorMessage = tableMessage(tableError ?? `Connection error: ${socketError}`)
+
     return (
       <>
         <link rel="stylesheet" href={BLACKJACK_STYLESHEET} />
@@ -907,7 +913,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
             <div className="wood-rail">
               <img id="dealerPortrait" className="dealer-portrait" src={activeDealer.portraits.normal} alt="" aria-hidden="true" />
               <div className="dealer-speech" id="dealerSpeech" aria-live="polite">
-                {tableError ?? `Connection error: ${socketError}`}
+                {errorMessage}
               </div>
               <div className="felt-table">
                 <img className="table-logo" src="/blackjack/Images/Table/table%20logo.png" alt="" aria-hidden="true" />
@@ -934,8 +940,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
 
           <section className="bottom-console">
             <div className="message" id="message">
-              {tableError ?? `Connection error: ${socketError}`}
-              {socketUrl ? ` (${socketUrl})` : ''}
+              {errorMessage}
             </div>
             <aside className="round-info" aria-label="Round totals">
               <span>CURRENT BET</span>
