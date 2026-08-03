@@ -91,17 +91,17 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
 
       {/* All-in label */}
       {player.allIn && (
-        <div className="absolute -top-2 bg-red-600 text-white text-xs font-bold px-2 rounded-full">ALL IN</div>
+        <div className="casino-player-seat__all-in absolute -top-2 bg-red-600 text-white text-xs font-bold px-2 rounded-full">ALL IN</div>
       )}
 
       {/* Disconnected label */}
       {!player.isConnected && (
-        <div className="absolute -top-2 bg-gray-700 text-gray-400 text-xs px-2 rounded-full">Away</div>
+        <div className="casino-player-seat__away absolute -top-2 bg-gray-700 text-gray-400 text-xs px-2 rounded-full">Away</div>
       )}
 
       {/* Action timer bar */}
       {player.isCurrentTurn && actionTimeLimit && (
-        <div className="w-full h-1 bg-gray-700 rounded-full mt-1">
+        <div className="casino-player-seat__timer w-full h-1 bg-gray-700 rounded-full mt-1">
           <div
             className={`h-full rounded-full transition-all duration-1000 ${timerColor}`}
             style={{ width: `${timerPct}%` }}

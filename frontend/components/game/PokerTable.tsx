@@ -245,10 +245,11 @@ export function PokerTable({
   const isObserver = !me && observers.some((o) => o.playerId === gameState.myPlayerId)
   const canSitInNow = gameState.phase === 'waiting' || gameState.phase === 'showdown'
   const isMyTurn = me?.isCurrentTurn ?? false
+  const isWaitingForPlayers = gameState.phase === 'waiting'
   const canTipDealer = Boolean(me && !isObserver && !me.isBot && (gameState.phase === 'waiting' || gameState.phase === 'showdown'))
-  const hasPlayableActions = isMyTurn && gameState.validActions.length > 0
-  const showMobileBoard = !handResult && (gameState.phase !== 'waiting' || gameState.pot > 0)
-  const showMobilePlayDock = Boolean(!handResult && me && (me.holeCards.length > 0 || hasPlayableActions || gameState.phase !== 'waiting'))
+  const hasPlayableActions = !isWaitingForPlayers && isMyTurn && gameState.validActions.length > 0
+  const showMobileBoard = !handResult && !isWaitingForPlayers
+  const showMobilePlayDock = Boolean(!handResult && !isWaitingForPlayers && me && (me.holeCards.length > 0 || hasPlayableActions))
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
@@ -626,6 +627,17 @@ export function PokerTable({
           {gameState.players.map((player) => {
             const pos = SEAT_POSITIONS[player.seat]
             if (!pos) return null
+            const visiblePlayer = isWaitingForPlayers
+              ? {
+                  ...player,
+                  currentBet: 0,
+                  totalBetThisHand: 0,
+                  folded: false,
+                  allIn: false,
+                  holeCards: [],
+                  isCurrentTurn: false,
+                }
+              : player
 
             return (
               <div
@@ -636,8 +648,8 @@ export function PokerTable({
                 style={pos}
               >
                 <PlayerSeat
-                  player={player}
-                  timeLeft={isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
+                  player={visiblePlayer}
+                  timeLeft={!isWaitingForPlayers && isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
                   actionTimeLimit={30}
                   backImage={deckBackImage}
                 />

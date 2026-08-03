@@ -2147,15 +2147,16 @@
       left: 10px;
       bottom: 10px;
       display: flex;
-      align-items: center;
-      gap: 7px;
-      min-width: 250px;
-      min-height: 98px;
+      width: 154px;
+      min-height: 118px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
       justify-content: flex-start;
-      border-radius: 16px;
+      border-radius: 14px;
       border: 1px solid rgba(243, 210, 162, 0.24);
       background: linear-gradient(180deg, rgba(12, 7, 6, 0.92), rgba(7, 5, 4, 0.78));
-      padding: 6px 8px;
+      padding: 7px;
       box-shadow: 0 18px 46px rgba(0, 0, 0, 0.44);
       backdrop-filter: blur(16px);
     }
@@ -2166,13 +2167,17 @@
 
     .casino-mobile-play-dock__meta {
       display: flex;
-      min-width: 72px;
-      flex-direction: column;
-      gap: 2px;
-      text-align: right;
+      min-width: 0;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 2px 6px;
+      text-align: center;
     }
 
     .casino-mobile-play-dock__meta span {
+      width: 100%;
       font-size: 8px;
       font-weight: 900;
       letter-spacing: 0.18em;
@@ -2181,13 +2186,13 @@
     }
 
     .casino-mobile-play-dock__meta strong {
-      font-size: 15px;
+      font-size: 12px;
       line-height: 1;
       color: #ffd747;
     }
 
     .casino-mobile-play-dock__meta em {
-      font-size: 11px;
+      font-size: 9px;
       font-style: normal;
       font-weight: 900;
       line-height: 1.1;
@@ -2195,20 +2200,21 @@
     }
 
     .casino-mobile-play-dock__meta small {
-      font-size: 10px;
+      font-size: 8px;
       font-weight: 800;
       color: rgba(255, 215, 71, 0.9);
     }
 
     .casino-mobile-play-dock__cards {
       display: flex;
-      gap: 6px;
+      justify-content: center;
+      gap: 5px;
     }
 
     .casino-mobile-play-dock__card {
-      height: 94px !important;
-      width: 64px !important;
-      border-radius: 9px !important;
+      height: 78px !important;
+      width: 53px !important;
+      border-radius: 8px !important;
     }
 
     .casino-mobile-play-dock .casino-action-panel {
@@ -2251,48 +2257,53 @@
     }
 
     .casino-mobile-play-dock .casino-action-panel__slider {
-      top: 50% !important;
-      right: calc(100% + 8px) !important;
+      top: 47% !important;
+      right: calc(100% + 6px) !important;
       bottom: auto !important;
       left: auto !important;
       margin-bottom: 0 !important;
       transform: translateY(-50%) !important;
     }
 
+    .casino-poker-table__seat .casino-player-seat__cards,
     .casino-poker-table__seat[data-self="true"] .casino-player-seat__cards {
       display: none !important;
     }
 
     .casino-poker-table__seat .casino-player-seat {
-      gap: 1px !important;
-      padding: 3px !important;
+      gap: 2px !important;
+      padding: 4px !important;
       border-radius: 10px !important;
     }
 
+    .casino-poker-table__seat .casino-player-seat.opacity-40 {
+      opacity: 0.72 !important;
+    }
+
     .casino-poker-table__seat .casino-player-seat__badges {
-      height: 14px !important;
+      height: 16px !important;
     }
 
     .casino-poker-table__seat .casino-player-seat__badges span {
-      padding: 0 4px !important;
-      font-size: 9px !important;
-      line-height: 14px !important;
+      padding: 0 5px !important;
+      font-size: 10px !important;
+      line-height: 16px !important;
     }
 
     .casino-poker-table__seat .casino-player-seat__avatar .w-12.h-12 {
-      height: 40px !important;
-      width: 40px !important;
+      height: 48px !important;
+      width: 48px !important;
       border-width: 1px !important;
-      border-radius: 9px !important;
+      border-radius: 10px !important;
     }
 
     .casino-poker-table__seat .casino-player-seat__meta .text-xs {
-      font-size: 9px !important;
-      line-height: 1.05 !important;
+      font-size: 11px !important;
+      line-height: 1.08 !important;
     }
 
     .casino-poker-table__seat .casino-player-seat__meta .text-\[10px\] {
-      font-size: 8px !important;
+      font-size: 9px !important;
       line-height: 1.05 !important;
     }
 
@@ -2302,60 +2313,106 @@
 
     .casino-poker-table__seat .casino-player-seat__status {
       display: block !important;
-      margin-top: 1px !important;
-      padding: 1px 5px !important;
-      font-size: 7px !important;
+      margin-top: 2px !important;
+      padding: 2px 6px !important;
+      font-size: 8px !important;
       line-height: 1.1 !important;
       letter-spacing: 0.08em !important;
     }
 
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat {
+      gap: 2px !important;
+    }
+
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__badges,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__status,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__bet-chip,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__all-in,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__away,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__timer,
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__meta > div:not(:first-child) {
+      display: none !important;
+    }
+
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__avatar .w-12.h-12 {
+      height: 50px !important;
+      width: 50px !important;
+    }
+
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__meta .text-xs {
+      max-width: 92px !important;
+      font-size: 11px !important;
+      line-height: 1.05 !important;
+    }
+
     .casino-action-panel__slider {
-      margin-bottom: 6px !important;
+      margin-bottom: 4px !important;
     }
 
     .casino-bet-slider {
-      width: min(330px, calc(100vw - 24px)) !important;
-      border-radius: 14px !important;
-      padding: 10px !important;
+      width: min(306px, calc(100vw - 126px)) !important;
+      max-height: calc(100svh - 74px) !important;
+      overflow-y: auto !important;
+      border-radius: 13px !important;
+      padding: 8px !important;
     }
 
     .casino-bet-slider > div:first-child {
-      margin-bottom: 7px !important;
+      margin-bottom: 4px !important;
     }
 
     .casino-bet-slider > div:first-child span:first-child {
-      font-size: 11px !important;
+      font-size: 10px !important;
     }
 
     .casino-bet-slider > div:first-child span:last-child {
-      font-size: 15px !important;
+      font-size: 14px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-bet-slider label {
+      margin-bottom: 3px !important;
+      font-size: 9px !important;
+      letter-spacing: 0.16em !important;
     }
 
     .casino-bet-slider input[type="text"] {
-      height: 34px !important;
-      padding: 0 9px !important;
-      font-size: 12px !important;
+      height: 29px !important;
+      padding: 0 8px !important;
+      font-size: 11px !important;
+    }
+
+    .casino-bet-slider input[type="text"] + div {
+      margin-top: 2px !important;
+      font-size: 9px !important;
     }
 
     .casino-bet-slider input[type="range"] {
-      margin-bottom: 8px !important;
+      margin-bottom: 5px !important;
     }
 
     .casino-bet-slider > div:nth-of-type(2) {
-      margin-bottom: 8px !important;
+      margin-bottom: 5px !important;
     }
 
     .casino-bet-slider > div:nth-of-type(3) {
-      margin-bottom: 8px !important;
-      gap: 5px !important;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      margin-bottom: 5px !important;
+      gap: 4px !important;
     }
 
     .casino-bet-slider > div:nth-of-type(3) button,
     .casino-bet-slider > div:last-child button {
-      min-height: 28px !important;
+      min-height: 25px !important;
       border-radius: 8px !important;
-      padding: 0 8px !important;
-      font-size: 11px !important;
+      padding: 0 7px !important;
+      font-size: 10px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-bet-slider > div:last-child {
+      gap: 5px !important;
     }
 
     .casino-hand-result-modal {
