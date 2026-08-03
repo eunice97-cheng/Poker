@@ -23,15 +23,16 @@ export function ChatEmojiTray({
     : 'text-[10px] uppercase tracking-[0.24em] text-[#f3d2a2]/42'
   const trayClassName = isTable
     ? 'max-h-36 space-y-2.5 overflow-y-auto px-2.5 py-2'
-    : 'max-h-60 space-y-2.5 overflow-y-auto rounded-2xl border border-white/8 bg-black/18 px-2.5 py-2.5'
+    : `space-y-2.5 overflow-y-auto rounded-2xl border border-white/8 bg-black/18 ${isVip ? 'max-h-80 px-3 py-3' : 'max-h-60 px-2.5 py-2.5'}`
+  const gridGapClassName = isVip ? 'gap-2' : 'gap-1.5'
   const gridClassName = isTable
-    ? `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-4' : 'grid-cols-5'} gap-1.5`
-    : `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-5' : 'grid-cols-7'} gap-1.5`
+    ? `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-4' : 'grid-cols-5'} ${gridGapClassName}`
+    : `casino-chat-emoji-tray__grid grid ${isVip ? 'grid-cols-5' : 'grid-cols-7'} ${gridGapClassName}`
   const buttonClassName = isTable
     ? `group flex ${isVip ? 'h-14' : 'h-12'} w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10`
     : `group flex ${isVip ? 'h-12' : 'h-10'} w-full items-center justify-center rounded-[1rem] border border-white/10 bg-black/24 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40`
   const emojiClassName = isTable ? 'text-[28px] leading-none' : 'text-[24px] leading-none'
-  const imageClassName = isTable ? 'h-11 w-11 object-contain' : 'h-10 w-10 object-contain'
+  const imageClassName = isTable ? 'h-11 w-11 object-contain' : 'h-12 w-12 object-contain'
 
   return (
     <div className={trayClassName}>
