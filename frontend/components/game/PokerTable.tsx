@@ -6,6 +6,7 @@ import { GameState, HandResult, ChatMessage, ClientObserver } from '@/types/poke
 import { PlayerSeat } from './PlayerSeat'
 import { CommunityCards } from './CommunityCards'
 import { ActionPanel } from './ActionPanel'
+import { CardComponent } from './CardComponent'
 import { HandResultModal } from './HandResultModal'
 import { ChatBox } from './ChatBox'
 import { ActionLog } from './ActionLog'
@@ -36,6 +37,14 @@ const PAD_X = 16
 const PAD_Y = 16
 const HOUSE_AI_NAMES = ['Alice', 'Bernice', 'Candice', 'Denice', 'Felice', 'Gillece'] as const
 const DEALER_TIP_AMOUNTS = [100, 500, 1000] as const
+const MOBILE_PHASE_LABELS: Record<GameState['phase'], string> = {
+  waiting: 'Waiting',
+  preflop: 'Pre-Flop',
+  flop: 'Flop',
+  turn: 'Turn',
+  river: 'River',
+  showdown: 'Showdown',
+}
 
 function BuzzerIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -238,6 +247,8 @@ export function PokerTable({
   const isMyTurn = me?.isCurrentTurn ?? false
   const canTipDealer = Boolean(me && !isObserver && !me.isBot && (gameState.phase === 'waiting' || gameState.phase === 'showdown'))
   const hasPlayableActions = isMyTurn && gameState.validActions.length > 0
+  const showMobileBoard = gameState.phase !== 'waiting' || gameState.pot > 0
+  const showMobilePlayDock = Boolean(me && (me.holeCards.length > 0 || hasPlayableActions || gameState.phase !== 'waiting'))
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
@@ -312,7 +323,7 @@ export function PokerTable({
         const verticalChrome = hasPlayableActions ? 58 : 44
         const horizontalScale = (window.innerWidth - 24) / SCENE_W
         const verticalScale = (window.innerHeight - verticalChrome) / 470
-        setSceneScale(Math.min(0.62, Math.max(0.5, Math.min(horizontalScale, verticalScale))))
+        setSceneScale(Math.min(0.68, Math.max(0.56, Math.min(horizontalScale, verticalScale))))
         return
       }
 
@@ -617,7 +628,13 @@ export function PokerTable({
             if (!pos) return null
 
             return (
-              <div key={player.playerId} className="absolute z-10" style={pos}>
+              <div
+                key={player.playerId}
+                data-self={player.playerId === gameState.myPlayerId ? 'true' : 'false'}
+                data-seat={player.seat}
+                className="casino-poker-table__seat absolute z-10"
+                style={pos}
+              >
                 <PlayerSeat
                   player={player}
                   timeLeft={isMyTurn && player.isCurrentTurn ? timeLeft : undefined}
@@ -631,6 +648,75 @@ export function PokerTable({
           </div>
         </div>
       </div>
+
+      {showMobileBoard && (
+        <div className="casino-mobile-board" aria-label="Community cards">
+          <div className="casino-mobile-board__phase">{MOBILE_PHASE_LABELS[gameState.phase]}</div>
+          <div className="casino-mobile-board__cards">
+            {[0, 1, 2, 3, 4].map((i) => (
+              gameState.community[i] ? (
+                <CardComponent
+                  key={i}
+                  card={gameState.community[i]}
+                  size="md"
+                  backImage={deckBackImage}
+                  className="casino-mobile-board__card"
+                />
+              ) : (
+                <div key={i} className="casino-mobile-card-placeholder" aria-hidden="true" />
+              )
+            ))}
+          </div>
+          {gameState.pot > 0 && (
+            <div className="casino-mobile-board__pot">Pot {gameState.pot.toLocaleString()}</div>
+          )}
+        </div>
+      )}
+
+      {showMobilePlayDock && me && (
+        <div className="casino-mobile-play-dock" data-has-actions={hasPlayableActions ? 'true' : 'false'}>
+          <div className="casino-mobile-play-dock__hand" data-folded={me.folded ? 'true' : 'false'}>
+            <div className="casino-mobile-play-dock__meta">
+              <span>Your Hand</span>
+              {gameState.myHandRank && gameState.phase !== 'waiting' ? <strong>{gameState.myHandRank}</strong> : null}
+              <em>{me.stack.toLocaleString()} chips</em>
+              {me.currentBet > 0 ? <small>Bet {me.currentBet.toLocaleString()}</small> : null}
+            </div>
+            <div className="casino-mobile-play-dock__cards">
+              {me.holeCards.length > 0 ? (
+                me.holeCards.map((card, i) => (
+                  <CardComponent
+                    key={`${card}-${i}`}
+                    card={card}
+                    size="lg"
+                    backImage={deckBackImage}
+                    className="casino-mobile-play-dock__card"
+                  />
+                ))
+              ) : (
+                <>
+                  <div className="casino-mobile-card-placeholder" aria-hidden="true" />
+                  <div className="casino-mobile-card-placeholder" aria-hidden="true" />
+                </>
+              )}
+            </div>
+          </div>
+
+          {hasPlayableActions ? (
+            <ActionPanel
+              validActions={gameState.validActions}
+              callAmount={gameState.callAmount}
+              pot={gameState.pot}
+              minRaise={gameState.minRaise}
+              myStack={me.stack}
+              myCurrentBet={me.currentBet}
+              bigBlind={gameState.bigBlind}
+              onAction={(action, amount) => onAction(action, amount)}
+              timeLeft={timeLeft}
+            />
+          ) : null}
+        </div>
+      )}
 
       <div
         data-mobile-active={hasPlayableActions ? 'true' : 'false'}
@@ -729,6 +815,7 @@ export function PokerTable({
           result={handResult}
           onClose={clearHandResult}
           backImage={deckBackImage}
+          myPlayerId={gameState.myPlayerId}
         />
       )}
       {isAdmin && (

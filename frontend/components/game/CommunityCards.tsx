@@ -21,7 +21,7 @@ const phaseLabel: Record<GamePhase, string> = {
 
 export function CommunityCards({ cards, phase, pot, backImage }: CommunityCardsProps) {
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="casino-community-cards flex flex-col items-center gap-3">
       <div className="text-gray-400 text-sm font-medium tracking-widest uppercase">
         {phaseLabel[phase]}
       </div>

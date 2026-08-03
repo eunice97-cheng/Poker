@@ -18,14 +18,14 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
   return (
     <div
       className={`
-        relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all
+        casino-player-seat relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all
         ${player.isCurrentTurn ? 'ring-2 ring-yellow-400 bg-yellow-400/10' : ''}
         ${player.folded ? 'opacity-40' : ''}
         ${!player.isConnected ? 'opacity-60' : ''}
       `}
     >
       {/* Dealer / Blind badges */}
-      <div className="flex gap-1 h-5">
+      <div className="casino-player-seat__badges flex gap-1 h-5">
         {player.isDealer && (
           <span className="bg-white text-black text-xs font-bold px-1.5 rounded-full leading-5">D</span>
         )}
@@ -38,12 +38,12 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
       </div>
 
       {/* Avatar */}
-      <div className={`rounded-lg transition-all ${player.isCurrentTurn ? 'ring-2 ring-yellow-400' : ''}`}>
+      <div className={`casino-player-seat__avatar rounded-lg transition-all ${player.isCurrentTurn ? 'ring-2 ring-yellow-400' : ''}`}>
         <AvatarDisplay avatarId={player.avatar ?? 'avatar_m1'} size="md" />
       </div>
 
       {/* Name + Stack */}
-      <div className="text-center">
+      <div className="casino-player-seat__meta text-center">
         <div className="text-white text-xs font-semibold truncate max-w-[80px]">{player.username}</div>
         {player.isBot && (
           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3d2a2]">
@@ -58,7 +58,7 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
 
       {/* Hole Cards */}
       {player.holeCards.length > 0 && !player.folded && (
-        <div className="flex gap-0.5">
+        <div className="casino-player-seat__cards flex gap-0.5">
           {player.holeCards.map((card, i) => (
             <CardComponent key={i} card={card} size="sm" backImage={backImage} />
           ))}
@@ -67,7 +67,7 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
 
       {/* Current bet chip */}
       {player.currentBet > 0 && (
-        <div className="absolute -bottom-3 bg-chip-gold text-black text-xs font-bold px-2 py-0.5 rounded-full border-2 border-yellow-300 shadow">
+        <div className="casino-player-seat__bet-chip absolute -bottom-3 bg-chip-gold text-black text-xs font-bold px-2 py-0.5 rounded-full border-2 border-yellow-300 shadow">
           {player.currentBet.toLocaleString()}
         </div>
       )}

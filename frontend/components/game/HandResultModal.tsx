@@ -8,19 +8,42 @@ interface HandResultModalProps {
   result: HandResult
   onClose: () => void
   backImage?: string
+  myPlayerId?: string
 }
 
 export function HandResultModal({
   result,
   onClose,
   backImage,
+  myPlayerId,
 }: HandResultModalProps) {
   const [countdown, setCountdown] = useState(8)
+  const myWinner = myPlayerId ? result.winners.find((winner) => winner.playerId === myPlayerId) : undefined
+  const myShownHand = myPlayerId ? result.allHoleCards.find((player) => player.playerId === myPlayerId) : undefined
+  const myCards = myWinner?.holeCards ?? myShownHand?.holeCards ?? []
+  const otherHands = result.allHoleCards.filter((player) => player.playerId !== myPlayerId)
+  const otherLosingHands = otherHands.filter((player) => !result.winners.some((winner) => winner.playerId === player.playerId))
+  const visibleWinners = myPlayerId
+    ? result.winners.filter((winner) => winner.playerId !== myPlayerId)
+    : result.winners
+  const resultTitle = myPlayerId
+    ? myWinner
+      ? 'You Won'
+      : 'You Lost'
+    : result.winners.length === 1
+      ? 'Winner'
+      : 'Split Pot'
+  const resultAmount = myWinner
+    ? `+${myWinner.amount.toLocaleString()}`
+    : result.winners.map((winner) => winner.username).join(', ')
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCountdown((c) => {
-        if (c <= 1) { onClose(); return 0 }
+        if (c <= 1) {
+          onClose()
+          return 0
+        }
         return c - 1
       })
     }, 1000)
@@ -28,73 +51,107 @@ export function HandResultModal({
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-gray-900 border border-yellow-500/40 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-yellow-400">
-            {result.winners.length === 1 ? 'Winner!' : 'Split Pot!'}
-          </h2>
-          <span className="text-gray-500 text-sm">Closing in {countdown}s</span>
+    <div className="casino-hand-result-modal fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="casino-hand-result-modal__panel mx-4 w-full max-w-lg rounded-2xl border border-yellow-500/40 bg-gray-900 p-6 shadow-2xl">
+        <div className="casino-hand-result-modal__header mb-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="casino-hand-result-modal__eyebrow text-xs font-semibold uppercase tracking-[0.22em] text-yellow-200/60">
+              Hand Result
+            </p>
+            <h2 className="casino-hand-result-modal__title text-2xl font-bold text-yellow-400">
+              {resultTitle}
+            </h2>
+          </div>
+          <div className="text-right">
+            <div className={`casino-hand-result-modal__amount text-lg font-bold ${myWinner ? 'text-yellow-300' : 'text-gray-300'}`}>
+              {resultAmount || 'No payout'}
+            </div>
+            <span className="casino-hand-result-modal__countdown text-sm text-gray-500">
+              Closing in {countdown}s
+            </span>
+          </div>
         </div>
 
-        {/* Community Cards */}
         {result.community.length > 0 && (
-          <div className="flex justify-center gap-2 mb-5">
+          <div className="casino-hand-result-modal__community mb-5 flex justify-center gap-2">
             {result.community.map((card, i) => (
               <CardComponent key={i} card={card} size="md" backImage={backImage} />
             ))}
           </div>
         )}
 
-        {/* Winners */}
-        <div className="space-y-3 mb-5">
-          {result.winners.map((winner, i) => (
-            <div key={i} className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-bold text-lg">{winner.username}</span>
-                <span className="text-yellow-400 font-bold text-lg">+{winner.amount.toLocaleString()}</span>
+        <div className="casino-hand-result-modal__body">
+          {myPlayerId && (
+            <div className={`casino-hand-result-modal__mine mb-5 rounded-xl border p-4 ${myWinner ? 'border-yellow-500/35 bg-yellow-500/10' : 'border-white/10 bg-white/5'}`}>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-lg font-bold text-white">Your hand</span>
+                <span className={`text-lg font-bold ${myWinner ? 'text-yellow-300' : 'text-gray-300'}`}>
+                  {myWinner ? `+${myWinner.amount.toLocaleString()}` : 'No payout'}
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                {winner.holeCards.length > 0 ? (
+                {myCards.length > 0 ? (
                   <div className="flex gap-1">
-                    {winner.holeCards.map((card, j) => (
-                      <CardComponent key={j} card={card} size="sm" backImage={backImage} />
+                    {myCards.map((card, i) => (
+                      <CardComponent key={`${card}-${i}`} card={card} size="sm" backImage={backImage} />
                     ))}
                   </div>
                 ) : null}
-                <span className="text-yellow-300 text-sm font-semibold">
-                  {winner.handRank}
-                  {winner.potCount && winner.potCount > 1 ? ` · ${winner.potCount} pots` : ''}
+                <span className={`text-sm font-semibold ${myWinner ? 'text-yellow-300' : 'text-gray-400'}`}>
+                  {myWinner?.handRank ?? 'Did not win this hand'}
                 </span>
               </div>
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* Other hands shown at showdown */}
-        {result.allHoleCards.filter(p => !result.winners.find(w => w.playerId === p.playerId)).length > 0 && (
-          <div className="border-t border-gray-700 pt-4 mb-5">
-            <p className="text-gray-500 text-xs mb-3 uppercase tracking-wider">Other Hands</p>
-            <div className="space-y-2">
-              {result.allHoleCards
-                .filter(p => !result.winners.find(w => w.playerId === p.playerId))
-                .map((p, i) => (
+          {visibleWinners.length > 0 && (
+            <div className="casino-hand-result-modal__winners mb-5 space-y-3">
+              {visibleWinners.map((winner, i) => (
+                <div key={i} className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-lg font-bold text-white">{winner.username}</span>
+                    <span className="text-lg font-bold text-yellow-400">+{winner.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {winner.holeCards.length > 0 ? (
+                      <div className="flex gap-1">
+                        {winner.holeCards.map((card, j) => (
+                          <CardComponent key={`${card}-${j}`} card={card} size="sm" backImage={backImage} />
+                        ))}
+                      </div>
+                    ) : null}
+                    <span className="text-sm font-semibold text-yellow-300">
+                      {winner.handRank}
+                      {winner.potCount && winner.potCount > 1 ? ` - ${winner.potCount} pots` : ''}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {otherLosingHands.length > 0 && (
+            <div className="casino-hand-result-modal__others mb-5 border-t border-gray-700 pt-4">
+              <p className="mb-3 text-xs uppercase tracking-wider text-gray-500">Other Hands</p>
+              <div className="space-y-2">
+                {otherLosingHands.map((player, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className="text-gray-400 text-sm w-24 truncate">{p.username}</span>
+                    <span className="w-24 truncate text-sm text-gray-400">{player.username}</span>
                     <div className="flex gap-1">
-                      {p.holeCards.map((card, j) => (
-                        <CardComponent key={j} card={card} size="sm" backImage={backImage} />
+                      {player.holeCards.map((card, j) => (
+                        <CardComponent key={`${card}-${j}`} card={card} size="sm" backImage={backImage} />
                       ))}
                     </div>
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <button
           onClick={onClose}
-          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 rounded-xl transition-colors"
+          className="casino-hand-result-modal__continue w-full rounded-xl bg-yellow-500 py-2.5 font-bold text-black transition-colors hover:bg-yellow-400"
         >
           Continue
         </button>
