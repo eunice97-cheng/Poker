@@ -69,6 +69,23 @@ export const VIP_CHAT_EMOJIS: ChatEmojiDefinition[] = [
 export const CHAT_EMOJIS = [...STANDARD_CHAT_EMOJIS, ...VIP_CHAT_EMOJIS]
 
 export const CHAT_EMOJI_MAP = new Map(CHAT_EMOJIS.map((emoji) => [emoji.code, emoji]))
+export const VIP_CHAT_EMOJI_CODE_SET = new Set(VIP_CHAT_EMOJIS.map((emoji) => emoji.code))
+
+export function isVipChatEmojiCode(emojiCode: string) {
+  return VIP_CHAT_EMOJI_CODE_SET.has(emojiCode)
+}
+
+export function hasVipChatEmojiCode(text: string) {
+  const matcher = /:([a-z0-9-]+):/g
+  let match = matcher.exec(text)
+
+  while (match) {
+    if (VIP_CHAT_EMOJI_CODE_SET.has(match[0])) return true
+    match = matcher.exec(text)
+  }
+
+  return false
+}
 
 export function appendChatEmojiCode(currentText: string, emojiCode: string, maxLength: number) {
   const spacer = currentText.length > 0 && !/\s$/.test(currentText) ? ' ' : ''

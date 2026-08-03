@@ -249,28 +249,28 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
       </div>
 
       <div className="relative z-10">
-        <header className="sticky top-0 z-20 border-b border-[#f5c76d]/[0.16] bg-[#100806]/[0.64] backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-4">
-            <div className="flex flex-wrap items-center gap-3">
+        <header className="casino-room-header sticky top-0 z-20 border-b border-[#f5c76d]/[0.16] bg-[#100806]/[0.64] backdrop-blur-xl">
+          <div className="casino-room-header__inner mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-4">
+            <div className="casino-room-header__brand flex flex-wrap items-center gap-3">
               <img
                 src="/blackjack/Images/header%20logo%201.png"
                 alt="ASL BlackJack Lounge"
-                className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(245,199,109,0.2)]"
+                className="casino-room-header__blackjack-logo h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(245,199,109,0.2)]"
               />
-              <div>
-                <div className="font-serif text-xl tracking-wide text-[#fff0c7] sm:text-2xl">ASL BlackJack Lounge</div>
-                <p className="text-[11px] uppercase tracking-[0.3em] text-[#f5c76d]/[0.58]">Same tab. New table.</p>
+              <div className="casino-room-header__copy">
+                <div className="casino-room-header__title font-serif text-xl tracking-wide text-[#fff0c7] sm:text-2xl">ASL BlackJack Lounge</div>
+                <p className="casino-room-header__subtitle text-[11px] uppercase tracking-[0.3em] text-[#f5c76d]/[0.58]">Same tab. New table.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-[#f5c76d]/[0.18] bg-black/[0.32] px-3 py-1.5 text-xs text-white/[0.72]">
+              <div className="casino-room-header__status flex items-center gap-2 rounded-full border border-[#f5c76d]/[0.18] bg-black/[0.32] px-3 py-1.5 text-xs text-white/[0.72]">
                 <span className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-300' : socketError ? 'bg-red-400' : 'animate-pulse bg-amber-300'}`} />
                 <span>{connectionLabel}</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div className="casino-room-header__actions flex flex-wrap items-center justify-end gap-2 sm:gap-3">
               <Link
                 href="/profile"
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
+                className="casino-room-header__profile flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
                 title="My Profile"
               >
                 <AvatarDisplay avatarId={profile.avatar} size="sm" />
@@ -281,13 +281,14 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
               </Link>
               <Link
                 href="/"
-                className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
+                className="casino-room-header__main rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
               >
-                Main Lobby
+                <span className="casino-room-header__main-full">Main Lobby</span>
+                <span className="casino-room-header__main-short hidden">Main</span>
               </Link>
               <button
                 onClick={handleInvite}
-                className="rounded-xl border border-[#f8d86a]/20 bg-[#f1b45b] px-4 py-3 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
+                className="casino-room-header__invite rounded-xl border border-[#f8d86a]/20 bg-[#f1b45b] px-4 py-3 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
                 title="Copy blackjack invite and open Discord"
               >
                 {inviteLabel === 'done' ? 'Copied' : 'Invite'}
@@ -295,14 +296,14 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
               {isAdmin && (
                 <Link
                   href="/gm"
-                  className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
+                  className="casino-room-header__gm rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
                 >
                   GM
                 </Link>
               )}
               <Link
                 href="/profile?tab=mail"
-                className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
+                className="casino-room-header__icon relative flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
                 title="Open mailbox"
                 aria-label="Open mailbox"
               >
@@ -314,11 +315,11 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                   </span>
                 )}
               </Link>
-              <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
+              <AudioControls buttonClassName="casino-room-header__icon flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
+                className="casino-room-header__icon flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
                 title="Sign out"
                 aria-label="Sign out"
               >

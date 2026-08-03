@@ -6,12 +6,15 @@ import { STANDARD_CHAT_EMOJIS, VIP_CHAT_EMOJIS } from '@/lib/chat-emojis'
 interface ChatEmojiTrayProps {
   hasVipAccess?: boolean
   onSelect: (emojiCode: string) => void
+  onLockedSelect?: () => void
   variant?: 'table' | 'lobby'
   category?: 'standard' | 'vip'
 }
 
 export function ChatEmojiTray({
+  hasVipAccess = false,
   onSelect,
+  onLockedSelect,
   variant = 'lobby',
   category = 'standard',
 }: ChatEmojiTrayProps) {
@@ -31,24 +34,39 @@ export function ChatEmojiTray({
   const buttonClassName = isVip
     ? `group flex ${isTable ? 'min-h-[4rem]' : 'min-h-[4.8rem]'} w-full flex-col items-center justify-center gap-1 rounded-[1rem] border border-white/10 bg-black/24 px-1.5 py-1.5 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40`
     : isTable
-      ? 'group flex h-12 w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10'
+        ? 'group flex h-12 w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10'
       : 'group flex h-10 w-full items-center justify-center rounded-[1rem] border border-white/10 bg-black/24 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40'
   const emojiClassName = isTable ? 'text-[28px] leading-none' : 'text-[24px] leading-none'
   const imageClassName = isTable ? 'h-11 w-11 object-contain' : 'h-14 w-14 object-contain'
+  const isVipLocked = isVip && !hasVipAccess
 
   return (
     <div className={trayClassName}>
       <section className="space-y-2">
-        <div className={sectionTitleClassName}>{isVip ? 'VIP Emoji' : 'Emoji'}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className={sectionTitleClassName}>{isVip ? 'VIP Emoji' : 'Emoji'}</div>
+          {isVipLocked && (
+            <div className="shrink-0 rounded-full border border-[#f3d2a2]/14 bg-[#f1b45b]/10 px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.12em] text-[#f3d2a2]/70">
+              GM / donors only
+            </div>
+          )}
+        </div>
         <div className={gridClassName}>
           {emojis.map((emoji) => (
             <button
               key={emoji.code}
               type="button"
-              onClick={() => onSelect(emoji.code)}
-              className={buttonClassName}
-              aria-label={`Insert ${emoji.label}`}
-              title={emoji.label}
+              onClick={() => {
+                if (isVipLocked) {
+                  onLockedSelect?.()
+                  return
+                }
+                onSelect(emoji.code)
+              }}
+              className={`${buttonClassName} ${isVipLocked ? 'opacity-85' : ''}`}
+              aria-disabled={isVipLocked}
+              aria-label={isVipLocked ? `${emoji.label}, VIP emoji for GM or donors` : `Insert ${emoji.label}`}
+              title={isVipLocked ? `${emoji.label} - GM or donors only` : emoji.label}
             >
               {emoji.imageSrc ? (
                 <>

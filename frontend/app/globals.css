@@ -272,9 +272,9 @@
 
   @keyframes casino-lobby-chat-unread-blink {
     0%, 100% {
-      border-color: rgba(243, 210, 162, 0.18);
+      border-color: rgba(241, 180, 91, 0.58);
       box-shadow: 0 0 0 rgba(241, 180, 91, 0);
-      color: rgba(255, 243, 226, 0.78);
+      color: rgba(241, 180, 91, 0.92);
     }
 
     50% {
@@ -282,7 +282,7 @@
       box-shadow:
         0 0 0 5px rgba(241, 180, 91, 0.12),
         0 0 22px rgba(241, 180, 91, 0.42);
-      color: #fff3e2;
+      color: #ffd37a;
     }
   }
 
@@ -315,7 +315,7 @@
   }
 
   .casino-lobby-chat[data-open="false"] > div {
-    border-color: rgba(243, 210, 162, 0.16);
+    border-color: rgba(241, 180, 91, 0.68);
     background: linear-gradient(180deg, rgba(16, 8, 7, 0.92), rgba(16, 8, 7, 0.72));
     overflow: visible;
   }
@@ -324,7 +324,7 @@
     height: 48px;
     width: 48px;
     padding: 0;
-    color: rgba(255, 243, 226, 0.78);
+    color: rgba(241, 180, 91, 0.94);
     overflow: visible;
   }
 
@@ -361,6 +361,10 @@
 
   .casino-lobby-chat__emoji-popover[data-kind="vip"] img {
     filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
+  }
+
+  .casino-room-header__main-short {
+    display: none;
   }
 
   @media (max-width: 940px), (max-height: 560px) {
@@ -664,6 +668,120 @@
   }
 
   @media (max-width: 940px) and (orientation: landscape), (max-height: 560px) and (orientation: landscape) {
+    .casino-room-header {
+      z-index: 10030 !important;
+      height: 64px !important;
+      overflow: visible !important;
+    }
+
+    .casino-room-header__inner {
+      height: 64px !important;
+      max-width: none !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+      padding: 8px 10px !important;
+    }
+
+    .casino-room-header__brand {
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+      flex-wrap: nowrap !important;
+      gap: 8px !important;
+      overflow: hidden !important;
+    }
+
+    .casino-room-header__poker-logo,
+    .casino-room-header__blackjack-logo {
+      height: 40px !important;
+      width: 40px !important;
+      flex: 0 0 40px !important;
+    }
+
+    .casino-room-header__copy {
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .casino-room-header__title {
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+      letter-spacing: 0.02em !important;
+    }
+
+    .casino-room-header__subtitle,
+    .casino-room-header__status {
+      display: none !important;
+    }
+
+    .casino-room-header__actions {
+      flex: 0 0 auto !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      gap: 6px !important;
+    }
+
+    .casino-room-header__profile {
+      height: 44px !important;
+      max-width: 132px !important;
+      gap: 7px !important;
+      padding: 5px 8px !important;
+      border-radius: 12px !important;
+    }
+
+    .casino-room-header__profile > span {
+      min-width: 0 !important;
+    }
+
+    .casino-room-header__profile > span > span:first-child {
+      font-size: 12px !important;
+      line-height: 1.05 !important;
+    }
+
+    .casino-room-header__profile > span > span:last-child {
+      font-size: 10px !important;
+      line-height: 1.05 !important;
+    }
+
+    .casino-room-header__main,
+    .casino-room-header__invite,
+    .casino-room-header__gm {
+      display: inline-flex !important;
+      height: 40px !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 12px !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+    }
+
+    .casino-room-header__main-full {
+      display: none !important;
+    }
+
+    .casino-room-header__main-short {
+      display: inline !important;
+    }
+
+    .casino-room-header__icon {
+      height: 40px !important;
+      width: 40px !important;
+      border-radius: 12px !important;
+      padding: 0 !important;
+    }
+
+    .casino-room-header__icon svg {
+      height: 18px !important;
+      width: 18px !important;
+    }
+
     .casino-floating-buttons {
       right: 0 !important;
       top: 72px !important;

@@ -5,7 +5,7 @@ import type { Socket } from 'socket.io-client'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
 import { ChatMessageText } from '@/components/ui/ChatMessageText'
-import { appendChatEmojiCode } from '@/lib/chat-emojis'
+import { appendChatEmojiCode, hasVipChatEmojiCode, isVipChatEmojiCode } from '@/lib/chat-emojis'
 import { ChatMessage, Profile } from '@/types/poker'
 
 interface LobbyChatProps {
@@ -149,6 +149,10 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
     }
     const text = draft.trim()
     if (!text) return
+    if (!hasVipEmojis && hasVipChatEmojiCode(text)) {
+      setError('VIP emoji are for GM or donors')
+      return
+    }
 
     setSending(true)
     setError('')
@@ -164,6 +168,11 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   }
 
   const appendEmoji = (emojiCode: string) => {
+    if (!hasVipEmojis && isVipChatEmojiCode(emojiCode)) {
+      setError('VIP emoji are for GM or donors')
+      return
+    }
+    setError('')
     setDraft((prev) => appendChatEmojiCode(prev, emojiCode, MAX_LOBBY_CHAT_LENGTH))
   }
 
@@ -182,7 +191,12 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
     >
       {open && activeEmojiTray && (
         <div className="casino-lobby-chat__emoji-popover" data-kind={activeEmojiTray}>
-          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} category={activeEmojiTray} />
+          <ChatEmojiTray
+            hasVipAccess={hasVipEmojis}
+            onSelect={appendEmoji}
+            onLockedSelect={() => setError('VIP emoji are for GM or donors')}
+            category={activeEmojiTray}
+          />
         </div>
       )}
 

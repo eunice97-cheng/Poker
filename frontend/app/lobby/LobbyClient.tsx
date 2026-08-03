@@ -187,10 +187,10 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
       </div>
 
       <div className="relative z-10">
-        <header className="sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-4">
-            <div className="flex flex-wrap items-center gap-2.5 md:gap-3">
-              <span className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[#f3d2a2]/26 bg-[radial-gradient(circle_at_35%_30%,rgba(255,247,214,0.34),rgba(241,180,91,0.22)_32%,rgba(113,63,18,0.14)_72%,rgba(0,0,0,0.18)_100%)] shadow-[0_0_24px_rgba(241,180,91,0.22)]">
+        <header className="casino-room-header sticky top-0 z-20 border-b border-[#f3d2a2]/10 bg-[#110907]/68 backdrop-blur-xl">
+          <div className="casino-room-header__inner mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:py-4">
+            <div className="casino-room-header__brand flex flex-wrap items-center gap-2.5 md:gap-3">
+              <span className="casino-room-header__poker-logo relative flex h-11 w-11 items-center justify-center rounded-full border border-[#f3d2a2]/26 bg-[radial-gradient(circle_at_35%_30%,rgba(255,247,214,0.34),rgba(241,180,91,0.22)_32%,rgba(113,63,18,0.14)_72%,rgba(0,0,0,0.18)_100%)] shadow-[0_0_24px_rgba(241,180,91,0.22)]">
                 <span className="absolute inset-[2px] rounded-full border border-[#fff1ba]/16" />
                 <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#fff7cf] shadow-[0_0_12px_rgba(255,247,207,0.95)]" />
                 <span className="absolute left-2 top-2 h-px w-4 rotate-[-18deg] bg-gradient-to-r from-transparent via-[#fff4bf] to-transparent opacity-85" />
@@ -198,11 +198,11 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   &#9824;
                 </span>
               </span>
-              <div>
-                <div className="font-serif text-xl tracking-wide text-[#fff3e2] sm:text-2xl">ASL Basement Poker</div>
-                <p className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Drinks first. Cards after.</p>
+              <div className="casino-room-header__copy">
+                <div className="casino-room-header__title font-serif text-xl tracking-wide text-[#fff3e2] sm:text-2xl">ASL Basement Poker</div>
+                <p className="casino-room-header__subtitle text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Drinks first. Cards after.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-white/62 md:text-xs">
+              <div className="casino-room-header__status flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-white/62 md:text-xs">
                 <span
                   className={`h-2 w-2 rounded-full ${
                     connected
@@ -227,12 +227,12 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div className="casino-room-header__actions flex flex-wrap items-center justify-end gap-2 sm:gap-3">
               {profile && (
                 <Link
                   href="/profile"
                   onClick={() => playSfx('click')}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
+                  className="casino-room-header__profile flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
                 >
                   <AvatarDisplay avatarId={profile.avatar ?? 'avatar_m1'} size="sm" />
                   <span className="min-w-0">
@@ -244,13 +244,14 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               <Link
                 href="/"
                 onClick={() => playSfx('click')}
-                className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
+                className="casino-room-header__main rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
               >
-                Main Lobby
+                <span className="casino-room-header__main-full">Main Lobby</span>
+                <span className="casino-room-header__main-short hidden">Main</span>
               </Link>
               <button
                 onClick={handleInvite}
-                className="rounded-xl border border-[#f8d86a]/20 bg-[#f1b45b] px-4 py-3 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
+                className="casino-room-header__invite rounded-xl border border-[#f8d86a]/20 bg-[#f1b45b] px-4 py-3 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
                 title="Copy invite and open Discord"
               >
                 {inviteLabel === 'done' ? 'Copied' : 'Invite'}
@@ -258,14 +259,14 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               {isAdmin && (
                 <Link
                   href="/gm"
-                  className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
+                  className="casino-room-header__gm rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
                 >
                   GM
                 </Link>
               )}
               <Link
                 href="/profile?tab=mail"
-                className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
+                className="casino-room-header__icon relative flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
                 title="Open mailbox"
                 aria-label="Open mailbox"
               >
@@ -277,11 +278,11 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   </span>
                 )}
               </Link>
-              <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
+              <AudioControls buttonClassName="casino-room-header__icon flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
+                className="casino-room-header__icon flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
                 title="Sign out"
                 aria-label="Sign out"
               >
