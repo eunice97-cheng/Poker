@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { ExitIcon } from '@/components/ui/ExitIcon'
 import { MailIcon } from '@/components/ui/MailIcon'
 import { LobbyChat } from '@/components/lobby/LobbyChat'
 import { useAudio } from '@/hooks/useAudio'
@@ -196,19 +197,16 @@ export function CasinoLobbyClient({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+              <Link
+                href="/profile"
+                onClick={() => playSfx('click')}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
+              >
                 <AvatarDisplay avatarId={profile?.avatar ?? 'avatar_m1'} size="sm" className="border-[#f8d86a]/35" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-bold text-white">{playerName}</div>
                   <div className="text-xs font-semibold text-[#f8d86a]">{formatChips(profile?.chip_balance)} chips</div>
                 </div>
-              </div>
-              <Link
-                href="/profile"
-                onClick={() => playSfx('click')}
-                className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
-              >
-                Profile
               </Link>
               <Link
                 href="/profile?tab=mail"
@@ -224,7 +222,7 @@ export function CasinoLobbyClient({
                   </span>
                 )}
               </Link>
-              <AudioControls />
+              <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
               <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/24 px-3 py-3 text-xs font-semibold text-white/62 xl:flex">
                 <span
                   className={`h-2 w-2 rounded-full ${
@@ -240,9 +238,11 @@ export function CasinoLobbyClient({
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/64 transition-colors hover:border-red-300/34 hover:text-red-100"
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
+                title="Sign out"
+                aria-label="Sign out"
               >
-                Sign Out
+                <ExitIcon />
               </button>
             </div>
           </div>

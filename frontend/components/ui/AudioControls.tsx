@@ -3,6 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAudio } from '@/hooks/useAudio'
 
+interface AudioControlsProps {
+  buttonClassName?: string
+}
+
 function AudioIcon({ muted }: { muted: boolean }) {
   return (
     <svg
@@ -31,7 +35,7 @@ function AudioIcon({ muted }: { muted: boolean }) {
   )
 }
 
-export function AudioControls() {
+export function AudioControls({ buttonClassName }: AudioControlsProps = {}) {
   const {
     musicVol,
     sfxVol,
@@ -62,7 +66,10 @@ export function AudioControls() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white"
+        className={
+          buttonClassName ??
+          'flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white/78 transition-colors hover:border-[#f3d2a2]/24 hover:text-white'
+        }
         title="Audio settings"
         aria-label="Audio settings"
       >

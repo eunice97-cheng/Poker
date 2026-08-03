@@ -78,7 +78,6 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
   const featuredTable = [...liveTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
   const featuredStakes = featuredTable ? `${featuredTable.small_blind}/${featuredTable.big_blind}` : 'House warming up'
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
-  const isUsingDefaultAvatar = profile?.avatar === 'avatar_m1'
 
   const handleCreateTable = (params: {
     name: string
@@ -228,38 +227,30 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
               {profile && (
                 <Link
                   href="/profile"
                   onClick={() => playSfx('click')}
-                  className="flex min-w-[10.5rem] items-center gap-3 rounded-full border border-[#f3d2a2]/10 bg-black/24 px-3 py-2 text-left transition-colors hover:border-[#f3d2a2]/28 hover:bg-black/34"
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-left transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
                 >
                   <AvatarDisplay avatarId={profile.avatar ?? 'avatar_m1'} size="sm" />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-[#fff3e2]">{profile.username}</span>
-                    <span className="block text-[10px] uppercase tracking-[0.2em] text-[#f3d2a2]/64">{profile.chip_balance.toLocaleString()} chips</span>
+                    <span className="block truncate text-sm font-bold text-white">{profile.username}</span>
+                    <span className="block text-xs font-semibold text-[#f8d86a]">{profile.chip_balance.toLocaleString()} chips</span>
                   </span>
-                </Link>
-              )}
-              {isUsingDefaultAvatar && (
-                <Link
-                  href="/profile"
-                  className="rounded-full border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-sm text-sky-100 transition-colors hover:border-sky-300/35 hover:bg-sky-400/15"
-                >
-                  Update Avatar
                 </Link>
               )}
               <Link
                 href="/"
                 onClick={() => playSfx('click')}
-                className="rounded-full border border-[#f3d2a2]/16 bg-black/24 px-4 py-2 text-sm font-semibold text-[#fff3e2]/82 transition-colors hover:border-[#f3d2a2]/34 hover:bg-[#f1b45b]/10 hover:text-white"
+                className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
               >
                 Main Lobby
               </Link>
               <button
                 onClick={handleInvite}
-                className="rounded-full border border-[#f3d2a2]/14 bg-[#f1b45b] px-4 py-2 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
+                className="rounded-xl border border-[#f8d86a]/20 bg-[#f1b45b] px-4 py-3 text-sm font-semibold text-[#20110a] transition-colors hover:bg-[#f4c272]"
                 title="Copy invite and open Discord"
               >
                 {inviteLabel === 'done' ? 'Copied' : 'Invite'}
@@ -267,14 +258,14 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
               {isAdmin && (
                 <Link
                   href="/gm"
-                  className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/76 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                  className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
                 >
                   GM
                 </Link>
               )}
               <Link
                 href="/profile?tab=mail"
-                className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
                 title="Open mailbox"
                 aria-label="Open mailbox"
               >
@@ -286,11 +277,11 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   </span>
                 )}
               </Link>
-              <AudioControls />
+              <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white/76 transition-colors hover:border-red-200/35 hover:bg-red-500/10 hover:text-red-100"
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
                 title="Sign out"
                 aria-label="Sign out"
               >
