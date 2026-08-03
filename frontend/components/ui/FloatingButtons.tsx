@@ -91,10 +91,6 @@ export function FloatingButtons() {
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
 
-  if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')) {
-    return null
-  }
-
   const toggleButtons = () => {
     if (buttonsOpen) setSupportOpen(false)
     setButtonsOpen((open) => !open)

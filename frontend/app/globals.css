@@ -1741,19 +1741,59 @@
     }
 
     .casino-mobile-table-panel__content {
-      width: min(280px, calc(100vw - 44px)) !important;
-      max-height: calc(100svh - 88px);
+      width: min(230px, calc(100vw - 44px)) !important;
+      max-height: calc(100svh - 104px);
       overflow-y: auto;
-      border-radius: 0 18px 18px 0;
+      border-radius: 0 14px 14px 0;
       border: 1px solid rgba(243, 210, 162, 0.14);
       background: linear-gradient(180deg, rgba(16, 8, 7, 0.92), rgba(16, 8, 7, 0.72));
-      padding: 8px;
+      padding: 6px;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
       backdrop-filter: blur(18px);
     }
 
     .casino-mobile-table-panel__toggle {
       flex: 0 0 auto;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-log {
+      height: 132px !important;
+      border-radius: 11px !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-log.h-10 {
+      height: 36px !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-log > button {
+      padding: 7px 10px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-log > div {
+      padding: 6px 9px !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-log > div > div {
+      padding: 1px 0 !important;
+      font-size: 11px !important;
+      line-height: 1.35 !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-observers {
+      border-radius: 11px !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-observers > div:first-child {
+      padding: 7px 10px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-mobile-table-panel__content .casino-table-observers > div:last-child {
+      max-height: 90px !important;
+      padding: 6px 8px !important;
     }
 
     .casino-mobile-table-chat {
@@ -2004,7 +2044,7 @@
     }
 
     .casino-poker-table__scene-shell {
-      margin-top: -2px !important;
+      margin-top: -18px !important;
     }
 
     .casino-poker-table__actionbar {
