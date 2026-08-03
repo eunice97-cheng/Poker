@@ -1,16 +1,14 @@
 'use client'
 
-import Image from 'next/image'
-import { STANDARD_CHAT_EMOJIS, VIP_CHAT_EMOJIS } from '@/lib/chat-emojis'
+import { STANDARD_CHAT_EMOJIS } from '@/lib/chat-emojis'
 
 interface ChatEmojiTrayProps {
-  hasVipAccess: boolean
+  hasVipAccess?: boolean
   onSelect: (emojiCode: string) => void
   variant?: 'table' | 'lobby'
 }
 
 export function ChatEmojiTray({
-  hasVipAccess,
   onSelect,
   variant = 'lobby',
 }: ChatEmojiTrayProps) {
@@ -25,10 +23,7 @@ export function ChatEmojiTray({
   const buttonClassName = isTable
     ? 'group flex h-12 w-full items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/5 transition-all hover:border-yellow-400/30 hover:bg-white/10'
     : 'group flex h-10 w-full items-center justify-center rounded-[1rem] border border-white/10 bg-black/24 transition-all hover:border-[#f3d2a2]/30 hover:bg-black/40'
-  const disabledButtonClassName = isTable
-    ? 'flex h-12 w-full items-center justify-center rounded-[1.1rem] border border-white/8 bg-white/[0.03] opacity-35 grayscale'
-    : 'flex h-10 w-full items-center justify-center rounded-[1rem] border border-white/8 bg-black/14 opacity-35 grayscale'
-  const emojiImageClassName = isTable ? 'h-10 w-10 object-contain' : 'h-8 w-8 object-contain'
+  const emojiClassName = isTable ? 'text-[28px] leading-none' : 'text-[24px] leading-none'
 
   return (
     <div className={trayClassName}>
@@ -44,33 +39,7 @@ export function ChatEmojiTray({
               aria-label={`Insert ${emoji.label}`}
               title={emoji.label}
             >
-              <Image src={emoji.src} alt={emoji.label} width={40} height={40} className={emojiImageClassName} />
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className={sectionTitleClassName}>{hasVipAccess ? 'VIP emoji' : 'VIP emoji locked'}</div>
-          {!hasVipAccess && (
-            <div className={isTable ? 'text-[9px] uppercase tracking-[0.2em] text-yellow-300/55' : 'text-[9px] uppercase tracking-[0.2em] text-[#f3d2a2]/52'}>
-              Unlock after first donation
-            </div>
-          )}
-        </div>
-        <div className={gridClassName}>
-          {VIP_CHAT_EMOJIS.map((emoji) => (
-            <button
-              key={emoji.code}
-              type="button"
-              onClick={() => onSelect(emoji.code)}
-              disabled={!hasVipAccess}
-              className={hasVipAccess ? buttonClassName : disabledButtonClassName}
-              aria-label={hasVipAccess ? `Insert ${emoji.label}` : `${emoji.label} is locked`}
-              title={hasVipAccess ? emoji.label : `${emoji.label} unlocks after your first donation`}
-            >
-              <Image src={emoji.src} alt={emoji.label} width={40} height={40} className={emojiImageClassName} />
+              <span className={emojiClassName} aria-hidden="true">{emoji.symbol}</span>
             </button>
           ))}
         </div>

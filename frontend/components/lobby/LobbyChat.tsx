@@ -162,7 +162,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
       }`}
     >
       <div
-        className={`overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
+        className={`casino-lobby-chat__panel overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
           open ? 'rounded-[30px]' : 'rounded-full'
         }`}
       >

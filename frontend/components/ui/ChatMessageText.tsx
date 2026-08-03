@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { getChatMessageSegments } from '@/lib/chat-emojis'
 
 interface ChatMessageTextProps {
@@ -11,8 +10,7 @@ interface ChatMessageTextProps {
 
 export function ChatMessageText({ text, size = 'md', className }: ChatMessageTextProps) {
   const segments = getChatMessageSegments(text)
-  const dimension = size === 'sm' ? 22 : 26
-  const imageClassName = size === 'sm' ? 'h-[22px] w-[22px]' : 'h-[26px] w-[26px]'
+  const emojiClassName = size === 'sm' ? 'text-[20px]' : 'text-[24px]'
 
   return (
     <span className={className}>
@@ -22,14 +20,13 @@ export function ChatMessageText({ text, size = 'md', className }: ChatMessageTex
         }
 
         return (
-          <span key={`emoji-${segment.emoji.code}-${index}`} className="mx-0.5 inline-flex align-[-0.4em]">
-            <Image
-              src={segment.emoji.src}
-              alt={segment.emoji.label}
-              width={dimension}
-              height={dimension}
-              className={imageClassName}
-            />
+          <span
+            key={`emoji-${segment.emoji.code}-${index}`}
+            className={`mx-0.5 inline-flex leading-none align-[-0.18em] ${emojiClassName}`}
+            role="img"
+            aria-label={segment.emoji.label}
+          >
+            {segment.emoji.symbol}
           </span>
         )
       })}

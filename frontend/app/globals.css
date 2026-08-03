@@ -674,9 +674,22 @@
     .casino-lobby-chat[data-open="true"] {
       left: auto !important;
       right: 8px !important;
+      top: 72px !important;
       bottom: 8px !important;
       width: min(300px, 40vw) !important;
       max-width: calc(100vw - 16px);
+    }
+
+    .casino-lobby-chat[data-open="true"] .casino-lobby-chat__panel {
+      display: flex;
+      height: 100%;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .casino-lobby-chat[data-open="true"] .casino-lobby-chat__toggle {
+      flex: 0 0 auto;
+      padding: 10px 12px !important;
     }
 
     .casino-lobby-chat[data-open="false"] {
@@ -702,22 +715,37 @@
     }
 
     .casino-lobby-chat__body {
+      display: flex;
+      min-height: 0;
+      flex: 1 1 auto;
+      flex-direction: column;
       padding: 8px !important;
     }
 
     .casino-lobby-chat__messages {
-      height: min(23vh, 96px) !important;
-      min-height: 54px;
-      max-height: 96px !important;
+      min-height: 0;
+      max-height: none !important;
+      flex: 1 1 auto;
+      height: auto !important;
+      padding-right: 3px !important;
+    }
+
+    .casino-lobby-chat__messages > :not([hidden]) ~ :not([hidden]) {
+      margin-top: 6px !important;
+    }
+
+    .casino-lobby-chat__messages > div {
+      border-radius: 14px !important;
+      padding: 10px !important;
     }
 
     .casino-lobby-chat__form {
-      margin-top: 6px !important;
+      margin-top: 5px !important;
       gap: 6px !important;
     }
 
     .casino-lobby-chat__emoji-tray {
-      max-height: 76px;
+      max-height: 64px;
       overflow-y: auto;
     }
 
@@ -999,13 +1027,13 @@
     }
 
     .casino-lobby-chat__messages {
-      height: min(18vh, 70px) !important;
-      min-height: 46px !important;
-      max-height: 70px !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
     }
 
     .casino-lobby-chat__emoji-tray {
-      max-height: 54px !important;
+      max-height: 48px !important;
       overflow-y: auto;
     }
 
