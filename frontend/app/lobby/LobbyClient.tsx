@@ -292,91 +292,83 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 pb-24 pt-5 md:pb-8 md:pt-10">
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_380px]">
-            <div className="rounded-[30px] border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(18,9,7,0.68),rgba(18,9,7,0.26))] p-5 shadow-[0_40px_120px_rgba(0,0,0,0.44)] backdrop-blur-md md:rounded-[38px] md:p-8">
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <main className="casino-poker-lobby mx-auto max-w-7xl px-4 pb-24 pt-5 md:pb-8 md:pt-10">
+          <section className="casino-poker-lobby__grid grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="casino-poker-lobby__card casino-poker-lobby__summary rounded-[30px] border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(18,9,7,0.68),rgba(18,9,7,0.26))] p-5 shadow-[0_40px_120px_rgba(0,0,0,0.44)] backdrop-blur-md md:rounded-[38px] md:p-8">
+              <div className="casino-poker-lobby__summary-content flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-2xl">
-                  <div className="inline-flex rounded-full border border-[#f3d2a2]/18 bg-[#f1b45b]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#f7dfba]">
+                  <div className="casino-poker-lobby__eyebrow inline-flex rounded-full border border-[#f3d2a2]/18 bg-[#f1b45b]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#f7dfba]">
                     Pre-game lounge
                   </div>
-                  <h1 className="mt-5 max-w-xl font-serif text-[2.6rem] leading-[0.94] text-[#fff3e2] sm:text-5xl md:text-7xl">
+                  <h1 className="casino-poker-lobby__headline mt-5 max-w-xl font-serif text-[2.6rem] leading-[0.94] text-[#fff3e2] sm:text-5xl md:text-7xl">
                     Hang out by the drinks before the cards hit the felt.
                   </h1>
-                  <p className="mt-4 max-w-xl text-sm leading-7 text-[#ffe8ca]/76 sm:text-base">
+                  <p className="casino-poker-lobby__copy mt-4 max-w-xl text-sm leading-7 text-[#ffe8ca]/76 sm:text-base">
                     This is the spot to idle, talk, and see who is ready to play. When a table feels right, step out of the lounge and sit down with the room already warm.
                   </p>
                 </div>
 
-                <div className="flex flex-col items-stretch gap-3">
+                <div className="casino-poker-lobby__cta flex flex-col items-stretch gap-3">
                   <Button
                     variant="primary"
                     size="lg"
-                    className="w-full max-w-[176px] rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)]"
+                    className="casino-poker-lobby__primary-action w-full max-w-[176px] rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)]"
                     onClick={() => setShowCreate(true)}
                   >
                     Start a table
                   </Button>
                   <button
                     onClick={handleInvite}
-                    className="w-full max-w-[176px] rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                    className="casino-poker-lobby__secondary-action w-full max-w-[176px] rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
                   >
                     {inviteLabel === 'done' ? 'Copied to clipboard' : 'Text the crew'}
                   </button>
                 </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3 md:mt-10 md:grid-cols-[1.15fr_1fr_1fr_1fr]">
-                <div className="col-span-2 rounded-[24px] border border-[#f3d2a2]/14 bg-black/18 p-4 md:col-span-1 md:rounded-[28px] md:p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-[#f3d2a2]/46">Tonight&apos;s main table</div>
-                  <div className="mt-3 font-serif text-3xl text-[#fff3e2]">{featuredStakes}</div>
-                  <p className="mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'No table has the room talking yet.'}</p>
+              <div className="casino-poker-lobby__stats mt-8 grid grid-cols-2 gap-3 md:mt-10 md:grid-cols-2">
+                <div className="casino-poker-lobby__stat-card col-span-2 rounded-[24px] border border-[#f3d2a2]/14 bg-black/18 p-4 md:rounded-[28px] md:p-5">
+                  <div className="casino-poker-lobby__stat-label text-[11px] uppercase tracking-[0.32em] text-[#f3d2a2]/46">Tonight&apos;s main table</div>
+                  <div className="casino-poker-lobby__stat-value mt-3 font-serif text-3xl text-[#fff3e2]">{featuredStakes}</div>
+                  <p className="casino-poker-lobby__stat-note mt-2 text-sm text-white/58">{featuredTable ? featuredTable.name : 'No table has the room talking yet.'}</p>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Tables open</div>
-                  <div className="mt-3 text-3xl font-bold text-white md:text-4xl">{activeTables.length}</div>
+                <div className="casino-poker-lobby__stat-card rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
+                  <div className="casino-poker-lobby__stat-label text-[11px] uppercase tracking-[0.32em] text-white/42">Tables open</div>
+                  <div className="casino-poker-lobby__stat-value mt-3 text-3xl font-bold text-white md:text-4xl">{activeTables.length}</div>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">People inside</div>
-                  <div className="mt-3 text-3xl font-bold text-white md:text-4xl">{playersSeated}</div>
+                <div className="casino-poker-lobby__stat-card rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
+                  <div className="casino-poker-lobby__stat-label text-[11px] uppercase tracking-[0.32em] text-white/42">People inside</div>
+                  <div className="casino-poker-lobby__stat-value mt-3 text-3xl font-bold text-white md:text-4xl">{playersSeated}</div>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-white/42">Empty stools</div>
-                  <div className="mt-3 text-3xl font-bold text-white md:text-4xl">{openSeats}</div>
+                <div className="casino-poker-lobby__stat-card rounded-[24px] border border-white/10 bg-black/18 p-4 md:rounded-[28px] md:p-5">
+                  <div className="casino-poker-lobby__stat-label text-[11px] uppercase tracking-[0.32em] text-white/42">Empty stools</div>
+                  <div className="casino-poker-lobby__stat-value mt-3 text-3xl font-bold text-white md:text-4xl">{openSeats}</div>
                 </div>
               </div>
             </div>
 
-            <aside className="blackjack-promo-panel rounded-[30px] bg-black/26 backdrop-blur-md md:rounded-[38px]">
-              <Link href="/blackjack" className="blackjack-promo-panel__link group block h-full min-h-[520px]" aria-label="Visit the ASL Blackjack Lounge">
-                <img
-                  src="/blackjack/Images/Promote%20ASL%20Blackjack.png"
-                  alt="Visit the ASL Blackjack Lounge"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+            <div className="casino-poker-lobby__card casino-poker-lobby__tables rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:rounded-[38px] md:p-6">
+              <div className="casino-poker-lobby__tables-header mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="casino-poker-lobby__tables-eyebrow text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
+                  <h2 className="casino-poker-lobby__tables-title mt-2 font-serif text-3xl text-[#fff3e2] md:text-4xl">Pick where the night goes next</h2>
+                  <p className="casino-poker-lobby__tables-copy mt-2 text-sm text-white/58">Watch the room, join a warm table, or open one that turns the lounge into a game.</p>
+                </div>
+                <div className="casino-poker-lobby__live-pill rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
+                  Live updates enabled
+                </div>
+              </div>
+
+              <div className="casino-poker-lobby__table-list">
+                <TableList
+                  initialTables={initialTables}
+                  onJoin={handleJoinTable}
+                  onTablesChange={setLiveTables}
+                  connected={connected}
+                  socketUrl={socketUrl}
                 />
-              </Link>
-            </aside>
-          </section>
-
-          <section className="mt-8 rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:rounded-[38px] md:p-6">
-            <div className="mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
-                <h2 className="mt-2 font-serif text-3xl text-[#fff3e2] md:text-4xl">Pick where the night goes next</h2>
-                <p className="mt-2 text-sm text-white/58">Watch the room, join a warm table, or open one that turns the lounge into a game.</p>
-              </div>
-              <div className="rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
-                Live updates enabled
               </div>
             </div>
-
-            <TableList
-              initialTables={initialTables}
-              onJoin={handleJoinTable}
-              onTablesChange={setLiveTables}
-              connected={connected}
-              socketUrl={socketUrl}
-            />
           </section>
         
           <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />

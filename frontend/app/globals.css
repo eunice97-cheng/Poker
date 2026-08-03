@@ -225,51 +225,6 @@
     }
   }
 
-  @keyframes blackjack-promo-border-spin {
-    to {
-      transform: rotate(1turn);
-    }
-  }
-
-  @keyframes blackjack-promo-glow-flicker {
-    0%, 100% {
-      box-shadow:
-        0 0 24px rgba(244, 202, 104, 0.32),
-        0 0 58px rgba(165, 105, 22, 0.16),
-        0 34px 90px rgba(0, 0, 0, 0.42);
-    }
-
-    42% {
-      box-shadow:
-        0 0 36px rgba(255, 224, 137, 0.46),
-        0 0 76px rgba(214, 151, 45, 0.24),
-        0 34px 90px rgba(0, 0, 0, 0.46);
-    }
-
-    58% {
-      box-shadow:
-        0 0 18px rgba(244, 202, 104, 0.24),
-        0 0 48px rgba(165, 105, 22, 0.12),
-        0 34px 90px rgba(0, 0, 0, 0.42);
-    }
-  }
-
-  @keyframes blackjack-promo-sheen {
-    0%, 62%, 100% {
-      transform: translateX(-135%) skewX(-16deg);
-      opacity: 0;
-    }
-
-    72% {
-      opacity: 0.58;
-    }
-
-    86% {
-      transform: translateX(135%) skewX(-16deg);
-      opacity: 0;
-    }
-  }
-
   @keyframes casino-lobby-chat-unread-blink {
     0%, 100% {
       border-color: rgba(241, 180, 91, 0.58);
@@ -454,76 +409,6 @@
   .main-site-flame:hover,
   .main-site-flame:focus-within {
     animation-play-state: paused;
-  }
-
-  .blackjack-promo-panel {
-    position: relative;
-    isolate: isolate;
-    overflow: hidden;
-    padding: 2px;
-    animation: blackjack-promo-glow-flicker 3.8s ease-in-out infinite;
-  }
-
-  .blackjack-promo-panel::before {
-    content: "";
-    position: absolute;
-    inset: -55%;
-    z-index: 0;
-    background:
-      conic-gradient(
-        from 0deg,
-        rgba(255, 239, 176, 0.96),
-        rgba(216, 157, 43, 0.2) 10%,
-        rgba(28, 16, 5, 0.15) 22%,
-        rgba(255, 219, 107, 0.9) 34%,
-        rgba(255, 239, 176, 0.08) 48%,
-        rgba(143, 91, 18, 0.2) 62%,
-        rgba(255, 211, 87, 0.88) 76%,
-        rgba(28, 16, 5, 0.18) 88%,
-        rgba(255, 239, 176, 0.96)
-      );
-    animation: blackjack-promo-border-spin 5.5s linear infinite;
-  }
-
-  .blackjack-promo-panel::after {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    z-index: 2;
-    border-radius: inherit;
-    pointer-events: none;
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 239, 176, 0.42),
-      inset 0 0 18px rgba(255, 205, 91, 0.2);
-  }
-
-  .blackjack-promo-panel__link,
-  .blackjack-promo-panel__surface {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-    border-radius: inherit;
-    background: #050302;
-  }
-
-  .blackjack-promo-panel__link::after,
-  .blackjack-promo-panel__surface::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(105deg, transparent 0 42%, rgba(255, 232, 157, 0.34) 48%, transparent 56% 100%);
-    mix-blend-mode: screen;
-    animation: blackjack-promo-sheen 4.8s ease-in-out infinite;
-  }
-
-  .blackjack-promo-panel:hover {
-    animation-duration: 2.7s;
-  }
-
-  .blackjack-promo-panel:hover::before {
-    animation-duration: 3.6s;
   }
 
   .landscape-only-guard {
@@ -782,6 +667,366 @@
       width: 18px !important;
     }
 
+    .casino-poker-lobby {
+      display: flex !important;
+      height: calc(100svh - 64px) !important;
+      max-width: none !important;
+      min-height: 0 !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      padding: 8px !important;
+    }
+
+    .casino-poker-lobby__grid {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr) !important;
+      gap: 8px !important;
+    }
+
+    .casino-poker-lobby__card {
+      min-height: 0 !important;
+      overflow: hidden !important;
+      border-radius: 16px !important;
+      padding: 10px !important;
+    }
+
+    .casino-poker-lobby__summary {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .casino-poker-lobby__summary-content {
+      gap: 8px !important;
+    }
+
+    .casino-poker-lobby__eyebrow {
+      padding: 4px 8px !important;
+      font-size: 8px !important;
+      letter-spacing: 0.16em !important;
+    }
+
+    .casino-poker-lobby__headline {
+      margin-top: 8px !important;
+      font-size: 22px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-poker-lobby__copy {
+      display: none !important;
+    }
+
+    .casino-poker-lobby__cta {
+      flex-direction: row !important;
+      gap: 6px !important;
+    }
+
+    .casino-poker-lobby__primary-action,
+    .casino-poker-lobby__secondary-action {
+      min-height: 34px !important;
+      max-width: none !important;
+      flex: 1 1 0 !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+    }
+
+    .casino-poker-lobby__stats {
+      margin-top: 8px !important;
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .casino-poker-lobby__stat-card {
+      border-radius: 10px !important;
+      padding: 8px !important;
+    }
+
+    .casino-poker-lobby__stat-label {
+      font-size: 7px !important;
+      letter-spacing: 0.12em !important;
+    }
+
+    .casino-poker-lobby__stat-value {
+      margin-top: 4px !important;
+      font-size: 18px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-poker-lobby__stat-note {
+      display: none !important;
+    }
+
+    .casino-poker-lobby__tables {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .casino-poker-lobby__tables-header {
+      margin-bottom: 8px !important;
+      padding-bottom: 8px !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .casino-poker-lobby__tables-eyebrow {
+      font-size: 8px !important;
+      letter-spacing: 0.18em !important;
+    }
+
+    .casino-poker-lobby__tables-title {
+      margin-top: 2px !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-poker-lobby__tables-copy,
+    .casino-poker-lobby__live-pill {
+      display: none !important;
+    }
+
+    .casino-poker-lobby__table-list {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      padding-right: 2px !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-list {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 6px !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-list__empty {
+      display: flex !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      border-radius: 14px !important;
+      padding: 12px !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-list__empty > div {
+      height: 40px !important;
+      width: 40px !important;
+      margin-bottom: 8px !important;
+      font-size: 20px !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-list__empty p {
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card {
+      border-radius: 14px !important;
+      padding: 8px !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card .mb-4 {
+      margin-bottom: 6px !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card h3 {
+      font-size: 13px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card .text-sm {
+      font-size: 11px !important;
+      line-height: 1.2 !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card .text-xs,
+    .casino-poker-lobby__table-list .casino-table-card .text-\[10px\] {
+      font-size: 8px !important;
+      letter-spacing: 0.1em !important;
+    }
+
+    .casino-poker-lobby__table-list .casino-table-card button {
+      min-height: 30px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+    }
+
+    .casino-blackjack-lobby {
+      display: flex !important;
+      height: calc(100svh - 64px) !important;
+      max-width: none !important;
+      min-height: 0 !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      padding: 8px !important;
+    }
+
+    .casino-blackjack-lobby__grid {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr) !important;
+      gap: 8px !important;
+    }
+
+    .casino-blackjack-lobby__card {
+      min-height: 0 !important;
+      overflow: hidden !important;
+      border-radius: 16px !important;
+      padding: 10px !important;
+    }
+
+    .casino-blackjack-lobby__summary {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .casino-blackjack-lobby__eyebrow {
+      padding: 4px 8px !important;
+      font-size: 8px !important;
+      letter-spacing: 0.16em !important;
+    }
+
+    .casino-blackjack-lobby__headline {
+      margin-top: 8px !important;
+      font-size: 22px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-blackjack-lobby__stats {
+      margin-top: 8px !important;
+      min-height: 0 !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+    }
+
+    .casino-blackjack-lobby__stat-card {
+      border-radius: 10px !important;
+      padding: 8px !important;
+    }
+
+    .casino-blackjack-lobby__stat-card > div:first-child {
+      font-size: 7px !important;
+      letter-spacing: 0.12em !important;
+    }
+
+    .casino-blackjack-lobby__stat-card > div:last-child {
+      margin-top: 4px !important;
+      font-size: 18px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-blackjack-lobby__cta {
+      margin-top: 8px !important;
+    }
+
+    .casino-blackjack-lobby__primary-action {
+      min-height: 34px !important;
+      width: 100% !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+    }
+
+    .casino-blackjack-lobby__tables {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .casino-blackjack-lobby__tables-header {
+      margin-bottom: 8px !important;
+      padding-bottom: 8px !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .casino-blackjack-lobby__tables-eyebrow {
+      font-size: 8px !important;
+      letter-spacing: 0.18em !important;
+    }
+
+    .casino-blackjack-lobby__tables-title {
+      margin-top: 2px !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-blackjack-lobby__tables-copy,
+    .casino-blackjack-lobby__live-pill {
+      display: none !important;
+    }
+
+    .casino-blackjack-lobby__table-list {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      padding-right: 2px !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-list {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 6px !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-list__empty {
+      display: flex !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      border-radius: 14px !important;
+      padding: 12px !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-list__empty > div {
+      height: 40px !important;
+      width: 40px !important;
+      margin-bottom: 8px !important;
+      font-size: 20px !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-list__empty p {
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card {
+      border-radius: 14px !important;
+      padding: 8px !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card .mb-4 {
+      margin-bottom: 6px !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card h3 {
+      font-size: 13px !important;
+      line-height: 1 !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card .text-sm {
+      font-size: 11px !important;
+      line-height: 1.2 !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card .text-xs,
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card .text-\[11px\] {
+      font-size: 8px !important;
+      letter-spacing: 0.1em !important;
+    }
+
+    .casino-blackjack-lobby__table-list .casino-blackjack-table-card button {
+      min-height: 30px !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+    }
+
     .casino-floating-buttons {
       right: 0 !important;
       top: 72px !important;
@@ -1013,7 +1258,7 @@
     }
   }
 
-  @media (max-width: 900px) and (max-height: 430px) and (orientation: landscape) {
+  @media (max-width: 940px) and (max-height: 430px) and (orientation: landscape) {
     .casino-game-lobby {
       height: 100svh;
       min-height: 0;

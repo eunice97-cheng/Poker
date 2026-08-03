@@ -329,30 +329,30 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 pb-16 pt-6 md:pt-10">
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_360px]">
-            <div className="rounded-[20px] border border-[#f5c76d]/[0.18] bg-black/[0.34] p-5 shadow-[0_36px_100px_rgba(0,0,0,0.42)] backdrop-blur-sm md:p-8">
-              <div className="max-w-3xl">
-                <div className="inline-flex rounded-full border border-[#f5c76d]/[0.24] bg-[#f5c76d]/[0.12] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#ffe6a7]">
+        <main className="casino-blackjack-lobby mx-auto max-w-7xl px-4 pb-16 pt-6 md:pt-10">
+          <section className="casino-blackjack-lobby__grid grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="casino-blackjack-lobby__card casino-blackjack-lobby__summary rounded-[20px] border border-[#f5c76d]/[0.18] bg-black/[0.34] p-5 shadow-[0_36px_100px_rgba(0,0,0,0.42)] backdrop-blur-sm md:p-8">
+              <div className="casino-blackjack-lobby__summary-copy max-w-3xl">
+                <div className="casino-blackjack-lobby__eyebrow inline-flex rounded-full border border-[#f5c76d]/[0.24] bg-[#f5c76d]/[0.12] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#ffe6a7]">
                   Blackjack tables
                 </div>
-                <h1 className="mt-5 max-w-3xl font-serif text-[2.4rem] leading-[0.95] text-[#fff7df] sm:text-5xl md:text-6xl">
+                <h1 className="casino-blackjack-lobby__headline mt-5 max-w-3xl font-serif text-[2.4rem] leading-[0.95] text-[#fff7df] sm:text-5xl md:text-6xl">
                   Sit with the same profile, play against the house dealer.
                 </h1>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="casino-blackjack-lobby__stats mt-8 grid grid-cols-2 gap-3 md:grid-cols-2">
                 <Stat label="Tables" value={activeTables.length.toString()} />
                 <Stat label="Players" value={playersSeated.toString()} />
                 <Stat label="Open seats" value={openSeats.toString()} />
                 <Stat label="Hot limits" value={featuredLimits} />
               </div>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="casino-blackjack-lobby__cta mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button
                   variant="primary"
                   size="lg"
-                  className="rounded-full bg-[#f0b92f] px-7 text-[#160b04] hover:bg-[#ffd76b]"
+                  className="casino-blackjack-lobby__primary-action rounded-full bg-[#f0b92f] px-7 text-[#160b04] hover:bg-[#ffd76b]"
                   onClick={() => setShowCreate(true)}
                 >
                   Open Blackjack Table
@@ -360,52 +360,44 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
               </div>
             </div>
 
-            <aside className="blackjack-promo-panel rounded-[20px] bg-black/[0.38] backdrop-blur-sm">
-              <div className="blackjack-promo-panel__surface h-full min-h-[430px]">
-                <img
-                  src="/blackjack/Images/Promo.png"
-                  alt="ASL BlackJack Lounge promotion"
-                  className="block h-full w-full object-cover"
-                />
-              </div>
-            </aside>
-          </section>
-
-          <section className="mt-8 rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:rounded-[38px] md:p-6">
-            <div className="mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
-                <h2 className="mt-2 font-serif text-3xl text-[#fff3e2] md:text-4xl">Choose a dealer table</h2>
-                <p className="mt-2 text-sm text-white/58">Watch the lounge, join a warm blackjack table, or open one for the next hand.</p>
-              </div>
-              <div className="rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
-                Live updates enabled
-              </div>
-            </div>
-
-            {activeTables.length === 0 ? (
-              <div className="rounded-[30px] border border-white/10 bg-black/28 px-6 py-16 text-center shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#f3d2a2]/25 bg-[#f1b45b]/10 text-3xl text-[#f7dfba]">
-                  &#9824;
+            <div className="casino-blackjack-lobby__card casino-blackjack-lobby__tables rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(16,8,7,0.82),rgba(16,8,7,0.56))] p-4 shadow-[0_30px_90px_rgba(0,0,0,0.34)] backdrop-blur-md md:rounded-[38px] md:p-6">
+              <div className="casino-blackjack-lobby__tables-header mb-5 flex flex-col gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="casino-blackjack-lobby__tables-eyebrow text-[11px] uppercase tracking-[0.34em] text-[#f3d2a2]/42">Tables</div>
+                  <h2 className="casino-blackjack-lobby__tables-title mt-2 font-serif text-3xl text-[#fff3e2] md:text-4xl">Choose a dealer table</h2>
+                  <p className="casino-blackjack-lobby__tables-copy mt-2 text-sm text-white/58">Watch the lounge, join a warm blackjack table, or open one for the next hand.</p>
                 </div>
-                <p className="text-lg font-semibold text-white">The blackjack lounge is open, but no table is drawing a crowd yet.</p>
-                <p className="mt-2 text-sm text-white/60">Open the first table, send an invite, and give players somewhere to gather.</p>
+                <div className="casino-blackjack-lobby__live-pill rounded-full border border-white/10 bg-black/22 px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/48">
+                  Live updates enabled
+                </div>
               </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 md:gap-5 xl:grid-cols-3">
-                {activeTables.map((table) => (
-                  <BlackjackTableCard
-                    key={table.id}
-                    table={table}
-                    onJoin={() => {
-                      setJoinModal(table)
-                      setBuyIn(table.min_buyin)
-                      setError('')
-                    }}
-                  />
-                ))}
+
+              <div className="casino-blackjack-lobby__table-list">
+                {activeTables.length === 0 ? (
+                  <div className="casino-blackjack-table-list__empty rounded-[30px] border border-white/10 bg-black/28 px-6 py-16 text-center shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#f3d2a2]/25 bg-[#f1b45b]/10 text-3xl text-[#f7dfba]">
+                      &#9824;
+                    </div>
+                    <p className="text-lg font-semibold text-white">The blackjack lounge is open, but no table is drawing a crowd yet.</p>
+                    <p className="mt-2 text-sm text-white/60">Open the first table, send an invite, and give players somewhere to gather.</p>
+                  </div>
+                ) : (
+                  <div className="casino-blackjack-table-list grid gap-4 sm:grid-cols-2 md:gap-5 xl:grid-cols-3">
+                    {activeTables.map((table) => (
+                      <BlackjackTableCard
+                        key={table.id}
+                        table={table}
+                        onJoin={() => {
+                          setJoinModal(table)
+                          setBuyIn(table.min_buyin)
+                          setError('')
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                </div>
               </div>
-            )}
           </section>
 
           <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} />
@@ -463,7 +455,7 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#f5c76d]/[0.16] bg-black/[0.26] p-4">
+    <div className="casino-blackjack-lobby__stat-card rounded-2xl border border-[#f5c76d]/[0.16] bg-black/[0.26] p-4">
       <div className="text-[11px] uppercase tracking-[0.22em] text-[#f5c76d]/[0.58]">{label}</div>
       <div className="mt-2 text-2xl font-bold text-[#fff7df]">{value}</div>
     </div>
@@ -475,7 +467,7 @@ function BlackjackTableCard({ table, onJoin }: { table: BlackjackTableInfo; onJo
   const seatsLeft = Math.max(table.max_players - table.player_count, 0)
 
   return (
-    <article className="relative overflow-hidden rounded-2xl border border-[#f5c76d]/[0.18] bg-[linear-gradient(145deg,rgba(42,24,10,0.78),rgba(8,4,3,0.9))] p-5 shadow-[0_22px_56px_rgba(0,0,0,0.38)]">
+    <article className="casino-blackjack-table-card relative overflow-hidden rounded-2xl border border-[#f5c76d]/[0.18] bg-[linear-gradient(145deg,rgba(42,24,10,0.78),rgba(8,4,3,0.9))] p-5 shadow-[0_22px_56px_rgba(0,0,0,0.38)]">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#f5c76d]/[0.6] to-transparent" />
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>

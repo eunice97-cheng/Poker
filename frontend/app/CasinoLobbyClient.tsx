@@ -68,7 +68,7 @@ function formatChips(value: number | undefined) {
 
 function isCompactLandscapeViewport() {
   if (typeof window === 'undefined') return false
-  return window.innerWidth <= 900 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
+  return window.innerWidth <= 940 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
 }
 
 function GameCard({ game }: { game: CasinoGameCard }) {

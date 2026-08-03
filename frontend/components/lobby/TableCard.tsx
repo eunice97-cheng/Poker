@@ -21,7 +21,7 @@ export function TableCard({ table, onJoin }: TableCardProps) {
   const seatsLeft = Math.max(table.max_players - table.player_count, 0)
 
   return (
-    <div className={`${theme.lobbyCardClass} group relative overflow-hidden rounded-[26px] border p-5 shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(0,0,0,0.45)]`}>
+    <div className={`casino-table-card ${theme.lobbyCardClass} group relative overflow-hidden rounded-[26px] border p-5 shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(0,0,0,0.45)]`}>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent opacity-70" />
       <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-white/10 blur-3xl transition-opacity duration-300 group-hover:opacity-80" />
 
