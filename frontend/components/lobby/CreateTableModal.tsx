@@ -19,6 +19,13 @@ interface CreateTableModalProps {
   }) => void
 }
 
+const playerOptions = [2, 3, 4, 5, 6]
+const blindOptions = [10, 20, 50, 100, 200, 500]
+
+function choiceClass(active: boolean) {
+  return `casino-create-choice ${active ? 'is-selected' : ''}`
+}
+
 export function CreateTableModal({ open, onClose, chipBalance, onCreate }: CreateTableModalProps) {
   const [name, setName] = useState('')
   const [maxPlayers, setMaxPlayers] = useState(6)
@@ -32,6 +39,12 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
   const maxBuyin = bigBlind * 100
   const actualBuyIn = Math.max(minBuyin, Math.min(maxBuyin, buyIn))
   const canAfford = chipBalance >= actualBuyIn
+  const tableName = name.trim() || 'My Table'
+
+  const updateBigBlind = (value: number) => {
+    setBigBlind(value)
+    setBuyIn((current) => Math.max(value * 20, Math.min(value * 100, current)))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,87 +70,132 @@ export function CreateTableModal({ open, onClose, chipBalance, onCreate }: Creat
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Table">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm text-gray-400">Table Name</label>
-          <input
-            className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none focus:border-yellow-500"
-            placeholder="My Table"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={40}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">Max Players</label>
-            <select
-              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none"
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(Number(e.target.value))}
-            >
-              {[2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>{n} players</option>
-              ))}
-            </select>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Start Poker Table"
+      maxWidth="max-w-3xl"
+      panelClassName="casino-create-modal casino-create-modal--poker"
+      headerClassName="casino-create-modal__header"
+      titleClassName="casino-create-modal__title"
+      closeClassName="casino-create-modal__close"
+      bodyClassName="casino-create-modal__body"
+    >
+      <form onSubmit={handleSubmit} className="casino-create-form">
+        <section className="casino-create-form__main" aria-label="Poker table setup">
+          <div className="casino-create-field">
+            <label className="casino-create-label" htmlFor="poker-table-name">Table name</label>
+            <input
+              id="poker-table-name"
+              className="casino-create-input"
+              placeholder="My Table"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={40}
+            />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm text-gray-400">Big Blind</label>
-            <select
-              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none"
-              value={bigBlind}
-              onChange={(e) => setBigBlind(Number(e.target.value))}
-            >
-              {[10, 20, 50, 100, 200, 500].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
+          <div className="casino-create-form__split">
+            <fieldset className="casino-create-field">
+              <legend className="casino-create-label">Seats</legend>
+              <div className="casino-create-choice-grid casino-create-choice-grid--players">
+                {playerOptions.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    className={choiceClass(maxPlayers === count)}
+                    aria-pressed={maxPlayers === count}
+                    onClick={() => setMaxPlayers(count)}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="casino-create-field">
+              <legend className="casino-create-label">Big blind</legend>
+              <div className="casino-create-choice-grid casino-create-choice-grid--stakes">
+                {blindOptions.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={choiceClass(bigBlind === value)}
+                    aria-pressed={bigBlind === value}
+                    onClick={() => updateBigBlind(value)}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           </div>
-        </div>
 
-        <div>
-          <label className="mb-1 block text-sm text-gray-400">
-            Your Buy-in ({minBuyin.toLocaleString()}-{maxBuyin.toLocaleString()})
-          </label>
-          <input
-            type="number"
-            className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white outline-none focus:border-yellow-500"
-            value={buyIn}
-            onChange={(e) => setBuyIn(Number(e.target.value))}
-            min={minBuyin}
-            max={maxBuyin}
-          />
-          {!canAfford && (
-            <p className="mt-1 text-xs text-red-400">Insufficient chips (balance: {chipBalance.toLocaleString()})</p>
-          )}
-        </div>
-
-        <div className="space-y-1 rounded-lg bg-gray-800/50 p-3 text-sm text-gray-400">
-          <div className="flex justify-between">
-            <span>Blinds</span>
-            <span className="text-white">{smallBlind}/{bigBlind}</span>
+          <div className="casino-create-field">
+            <div className="casino-create-label-row">
+              <label className="casino-create-label" htmlFor="poker-buy-in">Buy-in</label>
+              <span>{minBuyin.toLocaleString()}-{maxBuyin.toLocaleString()}</span>
+            </div>
+            <input
+              id="poker-buy-in"
+              type="number"
+              className="casino-create-input"
+              value={buyIn}
+              onChange={(e) => setBuyIn(Number(e.target.value))}
+              min={minBuyin}
+              max={maxBuyin}
+            />
+            <div className="casino-create-quick-actions">
+              <button type="button" onClick={() => setBuyIn(minBuyin)}>20 BB</button>
+              <button type="button" onClick={() => setBuyIn(bigBlind * 50)}>50 BB</button>
+              <button type="button" onClick={() => setBuyIn(maxBuyin)}>Max</button>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>Buy-in range</span>
-            <span className="text-white">{minBuyin.toLocaleString()}-{maxBuyin.toLocaleString()}</span>
+        </section>
+
+        <aside className="casino-create-summary" aria-label="Poker table summary">
+          <div className="casino-create-summary__top">
+            <span className="casino-create-summary__mark" aria-hidden="true">&#9824;</span>
+            <div>
+              <div className="casino-create-summary__eyebrow">Texas Holdem</div>
+              <strong>{tableName}</strong>
+            </div>
           </div>
-        </div>
 
-        <p className="rounded-lg border border-[#f3d2a2]/10 bg-[#f1b45b]/6 px-3 py-2 text-xs leading-5 text-[#f7dfba]/78">
-          A house player may join if the room is empty.
-        </p>
+          <div className="casino-create-summary__stats">
+            <div>
+              <span>Seats</span>
+              <strong>{maxPlayers}</strong>
+            </div>
+            <div>
+              <span>Blinds</span>
+              <strong>{smallBlind}/{bigBlind}</strong>
+            </div>
+            <div>
+              <span>Stack</span>
+              <strong>{actualBuyIn.toLocaleString()}</strong>
+            </div>
+            <div>
+              <span>Balance</span>
+              <strong>{chipBalance.toLocaleString()}</strong>
+            </div>
+          </div>
 
-        {error && <p className="text-center text-sm text-red-400">{error}</p>}
+          <p className={`casino-create-status ${canAfford ? '' : 'is-danger'}`}>
+            {canAfford
+              ? 'You will sit as the first player after the table opens.'
+              : `Insufficient chips. Balance: ${chipBalance.toLocaleString()}`}
+          </p>
 
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" className="flex-1" loading={loading} disabled={!canAfford}>
-            Create & Sit Down
-          </Button>
-        </div>
+          {error && <p className="casino-create-error">{error}</p>}
+
+          <div className="casino-create-actions">
+            <Button type="button" variant="ghost" className="casino-create-actions__secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" className="casino-create-actions__primary" loading={loading} disabled={!canAfford}>
+              Create & Sit
+            </Button>
+          </div>
+        </aside>
       </form>
     </Modal>
   )
