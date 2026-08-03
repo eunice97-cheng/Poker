@@ -2127,36 +2127,37 @@
 
     .casino-mobile-play-dock {
       position: absolute !important;
-      left: 50%;
-      bottom: 8px;
+      inset: 46px 0 0 0;
       z-index: 62;
-      display: grid !important;
-      width: min(620px, calc(100vw - 118px));
-      min-height: 106px;
-      transform: translateX(-50%);
-      grid-template-columns: 250px minmax(0, 1fr);
-      align-items: center;
-      justify-content: stretch;
-      gap: 10px;
-      border-radius: 18px;
-      border: 1px solid rgba(243, 210, 162, 0.22);
-      background: linear-gradient(180deg, rgba(12, 7, 6, 0.9), rgba(7, 5, 4, 0.78));
-      padding: 6px 8px;
-      box-shadow: 0 18px 52px rgba(0, 0, 0, 0.48);
-      backdrop-filter: blur(18px);
+      display: block !important;
+      width: auto;
+      min-height: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      pointer-events: none;
     }
 
     .casino-mobile-play-dock[data-has-actions="true"] {
-      justify-content: stretch;
+      justify-content: initial;
     }
 
     .casino-mobile-play-dock__hand {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-width: 0;
-      grid-column: 1;
+      gap: 7px;
+      min-width: 250px;
+      min-height: 98px;
       justify-content: flex-start;
+      border-radius: 16px;
+      border: 1px solid rgba(243, 210, 162, 0.24);
+      background: linear-gradient(180deg, rgba(12, 7, 6, 0.92), rgba(7, 5, 4, 0.78));
+      padding: 6px 8px;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.44);
+      backdrop-filter: blur(16px);
     }
 
     .casino-mobile-play-dock__hand[data-folded="true"] .casino-mobile-play-dock__cards {
@@ -2165,7 +2166,7 @@
 
     .casino-mobile-play-dock__meta {
       display: flex;
-      min-width: 70px;
+      min-width: 72px;
       flex-direction: column;
       gap: 2px;
       text-align: right;
@@ -2201,32 +2202,38 @@
 
     .casino-mobile-play-dock__cards {
       display: flex;
-      gap: 5px;
+      gap: 6px;
     }
 
     .casino-mobile-play-dock__card {
-      height: 92px !important;
-      width: 62px !important;
+      height: 94px !important;
+      width: 64px !important;
       border-radius: 9px !important;
     }
 
     .casino-mobile-play-dock .casino-action-panel {
-      grid-column: 2;
-      flex: 0 1 auto;
+      position: absolute;
+      right: 18px;
+      top: 52%;
       min-width: 0;
-      justify-self: end;
+      transform: translateY(-50%);
+      pointer-events: auto;
     }
 
     .casino-action-panel__controls {
+      width: 88px !important;
+      flex-direction: column !important;
       flex-wrap: nowrap !important;
+      align-items: stretch !important;
       gap: 5px !important;
-      border-radius: 14px !important;
-      padding: 5px !important;
+      border-radius: 16px !important;
+      padding: 6px !important;
     }
 
     .casino-action-panel__timer {
-      width: 24px !important;
+      width: 100% !important;
       font-size: 11px !important;
+      line-height: 1 !important;
     }
 
     .casino-action-panel__divider {
@@ -2235,14 +2242,24 @@
 
     .casino-action-panel button {
       min-height: 32px !important;
+      width: 100% !important;
       border-radius: 10px !important;
-      padding: 0 9px !important;
-      font-size: 11px !important;
-      line-height: 1 !important;
-      white-space: nowrap !important;
+      padding: 0 6px !important;
+      font-size: 10px !important;
+      line-height: 1.05 !important;
+      white-space: normal !important;
     }
 
-    .casino-poker-table__seat[data-self="true"] {
+    .casino-mobile-play-dock .casino-action-panel__slider {
+      top: 50% !important;
+      right: calc(100% + 8px) !important;
+      bottom: auto !important;
+      left: auto !important;
+      margin-bottom: 0 !important;
+      transform: translateY(-50%) !important;
+    }
+
+    .casino-poker-table__seat[data-self="true"] .casino-player-seat__cards {
       display: none !important;
     }
 
@@ -2281,6 +2298,15 @@
 
     .casino-poker-table__seat .casino-player-seat__meta [class*="max-w-[88px]"] {
       display: none !important;
+    }
+
+    .casino-poker-table__seat .casino-player-seat__status {
+      display: block !important;
+      margin-top: 1px !important;
+      padding: 1px 5px !important;
+      font-size: 7px !important;
+      line-height: 1.1 !important;
+      letter-spacing: 0.08em !important;
     }
 
     .casino-action-panel__slider {

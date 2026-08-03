@@ -14,6 +14,17 @@ interface PlayerSeatProps {
 export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: PlayerSeatProps) {
   const timerPct = actionTimeLimit && timeLeft !== undefined ? (timeLeft / actionTimeLimit) * 100 : 100
   const timerColor = timerPct > 50 ? 'bg-green-500' : timerPct > 20 ? 'bg-yellow-500' : 'bg-red-500'
+  const statusLabel = player.folded
+    ? 'Fold'
+    : player.allIn
+      ? 'All In'
+      : player.sittingOut
+        ? 'Out'
+        : player.isCurrentTurn
+          ? 'Turn'
+          : player.currentBet > 0
+            ? `Bet ${player.currentBet.toLocaleString()}`
+            : ''
 
   return (
     <div
@@ -55,6 +66,12 @@ export function PlayerSeat({ player, timeLeft, actionTimeLimit, backImage }: Pla
         )}
         <div className="text-yellow-400 text-xs">{player.stack.toLocaleString()}</div>
       </div>
+
+      {statusLabel && (
+        <div className="casino-player-seat__status hidden rounded-full border border-yellow-400/30 bg-black/45 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-yellow-200">
+          {statusLabel}
+        </div>
+      )}
 
       {/* Hole Cards */}
       {player.holeCards.length > 0 && !player.folded && (

@@ -320,7 +320,7 @@ export function PokerTable({
         window.innerWidth <= 940 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
 
       if (isCompactLandscape) {
-        const verticalChrome = hasPlayableActions ? 58 : 44
+        const verticalChrome = 44
         const horizontalScale = (window.innerWidth - 24) / SCENE_W
         const verticalScale = (window.innerHeight - verticalChrome) / 470
         setSceneScale(Math.min(0.68, Math.max(0.56, Math.min(horizontalScale, verticalScale))))
@@ -336,7 +336,7 @@ export function PokerTable({
     updateSceneScale()
     window.addEventListener('resize', updateSceneScale)
     return () => window.removeEventListener('resize', updateSceneScale)
-  }, [hasPlayableActions])
+  }, [])
 
   useEffect(() => {
     if (gameState.phase !== 'preflop') return
