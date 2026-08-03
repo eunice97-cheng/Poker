@@ -12,6 +12,7 @@ import { ActionLog } from './ActionLog'
 import { TableBuzzer } from './TableBuzzer'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { AudioControls } from '@/components/ui/AudioControls'
+import { ExitIcon } from '@/components/ui/ExitIcon'
 import { getTableTheme } from '@/lib/table-theme'
 import { getDealerImage, getDeckBackImage, getTableImage } from '@/lib/table-assets'
 import { buildTableInvite, getDiscordUrl, shareInvite } from '@/lib/invite'
@@ -35,6 +36,26 @@ const PAD_X = 16
 const PAD_Y = 16
 const HOUSE_AI_NAMES = ['Alice', 'Bernice', 'Candice', 'Denice', 'Felice', 'Gillece'] as const
 const DEALER_TIP_AMOUNTS = [100, 500, 1000] as const
+
+function BuzzerIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8.5 18.5h7M7.25 15.5h9.5M8 15.5v-3.8a4 4 0 0 1 8 0v3.8M9.5 7.2 8.4 5M14.5 7.2 15.6 5M12 6.4V3.9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.5 15.5h11a1 1 0 0 1 1 1v.2a1.8 1.8 0 0 1-1.8 1.8H7.3a1.8 1.8 0 0 1-1.8-1.8v-.2a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
 function ellipsePt(angleDeg: number): React.CSSProperties {
   const rad = (angleDeg * Math.PI) / 180
@@ -283,6 +304,16 @@ export function PokerTable({
   useEffect(() => {
     const updateSceneScale = () => {
       if (typeof window === 'undefined') return
+      const isCompactLandscape =
+        window.innerWidth <= 940 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
+
+      if (isCompactLandscape) {
+        const horizontalScale = (window.innerWidth - 24) / SCENE_W
+        const verticalScale = (window.innerHeight - 122) / 470
+        setSceneScale(Math.min(0.62, Math.max(0.5, Math.min(horizontalScale, verticalScale))))
+        return
+      }
+
       const isMobile = window.innerWidth < 640
       const horizontalScale = (window.innerWidth - (isMobile ? 8 : 20)) / SCENE_W
       const verticalScale = (window.innerHeight - (isMobile ? 220 : 280)) / SCENE_H
@@ -358,8 +389,8 @@ export function PokerTable({
   }
 
   return (
-    <div className={`relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
-      <div className={`z-10 flex shrink-0 flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:justify-between md:px-4 md:py-3 ${theme.topBarClass}`}>
+    <div className={`casino-poker-table relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
+      <div className={`casino-poker-table__topbar z-10 flex shrink-0 flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:justify-between md:px-4 md:py-3 ${theme.topBarClass}`}>
         <div className="truncate text-sm font-bold text-white md:text-base">{gameState.tableName}</div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 md:gap-4 md:text-sm">
           <span>Hand #{gameState.handNumber}</span>
@@ -378,12 +409,15 @@ export function PokerTable({
               onClick={onSitOut}
               disabled={!!me.standUpAfterHand}
               className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-yellow-400 disabled:cursor-not-allowed disabled:border-yellow-700/50 disabled:text-yellow-500 md:px-3 md:text-sm"
+              title={
+                me.standUpAfterHand
+                  ? 'Leaving after this hand'
+                  : gameState.phase === 'waiting' || gameState.phase === 'showdown'
+                    ? 'Stand up'
+                    : 'Stand up after this hand'
+              }
             >
-              {me.standUpAfterHand
-                ? 'Leaving After Hand'
-                : gameState.phase === 'waiting' || gameState.phase === 'showdown'
-                  ? 'Stand Up'
-                  : 'Stand Up After Hand'}
+              {me.standUpAfterHand ? 'Leaving' : 'Stand'}
             </button>
           )}
           {isObserver && (
@@ -391,47 +425,53 @@ export function PokerTable({
               onClick={onSitIn}
               disabled={!canSitInNow}
               className="rounded-lg border border-yellow-600 px-2.5 py-1 text-xs text-yellow-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-600 md:px-3 md:text-sm"
+              title={canSitInNow ? 'Sit down' : 'You can sit after this hand'}
             >
-              Sit Down
+              Sit
             </button>
           )}
           <button
             onClick={handleInvite}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 md:px-3 md:text-sm"
+            className="casino-poker-table__icon-button flex items-center justify-center rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 md:px-3 md:text-sm"
             title="Copy table invite and open Discord"
+            aria-label={inviteLabel === 'done' ? 'Invite copied' : 'Copy Discord invite'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
             </svg>
-            {inviteLabel === 'done' ? 'Copied' : 'Invite'}
+            <span className="sr-only">{inviteLabel === 'done' ? 'Invite copied' : 'Invite'}</span>
           </button>
           {isAdmin && (
             <button
               onClick={handleOpenBuzzer}
-              className="rounded-lg border border-pink-500/60 bg-pink-500/10 px-2.5 py-1 text-xs font-semibold text-pink-200 transition-colors hover:border-pink-400 hover:text-white md:px-3 md:text-sm"
+              className="casino-poker-table__icon-button flex items-center justify-center rounded-lg border border-pink-500/60 bg-pink-500/10 px-2.5 py-1 text-xs font-semibold text-pink-200 transition-colors hover:border-pink-400 hover:text-white md:px-3 md:text-sm"
+              title="GM buzzer"
+              aria-label="Open GM buzzer"
             >
-              Buzzer
+              <BuzzerIcon />
             </button>
           )}
           <AudioControls />
           <button
             onClick={onLeave}
             disabled={isLeaving}
-            className="rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 disabled:cursor-not-allowed disabled:border-gray-800 disabled:text-gray-600 md:px-3 md:text-sm"
+            className="casino-poker-table__icon-button flex items-center justify-center rounded-lg border border-gray-700 px-2.5 py-1 text-xs text-gray-400 transition-colors hover:text-red-400 disabled:cursor-not-allowed disabled:border-gray-800 disabled:text-gray-600 md:px-3 md:text-sm"
+            title={isLeaving ? 'Leaving room' : 'Leave room'}
+            aria-label={isLeaving ? 'Leaving room' : 'Leave room'}
           >
-            {isLeaving ? 'Leaving...' : 'Leave Room'}
+            <ExitIcon />
           </button>
           {leaveError && <span className="text-xs text-red-400">{leaveError}</span>}
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-start justify-center overflow-hidden pt-2">
+      <div className="casino-poker-table__scene flex min-h-0 flex-1 items-start justify-center overflow-hidden pt-2">
         <div
-          className="relative shrink-0"
+          className="casino-poker-table__scene-shell relative shrink-0"
           style={{ width: `${SCENE_W * sceneScale}px`, height: `${SCENE_H * sceneScale}px` }}
         >
           <div
-            className="absolute left-0 top-0 origin-top-left"
+            className="casino-poker-table__scene-world absolute left-0 top-0 origin-top-left"
             style={{
               width: `${SCENE_W}px`,
               height: `${SCENE_H}px`,
@@ -587,7 +627,7 @@ export function PokerTable({
         </div>
       </div>
 
-      <div className={`z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-3 px-3 py-3 md:gap-4 md:px-4 ${theme.actionBarClass}`}>
+      <div className={`casino-poker-table__actionbar z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-3 px-3 py-3 md:gap-4 md:px-4 ${theme.actionBarClass}`}>
         {gameState.myHandRank && gameState.phase !== 'waiting' && (
           <div className="hidden text-center sm:block">
             <div className="text-xs font-bold uppercase tracking-wide text-yellow-400">{gameState.myHandRank}</div>
@@ -614,7 +654,7 @@ export function PokerTable({
                 onClick={onSitIn}
                 className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-yellow-400"
               >
-                Sit Down
+                Sit
               </button>
             )}
           </div>
@@ -642,23 +682,38 @@ export function PokerTable({
         <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
       </div>
 
-      <div className="casino-mobile-table-panel absolute bottom-24 right-3 z-20 lg:hidden">
+      <div
+        data-open={showMobilePanel ? 'true' : 'false'}
+        className="casino-mobile-table-panel absolute z-20 flex items-start gap-1 lg:hidden"
+      >
         {showMobilePanel ? (
-          <div className="casino-mobile-table-panel__content w-[min(22rem,calc(100vw-1rem))] space-y-2">
+          <div className="casino-mobile-table-panel__content space-y-2">
             <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-32" />
             <ActionLog logs={actionLogs} />
-            <ChatBox messages={messages} onSend={onChat} myPlayerId={gameState.myPlayerId} hasVipEmojis={hasVipEmojis} />
           </div>
         ) : null}
         <button
           type="button"
           onClick={() => setShowMobilePanel((value) => !value)}
-          className="ml-auto mt-2 flex min-w-[4.5rem] items-center justify-center rounded-full bg-gray-900/95 px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/10"
+          className="casino-mobile-table-panel__toggle flex h-12 w-8 items-center justify-center rounded-l-full border border-r-0 border-[#f3d2a2]/18 bg-[linear-gradient(180deg,rgba(18,10,8,0.92),rgba(10,7,6,0.72))] text-[#fff3e2]/78 shadow-[0_12px_34px_rgba(0,0,0,0.38)] backdrop-blur-xl transition-colors hover:border-[#f1b45b]/52 hover:text-[#fff3e2]"
           aria-expanded={showMobilePanel}
-          aria-label={showMobilePanel ? 'Hide chat panel' : 'Show chat panel'}
+          aria-label={showMobilePanel ? 'Hide table tools' : 'Show table tools'}
+          title={showMobilePanel ? 'Hide table tools' : 'Show table tools'}
         >
-          {showMobilePanel ? 'Close' : 'Chat'}
+          <svg className={`h-4 w-4 transition-transform duration-200 ${showMobilePanel ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14.5 6.5 9 12l5.5 5.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
+      </div>
+
+      <div className="casino-mobile-table-chat absolute z-30 lg:hidden">
+        <ChatBox
+          messages={messages}
+          onSend={onChat}
+          myPlayerId={gameState.myPlayerId}
+          hasVipEmojis={hasVipEmojis}
+          initialCollapsed
+        />
       </div>
 
       {handResult && (

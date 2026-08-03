@@ -59,7 +59,7 @@ export function BetSlider({ minRaise, maxRaise, bigBlind, pot, callAmount, myCur
   ].map((preset) => ({ ...preset, value: clampAmount(preset.value) }))
 
   return (
-    <div className="w-72 rounded-xl border border-gray-700 bg-gray-900/95 p-4">
+    <div className="casino-bet-slider w-72 rounded-xl border border-gray-700 bg-gray-900/95 p-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm text-gray-400">Raise Amount</span>
         <span className="text-lg font-bold text-yellow-400">{amount.toLocaleString()}</span>

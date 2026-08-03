@@ -25,9 +25,9 @@ export function ActionPanel({ validActions, callAmount, pot, minRaise, myStack, 
   const maxRaise = myStack + myCurrentBet
 
   return (
-    <div className="relative">
+    <div className="casino-action-panel relative">
       {showRaiseSlider && (
-        <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2">
+        <div className="casino-action-panel__slider absolute bottom-full left-1/2 mb-3 -translate-x-1/2">
           <BetSlider
             minRaise={minRaise}
             maxRaise={maxRaise}
@@ -44,13 +44,13 @@ export function ActionPanel({ validActions, callAmount, pot, minRaise, myStack, 
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-gray-700 bg-black/70 px-3 py-3 backdrop-blur sm:px-4">
+      <div className="casino-action-panel__controls flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-gray-700 bg-black/70 px-3 py-3 backdrop-blur sm:px-4">
         {/* Timer */}
-        <div className={`w-8 text-center text-sm font-bold ${timeLeft <= 10 ? 'text-red-400' : 'text-gray-400'}`}>
+        <div className={`casino-action-panel__timer w-8 text-center text-sm font-bold ${timeLeft <= 10 ? 'text-red-400' : 'text-gray-400'}`}>
           {timeLeft}s
         </div>
 
-        <div className="hidden h-8 w-px bg-gray-700 sm:block" />
+        <div className="casino-action-panel__divider hidden h-8 w-px bg-gray-700 sm:block" />
 
         {/* Action buttons */}
         {validActions.includes('fold') && (
