@@ -40,11 +40,6 @@ const MEMBERSHIP_REWARDS = [
   { amount: '$25/mo', reward: '45,000 chips' },
 ]
 
-function isCompactLandscapeViewport() {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth <= 900 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
-}
-
 function ButtonIcon({ src }: { src: string }) {
   return (
     <Image
@@ -65,7 +60,6 @@ function GoldRim() {
 export function FloatingButtons() {
   const pathname = usePathname()
   const [supportOpen, setSupportOpen] = useState(false)
-  const [compactLandscape, setCompactLandscape] = useState(false)
   const supportRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -79,23 +73,7 @@ export function FloatingButtons() {
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
 
-  useEffect(() => {
-    const updateCompactLandscape = () => setCompactLandscape(isCompactLandscapeViewport())
-
-    updateCompactLandscape()
-    window.addEventListener('resize', updateCompactLandscape)
-    window.addEventListener('orientationchange', updateCompactLandscape)
-    return () => {
-      window.removeEventListener('resize', updateCompactLandscape)
-      window.removeEventListener('orientationchange', updateCompactLandscape)
-    }
-  }, [])
-
   if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')) {
-    return null
-  }
-
-  if (pathname === '/' && compactLandscape) {
     return null
   }
 

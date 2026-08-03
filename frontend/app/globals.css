@@ -270,6 +270,22 @@
     }
   }
 
+  @keyframes casino-lobby-chat-unread-blink {
+    0%, 100% {
+      border-color: rgba(243, 210, 162, 0.18);
+      box-shadow: 0 0 0 rgba(241, 180, 91, 0);
+      color: rgba(255, 243, 226, 0.78);
+    }
+
+    50% {
+      border-color: rgba(241, 180, 91, 0.88);
+      box-shadow:
+        0 0 0 5px rgba(241, 180, 91, 0.12),
+        0 0 22px rgba(241, 180, 91, 0.42);
+      color: #fff3e2;
+    }
+  }
+
   .floating-attention-chip,
   .floating-attention-bell,
   .floating-attention-drink {
@@ -296,6 +312,26 @@
     pointer-events: none;
     opacity: 0;
     transform: translateY(-0.75rem) scale(0.96);
+  }
+
+  .casino-lobby-chat[data-open="false"] > div {
+    border-color: rgba(243, 210, 162, 0.16);
+    background: linear-gradient(180deg, rgba(16, 8, 7, 0.92), rgba(16, 8, 7, 0.72));
+  }
+
+  .casino-lobby-chat[data-open="false"] .casino-lobby-chat__toggle {
+    height: 48px;
+    width: 48px;
+    padding: 0;
+    color: rgba(255, 243, 226, 0.78);
+  }
+
+  .casino-lobby-chat[data-open="false"][data-unread="true"] .casino-lobby-chat__icon-box {
+    animation: casino-lobby-chat-unread-blink 1.05s ease-in-out infinite;
+  }
+
+  .casino-lobby-chat__unread-badge {
+    box-shadow: 0 0 14px rgba(241, 180, 91, 0.42);
   }
 
   .main-site-flame {
@@ -604,6 +640,7 @@
     .casino-lobby-chat[data-open="false"] {
       right: 8px !important;
       bottom: 8px !important;
+      max-width: 48px !important;
     }
 
     .casino-lobby-chat__title {
@@ -708,10 +745,6 @@
     .main-site-link > span:first-child {
       height: 34px !important;
       width: 34px !important;
-    }
-
-    .casino-floating-buttons {
-      display: none !important;
     }
 
     .casino-game-lobby__header {
@@ -895,11 +928,13 @@
     .casino-lobby-chat[data-open="false"] {
       right: 8px !important;
       bottom: 8px !important;
-      max-width: 210px !important;
+      max-width: 48px !important;
     }
 
     .casino-lobby-chat[data-open="false"] > div > button {
-      padding: 8px 10px !important;
+      height: 48px !important;
+      width: 48px !important;
+      padding: 0 !important;
     }
 
     .casino-lobby-chat__messages {

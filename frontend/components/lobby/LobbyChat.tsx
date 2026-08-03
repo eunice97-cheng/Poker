@@ -30,13 +30,39 @@ function FallbackAvatar({ username }: { username: string }) {
   )
 }
 
+function ChatToggleIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5.25 6.75C5.25 5.78 6.03 5 7 5h10c.97 0 1.75.78 1.75 1.75v7.5c0 .97-.78 1.75-1.75 1.75h-5.24l-4.2 3.05A.82.82 0 0 1 6.25 18.4V16H7a1.75 1.75 0 0 1-1.75-1.75v-7.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M8.7 9.25h6.6M8.7 12.15h4.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = false }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [open, setOpen] = useState(!compactLandscape)
+  const [unreadCount, setUnreadCount] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const openRef = useRef(open)
+  const profileIdRef = useRef(profile?.id)
+
+  useEffect(() => {
+    profileIdRef.current = profile?.id
+  }, [profile?.id])
+
+  useEffect(() => {
+    openRef.current = open
+    if (open) setUnreadCount(0)
+  }, [open])
 
   useEffect(() => {
     if (compactLandscape) {
@@ -56,9 +82,15 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   useEffect(() => {
     if (!socket) return
 
-    const onHistory = (history: ChatMessage[]) => setMessages(history)
+    const onHistory = (history: ChatMessage[]) => {
+      setMessages(history)
+      if (!openRef.current) setUnreadCount(Math.min(history.length, 99))
+    }
     const onMessage = (message: ChatMessage) => {
       setMessages((prev) => [...prev.slice(-59), message])
+      if (!openRef.current && message.playerId !== profileIdRef.current) {
+        setUnreadCount((count) => Math.min(count + 1, 99))
+      }
     }
 
     socket.on('lobby_chat_history', onHistory)
@@ -106,9 +138,12 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
     setDraft((prev) => appendChatEmojiCode(prev, emojiCode, MAX_LOBBY_CHAT_LENGTH))
   }
 
+  const unreadLabel = unreadCount > 99 ? '99+' : unreadCount.toString()
+
   return (
     <div
       data-open={open ? 'true' : 'false'}
+      data-unread={unreadCount > 0 ? 'true' : 'false'}
       className={`casino-lobby-chat fixed bottom-3 right-1 z-[10000] max-w-[calc(100vw-0.5rem)] transition-all md:bottom-6 md:right-3 ${
         open ? 'w-[336px]' : 'left-auto w-auto'
       }`}
@@ -121,22 +156,36 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className={`flex items-center justify-between gap-3 text-left ${open ? 'w-full px-3 py-3 md:px-4' : 'w-full px-3 py-2.5 md:px-4'}`}
+          className={`casino-lobby-chat__toggle flex items-center justify-between gap-3 text-left ${open ? 'w-full px-3 py-3 md:px-4' : 'h-12 w-12 justify-center rounded-full p-0'}`}
+          aria-label={open ? 'Hide lounge chat' : 'Show lounge chat'}
         >
-          <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">Lounge chat</div>
-            <div className={`casino-lobby-chat__title ${open ? 'mt-1 font-serif text-lg text-[#fff3e2] md:text-xl' : 'text-sm font-semibold text-[#fff3e2]'}`}>
-              Hear the room
+          {open ? (
+            <>
+              <div className="min-w-0">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-[#f3d2a2]/42">Lounge chat</div>
+                <div className="casino-lobby-chat__title mt-1 font-serif text-lg text-[#fff3e2] md:text-xl">
+                  Hear the room
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/52 md:px-3 md:tracking-[0.22em]">
+                  {messages.length} msgs
+                </div>
+                <div className="casino-lobby-chat__icon-box flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[#fff3e2]/72">
+                  <ChatToggleIcon className="h-4 w-4" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="casino-lobby-chat__icon-box relative flex h-full w-full items-center justify-center rounded-full" aria-hidden="true">
+              <ChatToggleIcon />
+              {unreadCount > 0 && (
+                <span className="casino-lobby-chat__unread-badge absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#2b120a] bg-[#f1b45b] px-1 text-[10px] font-bold text-[#1b0d06]">
+                  {unreadLabel}
+                </span>
+              )}
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/52 md:px-3 md:tracking-[0.22em]">
-              {messages.length} msgs
-            </div>
-            <div className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-white/60 md:tracking-[0.22em]">
-              {open ? 'Hide' : 'Show'}
-            </div>
-          </div>
+          )}
         </button>
 
         {open && (
