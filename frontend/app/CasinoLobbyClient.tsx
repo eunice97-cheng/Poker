@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -60,6 +61,11 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
 
 function formatChips(value: number | undefined) {
   return (value ?? 0).toLocaleString()
+}
+
+function isCompactLandscapeViewport() {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth <= 900 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
 }
 
 function GameCard({ game }: { game: CasinoGameCard }) {
@@ -135,6 +141,64 @@ function ComingSoonCard() {
   )
 }
 
+function CompactGameCard({ game }: { game: CasinoGameCard }) {
+  const { playSfx } = useAudio()
+  const badge =
+    game.tone === 'gold'
+      ? 'border-[#f8d86a]/45 bg-[#f8d86a]/14 text-[#fff0be]'
+      : 'border-[#76f4dc]/42 bg-[#1da58e]/15 text-[#c8fff4]'
+
+  return (
+    <Link
+      href={game.href}
+      onClick={() => playSfx('click')}
+      className="relative flex h-full min-h-0 overflow-hidden rounded-xl border border-[#d9ad5a]/26 bg-black/74 shadow-[0_18px_44px_rgba(0,0,0,0.36)] outline-none focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
+      aria-label={`Enter ${game.title}`}
+    >
+      <img src={game.image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-[center_42%]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.12)_52%,rgba(0,0,0,0.78)_100%)]" />
+      <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#f5d07c]/18" />
+
+      <div className="relative z-10 flex h-full w-full flex-col justify-between p-2">
+        <div className={`w-fit rounded-full border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.16em] backdrop-blur-md ${badge}`}>
+          {game.roomLabel}
+        </div>
+
+        <div className="rounded-lg border border-[#f5d07c]/18 bg-black/70 p-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.34)] backdrop-blur-md">
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div className="rounded-md border border-white/10 bg-white/[0.04] px-1 py-1.5">
+              <div className="text-base font-bold leading-none text-white">{game.stats.tableCount}</div>
+              <div className="mt-1 text-[7px] uppercase tracking-[0.1em] text-white/48">Tables</div>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/[0.04] px-1 py-1.5">
+              <div className="text-base font-bold leading-none text-white">{game.stats.playerCount}</div>
+              <div className="mt-1 text-[7px] uppercase tracking-[0.1em] text-white/48">Players</div>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/[0.04] px-1 py-1.5">
+              <div className="text-base font-bold leading-none text-white">{game.stats.openSeats}</div>
+              <div className="mt-1 text-[7px] uppercase tracking-[0.1em] text-white/48">Seats</div>
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between gap-2 px-0.5 text-[11px]">
+            <span className="truncate font-semibold text-white/72">{game.stats.featuredLimit}</span>
+            <span className="shrink-0 font-bold text-[#fff2bf]">Enter</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function CompactComingSoonCard() {
+  return (
+    <div className="relative h-full min-h-0 overflow-hidden rounded-xl border border-[#d9ad5a]/18 bg-black/60 shadow-[0_18px_44px_rgba(0,0,0,0.32)]" aria-label="Coming soon">
+      <img src="/casino-lobby/coming-soon.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-[center_45%]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.08)_54%,rgba(0,0,0,0.48)_100%)]" />
+      <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#f5d07c]/14" />
+    </div>
+  )
+}
+
 export function CasinoLobbyClient({
   profile,
   pokerStats,
@@ -148,6 +212,7 @@ export function CasinoLobbyClient({
   const supabase = createClient()
   const { playSfx } = useAudio()
   const { socket, connected, error: socketError } = useSocket(token)
+  const [compactLandscape, setCompactLandscape] = useState(false)
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
   const playerName = profile?.username ?? 'Player'
   const gameCards: CasinoGameCard[] = games.map((game) => ({
@@ -163,6 +228,119 @@ export function CasinoLobbyClient({
       await supabase.auth.signOut()
     }
     router.push('/auth/login')
+  }
+
+  useEffect(() => {
+    const updateCompactLandscape = () => setCompactLandscape(isCompactLandscapeViewport())
+
+    updateCompactLandscape()
+    window.addEventListener('resize', updateCompactLandscape)
+    window.addEventListener('orientationchange', updateCompactLandscape)
+    return () => {
+      window.removeEventListener('resize', updateCompactLandscape)
+      window.removeEventListener('orientationchange', updateCompactLandscape)
+    }
+  }, [])
+
+  if (compactLandscape) {
+    return (
+      <main className="relative h-[100svh] overflow-hidden bg-[#080b0d] text-white">
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('/casino-lobby/lobby-background.png')" }}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,5,6,0.86)_0%,rgba(5,8,10,0.4)_28%,rgba(9,7,6,0.28)_58%,rgba(4,5,6,0.88)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.36)_0%,rgba(0,0,0,0.12)_35%,rgba(3,5,6,0.88)_100%)]" />
+        </div>
+
+        <div className="relative z-10 flex h-full min-h-0 flex-col">
+          <header className="h-[64px] shrink-0 border-b border-[#d9ad5a]/16 bg-black/42 backdrop-blur-xl">
+            <div className="flex h-full items-center justify-between gap-2 px-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <img
+                  src="/casino-lobby/logo.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-10 w-14 shrink-0 object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.48)]"
+                />
+                <div className="min-w-0">
+                  <div className="truncate bg-gradient-to-r from-[#f8e7b2] via-[#d9ad5a] to-[#fff8df] bg-clip-text text-[8px] font-bold uppercase tracking-[0.24em] text-transparent">
+                    ASL Gaming Casino
+                  </div>
+                  <h1 className="truncate bg-gradient-to-r from-[#fffaf0] via-[#f6d47e] to-[#c8923a] bg-clip-text font-serif text-[26px] font-black uppercase leading-none tracking-[0.06em] text-transparent">
+                    Game Lobby
+                  </h1>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Link
+                  href="/profile"
+                  onClick={() => playSfx('click')}
+                  className="flex max-w-[140px] items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-2 py-1.5 transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
+                >
+                  <AvatarDisplay avatarId={profile?.avatar ?? 'avatar_m1'} size="sm" className="border-[#f8d86a]/35" />
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-bold leading-tight text-white">{playerName}</div>
+                    <div className="truncate text-[10px] font-semibold leading-tight text-[#f8d86a]">{formatChips(profile?.chip_balance)} chips</div>
+                  </div>
+                </Link>
+                <Link
+                  href="/profile?tab=mail"
+                  onClick={() => playSfx('click')}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#78f4df]/34 hover:text-white"
+                  aria-label="Open player mail"
+                  title="Player mail"
+                >
+                  <MailIcon />
+                  {unreadMailCount > 0 && (
+                    <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-[#f8d86a] px-1.5 py-0.5 text-center text-[10px] font-black text-black">
+                      {unreadMailLabel}
+                    </span>
+                  )}
+                </Link>
+                <AudioControls buttonClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/64 transition-colors hover:border-red-300/34 hover:bg-red-500/10 hover:text-red-100"
+                  title="Sign out"
+                  aria-label="Sign out"
+                >
+                  <ExitIcon />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <section className="grid min-h-0 flex-1 grid-cols-[116px_minmax(0,1fr)] gap-2 p-2">
+            <div className="grid min-h-0 grid-rows-3 gap-2">
+              <div className="flex min-h-0 flex-col justify-center rounded-xl border border-white/10 bg-black/34 px-3 py-2 backdrop-blur-md">
+                <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/42">Casino Balance</div>
+                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{formatChips(profile?.chip_balance)}</div>
+              </div>
+              <div className="flex min-h-0 flex-col justify-center rounded-xl border border-white/10 bg-black/34 px-3 py-2 backdrop-blur-md">
+                <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/42">Live Tables</div>
+                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{pokerStats.tableCount + blackjackStats.tableCount}</div>
+              </div>
+              <div className="flex min-h-0 flex-col justify-center rounded-xl border border-white/10 bg-black/34 px-3 py-2 backdrop-blur-md">
+                <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/42">Players Seated</div>
+                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{pokerStats.playerCount + blackjackStats.playerCount}</div>
+              </div>
+            </div>
+
+            <div className="grid min-h-0 grid-cols-3 gap-2">
+              <CompactGameCard game={gameCards[0]} />
+              <CompactComingSoonCard />
+              <CompactGameCard game={gameCards[1]} />
+            </div>
+          </section>
+
+          <LobbyChat socket={socket} profile={profile} hasVipEmojis={hasVipEmojis} compactLandscape />
+        </div>
+      </main>
+    )
   }
 
   return (

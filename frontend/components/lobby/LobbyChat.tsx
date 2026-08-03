@@ -12,6 +12,7 @@ interface LobbyChatProps {
   socket: Socket | null
   profile: Profile | null
   hasVipEmojis: boolean
+  compactLandscape?: boolean
 }
 
 const MAX_LOBBY_CHAT_LENGTH = 240
@@ -29,18 +30,23 @@ function FallbackAvatar({ username }: { username: string }) {
   )
 }
 
-export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
+export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = false }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(!compactLandscape)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (compactLandscape) {
+      setOpen(false)
+      return
+    }
+
     const shouldCollapseOnPhone = window.matchMedia('(max-width: 940px), (max-height: 560px), (max-width: 900px) and (max-height: 430px) and (orientation: landscape)').matches
     if (shouldCollapseOnPhone) setOpen(false)
-  }, [])
+  }, [compactLandscape])
 
   useEffect(() => {
     document.body.classList.toggle('casino-lobby-chat-open', open)
