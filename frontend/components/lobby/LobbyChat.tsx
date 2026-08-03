@@ -54,6 +54,21 @@ function EmojiIcon({ className = 'h-4 w-4' }: { className?: string }) {
   )
 }
 
+function VipEmojiIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5.2 18.6h13.6M6.1 16.2l-1-8.1 4.7 3.2L12 5.4l2.2 5.9 4.7-3.2-1 8.1H6.1Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M9.2 14.1h5.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = false }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
@@ -61,7 +76,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   const [sending, setSending] = useState(false)
   const [open, setOpen] = useState(!compactLandscape)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [showEmojiTray, setShowEmojiTray] = useState(false)
+  const [activeEmojiTray, setActiveEmojiTray] = useState<'standard' | 'vip' | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const openRef = useRef(open)
   const profileIdRef = useRef(profile?.id)
@@ -73,12 +88,13 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   useEffect(() => {
     openRef.current = open
     if (open) setUnreadCount(0)
-    if (!open) setShowEmojiTray(false)
+    if (!open) setActiveEmojiTray(null)
   }, [open])
 
   useEffect(() => {
     if (compactLandscape) {
       setOpen(false)
+      setActiveEmojiTray(null)
       return
     }
 
@@ -143,7 +159,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
         return
       }
       setDraft('')
-      setShowEmojiTray(false)
+      setActiveEmojiTray(null)
     })
   }
 
@@ -152,6 +168,9 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   }
 
   const unreadLabel = unreadCount > 99 ? '99+' : unreadCount.toString()
+  const unreadStatusLabel = unreadCount === 1 ? '1 unread' : `${unreadLabel} unread`
+  const showEmojiTray = activeEmojiTray === 'standard'
+  const showVipEmojiTray = activeEmojiTray === 'vip'
 
   return (
     <div
@@ -161,9 +180,9 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
         open ? 'w-[336px]' : 'left-auto w-auto'
       }`}
     >
-      {open && showEmojiTray && (
-        <div className="casino-lobby-chat__emoji-popover">
-          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
+      {open && activeEmojiTray && (
+        <div className="casino-lobby-chat__emoji-popover" data-kind={activeEmojiTray}>
+          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} category={activeEmojiTray} />
         </div>
       )}
 
@@ -188,7 +207,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
               </div>
               <div className="flex items-center gap-2">
                 <div className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/52 md:px-3 md:tracking-[0.22em]">
-                  {messages.length} msgs
+                  {unreadStatusLabel}
                 </div>
                 <div className="casino-lobby-chat__icon-box flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[#fff3e2]/72">
                   <ChatToggleIcon className="h-4 w-4" />
@@ -237,20 +256,36 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
 
             <form onSubmit={submit} className="casino-lobby-chat__form mt-3 space-y-2">
               <div className="casino-lobby-chat__compose flex items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiTray((value) => !value)}
-                  className={`casino-lobby-chat__emoji-button flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl border text-[#fff3e2]/72 transition-colors ${
-                    showEmojiTray
-                      ? 'border-[#f3d2a2]/38 bg-[#f1b45b]/14 text-[#fff3e2]'
-                      : 'border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.72)] hover:border-[#f3d2a2]/32 hover:text-[#fff3e2]'
-                  }`}
-                  aria-pressed={showEmojiTray}
-                  aria-label={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
-                  title={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
-                >
-                  <EmojiIcon />
-                </button>
+                <div className="casino-lobby-chat__emoji-actions flex shrink-0 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveEmojiTray((value) => (value === 'standard' ? null : 'standard'))}
+                    className={`casino-lobby-chat__emoji-button flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl border text-[#fff3e2]/72 transition-colors ${
+                      showEmojiTray
+                        ? 'border-[#f3d2a2]/38 bg-[#f1b45b]/14 text-[#fff3e2]'
+                        : 'border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.72)] hover:border-[#f3d2a2]/32 hover:text-[#fff3e2]'
+                    }`}
+                    aria-pressed={showEmojiTray}
+                    aria-label={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
+                    title={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
+                  >
+                    <EmojiIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveEmojiTray((value) => (value === 'vip' ? null : 'vip'))}
+                    className={`casino-lobby-chat__emoji-button casino-lobby-chat__vip-emoji-button flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl border transition-colors ${
+                      showVipEmojiTray
+                        ? 'border-[#f3d2a2]/48 bg-[#f1b45b]/18 text-[#ffe5a4]'
+                        : 'border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.72)] text-[#f3d2a2]/72 hover:border-[#f3d2a2]/36 hover:text-[#ffe5a4]'
+                    }`}
+                    aria-pressed={showVipEmojiTray}
+                    aria-label={showVipEmojiTray ? 'Hide VIP emoji picker' : 'Show VIP emoji picker'}
+                    title={showVipEmojiTray ? 'Hide VIP emoji picker' : 'Show VIP emoji picker'}
+                  >
+                    <VipEmojiIcon />
+                  </button>
+                </div>
                 <textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value.slice(0, MAX_LOBBY_CHAT_LENGTH))}

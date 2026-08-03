@@ -1,8 +1,10 @@
 export interface ChatEmojiDefinition {
   slug: string
   code: string
-  symbol: string
   label: string
+  symbol?: string
+  imageSrc?: string
+  kind?: 'standard' | 'vip'
 }
 
 export const STANDARD_CHAT_EMOJIS: ChatEmojiDefinition[] = [
@@ -34,8 +36,37 @@ export const STANDARD_CHAT_EMOJIS: ChatEmojiDefinition[] = [
   { slug: 'wheelchair', code: ':wheelchair:', symbol: '\u267F\uFE0F', label: 'wheelchair' },
 ]
 
-export const VIP_CHAT_EMOJIS: ChatEmojiDefinition[] = []
-export const CHAT_EMOJIS = STANDARD_CHAT_EMOJIS
+const VIP_EMOJI_BASE_PATH = '/vip-emojis'
+
+export const VIP_CHAT_EMOJIS: ChatEmojiDefinition[] = [
+  { slug: 'vip-all-in', code: ':vip-all-in:', imageSrc: `${VIP_EMOJI_BASE_PATH}/all-in.png`, label: 'all in', kind: 'vip' },
+  { slug: 'vip-angry', code: ':vip-angry:', imageSrc: `${VIP_EMOJI_BASE_PATH}/angry.png`, label: 'angry', kind: 'vip' },
+  { slug: 'vip-applause', code: ':vip-applause:', imageSrc: `${VIP_EMOJI_BASE_PATH}/applause.png`, label: 'applause', kind: 'vip' },
+  { slug: 'vip-big-pot', code: ':vip-big-pot:', imageSrc: `${VIP_EMOJI_BASE_PATH}/big-pot.png`, label: 'big pot', kind: 'vip' },
+  { slug: 'vip-blackjack-21', code: ':vip-blackjack-21:', imageSrc: `${VIP_EMOJI_BASE_PATH}/blackjack-21.png`, label: 'blackjack 21', kind: 'vip' },
+  { slug: 'vip-bluff', code: ':vip-bluff:', imageSrc: `${VIP_EMOJI_BASE_PATH}/bluff.png`, label: 'bluff', kind: 'vip' },
+  { slug: 'vip-bust', code: ':vip-bust:', imageSrc: `${VIP_EMOJI_BASE_PATH}/bust.png`, label: 'bust', kind: 'vip' },
+  { slug: 'vip-cheers', code: ':vip-cheers:', imageSrc: `${VIP_EMOJI_BASE_PATH}/cheers.png`, label: 'cheers', kind: 'vip' },
+  { slug: 'vip-crying', code: ':vip-crying:', imageSrc: `${VIP_EMOJI_BASE_PATH}/crying.png`, label: 'crying', kind: 'vip' },
+  { slug: 'vip-double-down', code: ':vip-double-down:', imageSrc: `${VIP_EMOJI_BASE_PATH}/double-down.png`, label: 'double down', kind: 'vip' },
+  { slug: 'vip-facepalm', code: ':vip-facepalm:', imageSrc: `${VIP_EMOJI_BASE_PATH}/facepalm.png`, label: 'facepalm', kind: 'vip' },
+  { slug: 'vip-fold', code: ':vip-fold:', imageSrc: `${VIP_EMOJI_BASE_PATH}/fold.png`, label: 'fold', kind: 'vip' },
+  { slug: 'vip-good-game', code: ':vip-good-game:', imageSrc: `${VIP_EMOJI_BASE_PATH}/good-game.png`, label: 'good game', kind: 'vip' },
+  { slug: 'vip-hit-me', code: ':vip-hit-me:', imageSrc: `${VIP_EMOJI_BASE_PATH}/hit-me.png`, label: 'hit me', kind: 'vip' },
+  { slug: 'vip-hot-streak', code: ':vip-hot-streak:', imageSrc: `${VIP_EMOJI_BASE_PATH}/hot-streak.png`, label: 'hot streak', kind: 'vip' },
+  { slug: 'vip-join-me', code: ':vip-join-me:', imageSrc: `${VIP_EMOJI_BASE_PATH}/join-me.png`, label: 'join me', kind: 'vip' },
+  { slug: 'vip-laughing', code: ':vip-laughing:', imageSrc: `${VIP_EMOJI_BASE_PATH}/laughing.png`, label: 'laughing', kind: 'vip' },
+  { slug: 'vip-love-it', code: ':vip-love-it:', imageSrc: `${VIP_EMOJI_BASE_PATH}/love-it.png`, label: 'love it', kind: 'vip' },
+  { slug: 'vip-lucky-ace', code: ':vip-lucky-ace:', imageSrc: `${VIP_EMOJI_BASE_PATH}/lucky-ace.png`, label: 'lucky ace', kind: 'vip' },
+  { slug: 'vip-raise', code: ':vip-raise:', imageSrc: `${VIP_EMOJI_BASE_PATH}/raise.png`, label: 'raise', kind: 'vip' },
+  { slug: 'vip-respect', code: ':vip-respect:', imageSrc: `${VIP_EMOJI_BASE_PATH}/respect.png`, label: 'respect', kind: 'vip' },
+  { slug: 'vip-rolling', code: ':vip-rolling:', imageSrc: `${VIP_EMOJI_BASE_PATH}/rolling.png`, label: 'rolling', kind: 'vip' },
+  { slug: 'vip-royal-flush', code: ':vip-royal-flush:', imageSrc: `${VIP_EMOJI_BASE_PATH}/royal-flush.png`, label: 'royal flush', kind: 'vip' },
+  { slug: 'vip-shocked', code: ':vip-shocked:', imageSrc: `${VIP_EMOJI_BASE_PATH}/shocked.png`, label: 'shocked', kind: 'vip' },
+  { slug: 'vip-stand', code: ':vip-stand:', imageSrc: `${VIP_EMOJI_BASE_PATH}/stand.png`, label: 'stand', kind: 'vip' },
+]
+
+export const CHAT_EMOJIS = [...STANDARD_CHAT_EMOJIS, ...VIP_CHAT_EMOJIS]
 
 export const CHAT_EMOJI_MAP = new Map(CHAT_EMOJIS.map((emoji) => [emoji.code, emoji]))
 

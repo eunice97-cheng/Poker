@@ -352,6 +352,14 @@
     backdrop-filter: blur(18px);
   }
 
+  .casino-lobby-chat__emoji-popover[data-kind="vip"] {
+    width: min(19rem, calc(100vw - 1rem));
+  }
+
+  .casino-lobby-chat__emoji-popover[data-kind="vip"] img {
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.38));
+  }
+
   @media (max-width: 940px), (max-height: 560px) {
     .main-site-link {
       display: none !important;
@@ -767,6 +775,10 @@
       gap: 6px !important;
     }
 
+    .casino-lobby-chat__emoji-actions {
+      gap: 5px !important;
+    }
+
     .casino-lobby-chat__emoji-popover {
       right: calc(100% + 6px);
       bottom: 0;
@@ -795,6 +807,19 @@
 
     .casino-lobby-chat__emoji-popover button span {
       font-size: 21px !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] .grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] button {
+      height: 42px !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] img {
+      height: 36px !important;
+      width: 36px !important;
     }
 
     .casino-lobby-chat__emoji-button {
@@ -1094,6 +1119,19 @@
 
     .casino-lobby-chat__emoji-popover button span {
       font-size: 19px !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] .grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] button {
+      height: 38px !important;
+    }
+
+    .casino-lobby-chat__emoji-popover[data-kind="vip"] img {
+      height: 32px !important;
+      width: 32px !important;
     }
 
     .casino-lobby-chat__emoji-button {
