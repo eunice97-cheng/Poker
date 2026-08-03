@@ -134,11 +134,24 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCol
   const unreadLabel = unreadCount > 99 ? '99+' : unreadCount.toString()
 
   return (
-    <div
-      data-open={collapsed ? 'false' : 'true'}
-      data-unread={unreadCount > 0 ? 'true' : 'false'}
-      className={`casino-table-chat flex flex-col overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all ${collapsed ? 'h-12 w-12 self-end rounded-full' : 'h-72 rounded-[30px] sm:h-80'}`}
-    >
+    <div className="casino-table-chat-shell relative flex w-full flex-col">
+      {!collapsed && activeEmojiTray && (
+        <div className="casino-table-chat__emoji-popover" data-kind={activeEmojiTray}>
+          <ChatEmojiTray
+            hasVipAccess={hasVipEmojis}
+            onSelect={appendEmoji}
+            onLockedSelect={() => setError('VIP emoji are for GM or donors')}
+            variant="table"
+            category={activeEmojiTray}
+          />
+        </div>
+      )}
+
+      <div
+        data-open={collapsed ? 'false' : 'true'}
+        data-unread={unreadCount > 0 ? 'true' : 'false'}
+        className={`casino-table-chat flex flex-col overflow-hidden border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(16,8,7,0.88),rgba(16,8,7,0.62))] shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all ${collapsed ? 'h-12 w-12 self-end rounded-full' : 'h-72 rounded-[30px] sm:h-80'}`}
+      >
       <button
         type="button"
         onClick={() => setCollapsed((current) => !current)}
@@ -205,18 +218,6 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCol
           </div>
 
           <div className="casino-table-chat__form shrink-0 border-t border-white/8 px-3 py-3">
-            {activeEmojiTray && (
-              <div className="casino-table-chat__emoji-tray mb-2 rounded-2xl border border-white/8 bg-black/18">
-                <ChatEmojiTray
-                  hasVipAccess={hasVipEmojis}
-                  onSelect={appendEmoji}
-                  onLockedSelect={() => setError('VIP emoji are for GM or donors')}
-                  variant="table"
-                  category={activeEmojiTray}
-                />
-              </div>
-            )}
-
             <div className="casino-table-chat__compose flex items-center gap-2 px-2 py-2">
               <button
                 type="button"
@@ -276,6 +277,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCol
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }

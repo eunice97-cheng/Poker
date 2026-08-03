@@ -237,6 +237,7 @@ export function PokerTable({
   const canSitInNow = gameState.phase === 'waiting' || gameState.phase === 'showdown'
   const isMyTurn = me?.isCurrentTurn ?? false
   const canTipDealer = Boolean(me && !isObserver && !me.isBot && (gameState.phase === 'waiting' || gameState.phase === 'showdown'))
+  const hasPlayableActions = isMyTurn && gameState.validActions.length > 0
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
@@ -308,8 +309,9 @@ export function PokerTable({
         window.innerWidth <= 940 && window.innerHeight <= 430 && window.innerWidth > window.innerHeight
 
       if (isCompactLandscape) {
+        const verticalChrome = hasPlayableActions ? 122 : 64
         const horizontalScale = (window.innerWidth - 24) / SCENE_W
-        const verticalScale = (window.innerHeight - 122) / 470
+        const verticalScale = (window.innerHeight - verticalChrome) / 470
         setSceneScale(Math.min(0.62, Math.max(0.5, Math.min(horizontalScale, verticalScale))))
         return
       }
@@ -323,7 +325,7 @@ export function PokerTable({
     updateSceneScale()
     window.addEventListener('resize', updateSceneScale)
     return () => window.removeEventListener('resize', updateSceneScale)
-  }, [])
+  }, [hasPlayableActions])
 
   useEffect(() => {
     if (gameState.phase !== 'preflop') return
@@ -389,7 +391,10 @@ export function PokerTable({
   }
 
   return (
-    <div className={`casino-poker-table relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}>
+    <div
+      data-mobile-actions={hasPlayableActions ? 'true' : 'false'}
+      className={`casino-poker-table relative flex h-screen w-full flex-col overflow-hidden ${theme.sceneClass}`}
+    >
       <div className={`casino-poker-table__topbar z-10 flex shrink-0 flex-col gap-2 px-3 py-2.5 md:flex-row md:items-center md:justify-between md:px-4 md:py-3 ${theme.topBarClass}`}>
         <div className="truncate text-sm font-bold text-white md:text-base">{gameState.tableName}</div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 md:gap-4 md:text-sm">
@@ -627,14 +632,17 @@ export function PokerTable({
         </div>
       </div>
 
-      <div className={`casino-poker-table__actionbar z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-3 px-3 py-3 md:gap-4 md:px-4 ${theme.actionBarClass}`}>
+      <div
+        data-mobile-active={hasPlayableActions ? 'true' : 'false'}
+        className={`casino-poker-table__actionbar z-20 flex min-h-[76px] shrink-0 items-center justify-center gap-3 px-3 py-3 md:gap-4 md:px-4 ${theme.actionBarClass}`}
+      >
         {gameState.myHandRank && gameState.phase !== 'waiting' && (
           <div className="hidden text-center sm:block">
             <div className="text-xs font-bold uppercase tracking-wide text-yellow-400">{gameState.myHandRank}</div>
             <div className="text-xs text-gray-600">your hand</div>
           </div>
         )}
-        {isMyTurn && gameState.validActions.length > 0 ? (
+        {hasPlayableActions ? (
           <ActionPanel
             validActions={gameState.validActions}
             callAmount={gameState.callAmount}
@@ -686,24 +694,24 @@ export function PokerTable({
         data-open={showMobilePanel ? 'true' : 'false'}
         className="casino-mobile-table-panel absolute z-20 flex items-start gap-1 lg:hidden"
       >
+        <button
+          type="button"
+          onClick={() => setShowMobilePanel((value) => !value)}
+          className="casino-mobile-table-panel__toggle flex h-12 w-8 items-center justify-center rounded-r-full border border-l-0 border-[#f3d2a2]/18 bg-[linear-gradient(180deg,rgba(18,10,8,0.92),rgba(10,7,6,0.72))] text-[#fff3e2]/78 shadow-[0_12px_34px_rgba(0,0,0,0.38)] backdrop-blur-xl transition-colors hover:border-[#f1b45b]/52 hover:text-[#fff3e2]"
+          aria-expanded={showMobilePanel}
+          aria-label={showMobilePanel ? 'Hide observers and action log' : 'Show observers and action log'}
+          title={showMobilePanel ? 'Hide observers and action log' : 'Show observers and action log'}
+        >
+          <svg className={`h-4 w-4 transition-transform duration-200 ${showMobilePanel ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9.5 6.5 15 12l-5.5 5.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         {showMobilePanel ? (
           <div className="casino-mobile-table-panel__content space-y-2">
             <ObserverPanel observers={observers} panelClassName={theme.sidePanelClass} bodyMaxHeightClass="max-h-32" />
             <ActionLog logs={actionLogs} />
           </div>
         ) : null}
-        <button
-          type="button"
-          onClick={() => setShowMobilePanel((value) => !value)}
-          className="casino-mobile-table-panel__toggle flex h-12 w-8 items-center justify-center rounded-l-full border border-r-0 border-[#f3d2a2]/18 bg-[linear-gradient(180deg,rgba(18,10,8,0.92),rgba(10,7,6,0.72))] text-[#fff3e2]/78 shadow-[0_12px_34px_rgba(0,0,0,0.38)] backdrop-blur-xl transition-colors hover:border-[#f1b45b]/52 hover:text-[#fff3e2]"
-          aria-expanded={showMobilePanel}
-          aria-label={showMobilePanel ? 'Hide table tools' : 'Show table tools'}
-          title={showMobilePanel ? 'Hide table tools' : 'Show table tools'}
-        >
-          <svg className={`h-4 w-4 transition-transform duration-200 ${showMobilePanel ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M14.5 6.5 9 12l5.5 5.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
       </div>
 
       <div className="casino-mobile-table-chat absolute z-30 lg:hidden">
