@@ -258,7 +258,7 @@ export function CasinoLobbyClient({
         </div>
 
         <div className="relative z-10 flex h-full min-h-0 flex-col">
-          <header className="h-[64px] shrink-0 border-b border-[#d9ad5a]/16 bg-black/42 backdrop-blur-xl">
+          <header className="relative z-[10030] h-[64px] shrink-0 overflow-visible border-b border-[#d9ad5a]/16 bg-black/42 backdrop-blur-xl">
             <div className="flex h-full items-center justify-between gap-2 px-3">
               <div className="flex min-w-0 items-center gap-2">
                 <img
@@ -358,7 +358,7 @@ export function CasinoLobbyClient({
       </div>
 
       <div className="casino-game-lobby__surface relative z-10">
-        <header className="casino-game-lobby__header border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
+        <header className="casino-game-lobby__header relative z-[10030] overflow-visible border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
           <div className="casino-game-lobby__header-inner mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="casino-game-lobby__brand flex items-center gap-4">
               <img

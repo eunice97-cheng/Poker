@@ -716,9 +716,15 @@
       gap: 6px !important;
     }
 
-    .casino-lobby-chat__form > div:first-child {
+    .casino-lobby-chat__emoji-tray {
       max-height: 76px;
       overflow-y: auto;
+    }
+
+    .casino-lobby-chat__emoji-button {
+      height: 38px !important;
+      width: 38px !important;
+      border-radius: 12px !important;
     }
 
     .casino-lobby-chat__input {
@@ -998,8 +1004,15 @@
       max-height: 70px !important;
     }
 
-    .casino-lobby-chat__form > div:first-child {
+    .casino-lobby-chat__emoji-tray {
       max-height: 54px !important;
+      overflow-y: auto;
+    }
+
+    .casino-lobby-chat__emoji-button {
+      height: 34px !important;
+      width: 34px !important;
+      border-radius: 12px !important;
     }
 
     .casino-lobby-chat__input {

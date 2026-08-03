@@ -44,6 +44,16 @@ function ChatToggleIcon({ className = 'h-5 w-5' }: { className?: string }) {
   )
 }
 
+function EmojiIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.8 10h.01M15.2 10h.01" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M8.8 14.2c1.65 1.75 4.75 1.75 6.4 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = false }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [draft, setDraft] = useState('')
@@ -51,6 +61,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   const [sending, setSending] = useState(false)
   const [open, setOpen] = useState(!compactLandscape)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showEmojiTray, setShowEmojiTray] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const openRef = useRef(open)
   const profileIdRef = useRef(profile?.id)
@@ -62,6 +73,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
   useEffect(() => {
     openRef.current = open
     if (open) setUnreadCount(0)
+    if (!open) setShowEmojiTray(false)
   }, [open])
 
   useEffect(() => {
@@ -131,6 +143,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
         return
       }
       setDraft('')
+      setShowEmojiTray(false)
     })
   }
 
@@ -217,14 +230,34 @@ export function LobbyChat({ socket, profile, hasVipEmojis, compactLandscape = fa
             </div>
 
             <form onSubmit={submit} className="casino-lobby-chat__form mt-3 space-y-2">
-              <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value.slice(0, MAX_LOBBY_CHAT_LENGTH))}
-                rows={2}
-                placeholder={placeholder}
-                className="casino-lobby-chat__input w-full resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
-              />
+              {showEmojiTray && (
+                <div className="casino-lobby-chat__emoji-tray">
+                  <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} />
+                </div>
+              )}
+              <div className="casino-lobby-chat__compose flex items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiTray((value) => !value)}
+                  className={`casino-lobby-chat__emoji-button flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl border text-[#fff3e2]/72 transition-colors ${
+                    showEmojiTray
+                      ? 'border-[#f3d2a2]/38 bg-[#f1b45b]/14 text-[#fff3e2]'
+                      : 'border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.72)] hover:border-[#f3d2a2]/32 hover:text-[#fff3e2]'
+                  }`}
+                  aria-pressed={showEmojiTray}
+                  aria-label={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
+                  title={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
+                >
+                  <EmojiIcon />
+                </button>
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value.slice(0, MAX_LOBBY_CHAT_LENGTH))}
+                  rows={2}
+                  placeholder={placeholder}
+                  className="casino-lobby-chat__input min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-4 py-3 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
+                />
+              </div>
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs text-red-300/90">{error || `${draft.trim().length}/${MAX_LOBBY_CHAT_LENGTH}`}</div>
                 <button
