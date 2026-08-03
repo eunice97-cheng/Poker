@@ -2130,13 +2130,14 @@
       left: 50%;
       bottom: 8px;
       z-index: 62;
-      display: flex !important;
+      display: grid !important;
       width: min(620px, calc(100vw - 118px));
-      min-height: 104px;
+      min-height: 106px;
       transform: translateX(-50%);
+      grid-template-columns: 250px minmax(0, 1fr);
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      justify-content: stretch;
+      gap: 10px;
       border-radius: 18px;
       border: 1px solid rgba(243, 210, 162, 0.22);
       background: linear-gradient(180deg, rgba(12, 7, 6, 0.9), rgba(7, 5, 4, 0.78));
@@ -2146,14 +2147,16 @@
     }
 
     .casino-mobile-play-dock[data-has-actions="true"] {
-      justify-content: space-between;
+      justify-content: stretch;
     }
 
     .casino-mobile-play-dock__hand {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 190px;
+      min-width: 0;
+      grid-column: 1;
+      justify-content: flex-start;
     }
 
     .casino-mobile-play-dock__hand[data-folded="true"] .casino-mobile-play-dock__cards {
@@ -2208,8 +2211,10 @@
     }
 
     .casino-mobile-play-dock .casino-action-panel {
+      grid-column: 2;
       flex: 0 1 auto;
       min-width: 0;
+      justify-self: end;
     }
 
     .casino-action-panel__controls {
@@ -2329,6 +2334,7 @@
 
     .casino-hand-result-modal {
       padding: 8px !important;
+      z-index: 120 !important;
     }
 
     .casino-hand-result-modal__panel {

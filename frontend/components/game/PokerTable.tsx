@@ -247,8 +247,8 @@ export function PokerTable({
   const isMyTurn = me?.isCurrentTurn ?? false
   const canTipDealer = Boolean(me && !isObserver && !me.isBot && (gameState.phase === 'waiting' || gameState.phase === 'showdown'))
   const hasPlayableActions = isMyTurn && gameState.validActions.length > 0
-  const showMobileBoard = gameState.phase !== 'waiting' || gameState.pot > 0
-  const showMobilePlayDock = Boolean(me && (me.holeCards.length > 0 || hasPlayableActions || gameState.phase !== 'waiting'))
+  const showMobileBoard = !handResult && (gameState.phase !== 'waiting' || gameState.pot > 0)
+  const showMobilePlayDock = Boolean(!handResult && me && (me.holeCards.length > 0 || hasPlayableActions || gameState.phase !== 'waiting'))
   const dealerImage = getDealerImage(gameState.bigBlind)
   const deckBackImage = getDeckBackImage(gameState.bigBlind)
   const tableImage = getTableImage(gameState.bigBlind)
