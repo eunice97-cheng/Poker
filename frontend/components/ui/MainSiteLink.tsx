@@ -76,13 +76,13 @@ export function MainSiteLink() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed left-3 top-3 z-[9998] inline-flex items-center gap-2 rounded-full border border-[#f7d57a]/30 bg-[linear-gradient(135deg,rgba(25,16,10,0.92),rgba(42,24,12,0.86))] px-3 py-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f7d57a]/55 hover:shadow-[0_22px_55px_rgba(0,0,0,0.42)] sm:left-5 sm:top-5"
+      className="main-site-link fixed left-3 top-3 z-[9998] inline-flex items-center gap-2 rounded-full border border-[#f7d57a]/30 bg-[linear-gradient(135deg,rgba(25,16,10,0.92),rgba(42,24,12,0.86))] px-3 py-2 text-left shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-[#f7d57a]/55 hover:shadow-[0_22px_55px_rgba(0,0,0,0.42)] sm:left-5 sm:top-5"
       aria-label="Open the main Arcana Studio Labs site in a new tab"
     >
       <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#f7d57a]/38 bg-[radial-gradient(circle_at_42%_24%,rgba(255,239,174,0.2),rgba(164,87,32,0.12)_46%,rgba(14,8,8,0.5)_100%)] shadow-[inset_0_1px_0_rgba(255,245,201,0.28),0_0_22px_rgba(217,132,48,0.12)]">
         <FlameIcon />
       </span>
-      <span className="hidden min-w-0 sm:block">
+      <span className="main-site-link__label hidden min-w-0 sm:block">
         <span className="block text-[10px] uppercase tracking-[0.24em] text-[#f3d2a2]/72">Main site</span>
         <span className="block whitespace-nowrap text-sm font-semibold text-[#fff3e2]">Arcana Studio Labs</span>
       </span>

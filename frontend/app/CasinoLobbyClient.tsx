@@ -73,7 +73,7 @@ function GameCard({ game }: { game: CasinoGameCard }) {
     <Link
       href={game.href}
       onClick={() => playSfx('click')}
-      className="group relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
+      className="casino-game-card group relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/26 bg-black/74 shadow-[0_30px_90px_rgba(0,0,0,0.42)] outline-none transition-transform duration-300 hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-[#f8d86a]/70"
       aria-label={`Enter ${game.title}`}
     >
       <img
@@ -92,7 +92,7 @@ function GameCard({ game }: { game: CasinoGameCard }) {
           </div>
         </div>
 
-        <div className="rounded-[18px] border border-[#f5d07c]/18 bg-black/68 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.36)] backdrop-blur-md">
+        <div className="casino-game-card__panel rounded-[18px] border border-[#f5d07c]/18 bg-black/68 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.36)] backdrop-blur-md">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5">
               <div className="text-xl font-bold text-white">{game.stats.tableCount}</div>
@@ -120,7 +120,7 @@ function GameCard({ game }: { game: CasinoGameCard }) {
 function ComingSoonCard() {
   return (
     <div
-      className="relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/18 bg-black/60 shadow-[0_30px_90px_rgba(0,0,0,0.36)]"
+      className="casino-game-card casino-game-card--coming-soon relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/18 bg-black/60 shadow-[0_30px_90px_rgba(0,0,0,0.36)]"
       aria-label="Coming soon"
     >
       <img
@@ -166,7 +166,7 @@ export function CasinoLobbyClient({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#080b0d] text-white">
+    <main className="casino-game-lobby relative min-h-screen overflow-hidden bg-[#080b0d] text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -176,31 +176,31 @@ export function CasinoLobbyClient({
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.16)_30%,rgba(3,5,6,0.78)_78%,rgba(3,5,6,0.98)_100%)]" />
       </div>
 
-      <div className="relative z-10">
-        <header className="border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
+      <div className="casino-game-lobby__surface relative z-10">
+        <header className="casino-game-lobby__header border-b border-[#d9ad5a]/16 bg-black/36 backdrop-blur-xl">
+          <div className="casino-game-lobby__header-inner mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="casino-game-lobby__brand flex items-center gap-4">
               <img
                 src="/casino-lobby/logo.png"
                 alt=""
                 aria-hidden="true"
-                className="h-16 w-24 object-contain drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)] sm:h-20 sm:w-28"
+                className="casino-game-lobby__logo h-16 w-24 object-contain drop-shadow-[0_14px_34px_rgba(0,0,0,0.48)] sm:h-20 sm:w-28"
               />
               <div>
-                <div className="bg-gradient-to-r from-[#f8e7b2] via-[#d9ad5a] to-[#fff8df] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_14px_rgba(217,173,90,0.18)]">
+                <div className="casino-game-lobby__eyebrow bg-gradient-to-r from-[#f8e7b2] via-[#d9ad5a] to-[#fff8df] bg-clip-text text-[11px] font-bold uppercase tracking-[0.34em] text-transparent drop-shadow-[0_0_14px_rgba(217,173,90,0.18)]">
                   ASL Gaming Casino
                 </div>
-                <h1 className="mt-1 bg-gradient-to-r from-[#fffaf0] via-[#f6d47e] to-[#c8923a] bg-clip-text font-serif text-3xl font-black uppercase tracking-[0.08em] text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
+                <h1 className="casino-game-lobby__title mt-1 bg-gradient-to-r from-[#fffaf0] via-[#f6d47e] to-[#c8923a] bg-clip-text font-serif text-3xl font-black uppercase tracking-[0.08em] text-transparent drop-shadow-[0_6px_22px_rgba(217,173,90,0.22)] sm:text-4xl">
                   GAME LOBBY
                 </h1>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="casino-game-lobby__actions flex flex-wrap items-center gap-2 sm:gap-3">
               <Link
                 href="/profile"
                 onClick={() => playSfx('click')}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
+                className="casino-game-lobby__profile flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 transition-colors hover:border-[#f8d86a]/34 hover:bg-black/40"
               >
                 <AvatarDisplay avatarId={profile?.avatar ?? 'avatar_m1'} size="sm" className="border-[#f8d86a]/35" />
                 <div className="min-w-0">
@@ -248,8 +248,8 @@ export function CasinoLobbyClient({
           </div>
         </header>
 
-        <section className="mx-auto max-w-6xl px-4 pb-36 pt-8 sm:px-6 lg:pb-40 lg:pt-10">
-          <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <section className="casino-game-lobby__content mx-auto max-w-6xl px-4 pb-36 pt-8 sm:px-6 lg:pb-40 lg:pt-10">
+          <div className="casino-game-lobby__stats mb-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-black/28 p-4 backdrop-blur-md">
               <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/42">Casino Balance</div>
               <div className="mt-2 text-2xl font-black text-[#fff8df]">{formatChips(profile?.chip_balance)}</div>
@@ -264,7 +264,7 @@ export function CasinoLobbyClient({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="casino-game-lobby__games grid gap-3 sm:grid-cols-3">
             <GameCard game={gameCards[0]} />
             <ComingSoonCard />
             <GameCard game={gameCards[1]} />

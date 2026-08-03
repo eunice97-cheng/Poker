@@ -38,7 +38,7 @@ export function LobbyChat({ socket, profile, hasVipEmojis }: LobbyChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const shouldCollapseOnPhone = window.matchMedia('(max-width: 940px), (max-height: 560px)').matches
+    const shouldCollapseOnPhone = window.matchMedia('(max-width: 940px), (max-height: 560px), (max-width: 900px) and (max-height: 430px) and (orientation: landscape)').matches
     if (shouldCollapseOnPhone) setOpen(false)
   }, [])
 
