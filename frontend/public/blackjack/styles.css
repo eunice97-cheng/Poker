@@ -3088,7 +3088,7 @@ button { font: inherit; }
 
   .tip-control.table-tip-control {
     display: block !important;
-    left: calc(50% + 78px);
+    left: calc(50% + 90px);
     top: 23%;
     z-index: 36;
     width: 64px;
@@ -3125,7 +3125,7 @@ button { font: inherit; }
   }
 
   .table-logo {
-    top: 39%;
+    top: 42%;
     width: clamp(96px, 15vw, 132px);
     opacity: .68;
   }
@@ -3682,9 +3682,7 @@ button { font: inherit; }
   }
 
   .action-row .action-button:disabled {
-    opacity: .34;
-    cursor: default;
-    filter: grayscale(.55) brightness(.62);
+    display: none !important;
   }
 
   .action-button b {
