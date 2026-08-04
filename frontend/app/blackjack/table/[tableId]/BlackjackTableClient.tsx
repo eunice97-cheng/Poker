@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
 import { ChatMessageText } from '@/components/ui/ChatMessageText'
+import { ExitIcon } from '@/components/ui/ExitIcon'
 import { useSocket } from '@/hooks/useSocket'
 import { useBlackjackState } from '@/hooks/useBlackjackState'
 import { appendChatEmojiCode } from '@/lib/chat-emojis'
@@ -117,7 +118,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-24'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-25'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -1064,16 +1065,6 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
             <button type="button" className="utility-button" id="helpBtn" aria-label="Help" onClick={() => setRulesOpen(true)}>
               <span className="utility-label" aria-hidden="true">Help</span>
             </button>
-            <button
-              type="button"
-              className="utility-button"
-              id="settingsBtn"
-              aria-label="Settings"
-              aria-controls="settingsModal"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <span className="utility-label" aria-hidden="true">Settings</span>
-            </button>
           </nav>
         </header>
 
@@ -1245,7 +1236,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 disabled={isRoundLocked && playerHands.length > 0}
                 onClick={handleSitOut}
               >
-                Stand Up
+                Stand
               </button>
             )}
             {waitingMe && (
@@ -1255,11 +1246,18 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
                 disabled={blackjackState.players.length >= blackjackState.maxPlayers}
                 onClick={() => handleSitIn()}
               >
-                Sit Down
+                Sit
               </button>
             )}
-            <button type="button" className="table-status-button is-cashout" disabled={leaving} onClick={leaveTable}>
-              {leaving ? 'Leaving' : 'Cash Out'}
+            <button
+              type="button"
+              className="table-status-button is-cashout"
+              disabled={leaving}
+              aria-label={leaving ? 'Leaving table' : 'Cash out and leave table'}
+              title={leaving ? 'Leaving table' : 'Cash out'}
+              onClick={leaveTable}
+            >
+              <ExitIcon className="cashout-icon" />
             </button>
           </div>
         </div>
@@ -1272,7 +1270,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               disabled={isRoundLocked && playerHands.length > 0}
               onClick={handleSitOut}
             >
-              Stand Up
+              Stand
             </button>
           )}
           {waitingMe && (
@@ -1282,11 +1280,18 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               disabled={blackjackState.players.length >= blackjackState.maxPlayers}
               onClick={() => handleSitIn()}
             >
-              Sit Down
+              Sit
             </button>
           )}
-          <button type="button" className="table-status-button is-cashout" disabled={leaving} onClick={leaveTable}>
-            {leaving ? 'Leaving' : 'Cash Out'}
+          <button
+            type="button"
+            className="table-status-button is-cashout"
+            disabled={leaving}
+            aria-label={leaving ? 'Leaving table' : 'Cash out and leave table'}
+            title={leaving ? 'Leaving table' : 'Cash out'}
+            onClick={leaveTable}
+          >
+            <ExitIcon className="cashout-icon" />
           </button>
         </div>
 
