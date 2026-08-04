@@ -3329,16 +3329,17 @@ button { font: inherit; }
 
   .blackjack-mobile-seat-controls .table-status-button:disabled {
     opacity: 1 !important;
-    border-color: #7b6026;
-    background: linear-gradient(180deg, #4b3a18, #181208) !important;
-    color: #f4d889;
+    border-color: #6f7784;
+    background: linear-gradient(180deg, #46505d, #202631) !important;
+    color: #eef2f7;
     filter: none !important;
+    cursor: not-allowed;
   }
 
   .blackjack-mobile-seat-controls .table-status-button.is-cashout:disabled {
-    border-color: #713329;
-    background: linear-gradient(180deg, #43211c, #150a08) !important;
-    color: #efc5b8;
+    border-color: #6f7784;
+    background: linear-gradient(180deg, #46505d, #202631) !important;
+    color: #eef2f7;
   }
 
   .blackjack-mobile-chat-panel {
@@ -3698,6 +3699,7 @@ button { font: inherit; }
     opacity: 1 !important;
     filter: none !important;
     cursor: not-allowed;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 8px 14px rgba(0,0,0,.38);
   }
 
   .action-button b {
@@ -3831,6 +3833,25 @@ button { font: inherit; }
     border-color: #5bdbea !important;
     background: linear-gradient(180deg, #218293, #0b3f4c) !important;
     color: #eaffff !important;
+  }
+
+  .action-row .action-button:disabled,
+  .action-row #undoBtn:disabled,
+  .action-row #clearBtn:disabled,
+  .action-row #dealBtn:disabled,
+  .action-row #hitBtn:disabled,
+  .action-row #standBtn:disabled,
+  .action-row #doubleBtn:disabled,
+  .action-row #splitBtn:disabled,
+  .action-row #surrenderBtn:disabled,
+  .action-row #insuranceBtn:disabled,
+  .action-row #newRoundBtn:disabled {
+    border-color: #6f7784 !important;
+    background: linear-gradient(180deg, #46505d, #202631) !important;
+    color: #eef2f7 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    cursor: not-allowed;
   }
 
   @media (max-width: 860px) {
