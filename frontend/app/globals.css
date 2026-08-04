@@ -1258,26 +1258,30 @@
     }
 
     .casino-poker-lobby__stats {
-      margin-top: 8px !important;
+      margin-top: 6px !important;
       min-height: 0 !important;
-      flex: 1 1 auto !important;
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      flex: 0 0 auto !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
       gap: 6px !important;
+    }
+
+    .casino-poker-lobby__stats > .casino-poker-lobby__stat-card:first-child {
+      grid-column: 1 / -1 !important;
     }
 
     .casino-poker-lobby__stat-card {
       border-radius: 10px !important;
-      padding: 8px !important;
+      padding: 6px 8px !important;
     }
 
     .casino-poker-lobby__stat-label {
-      font-size: 7px !important;
-      letter-spacing: 0.12em !important;
+      font-size: 6.5px !important;
+      letter-spacing: 0.1em !important;
     }
 
     .casino-poker-lobby__stat-value {
-      margin-top: 4px !important;
-      font-size: 18px !important;
+      margin-top: 3px !important;
+      font-size: 17px !important;
       line-height: 1 !important;
     }
 
