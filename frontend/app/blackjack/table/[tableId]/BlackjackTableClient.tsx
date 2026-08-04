@@ -119,7 +119,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-28'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-29'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -1303,6 +1303,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
             myPlayerId={blackjackState.myPlayerId}
             hasVipEmojis={false}
             initialCollapsed
+            placeholder="Message..."
           />
         </div>
 
@@ -1364,13 +1365,16 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
             </div>
           )}
 
-          <div className="action-row">
+          <div
+            className="action-row"
+            data-mode={canBet ? 'betting' : canBuyInsurance ? 'insurance' : isMyTurn ? 'turn' : 'idle'}
+          >
             <button type="button" id="undoBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet}>
               <b>Undo</b>
               <span>UNDO</span>
             </button>
-            <button type="button" id="clearBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet}>
-              <b>X</b>
+            <button type="button" id="clearBtn" className="secondary action-button" disabled={!canBet || !me || me.bet <= 0} onClick={handleClearBet} aria-label="Clear bet">
+              <b>Clear</b>
               <span>CLEAR BET</span>
             </button>
             {(['hit', 'stand', 'double', 'split'] as BlackjackAction[]).map((action) => (
@@ -1403,7 +1407,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
               disabled={!isMyTurn || !blackjackState.validActions.includes('surrender')}
               onClick={() => handleBlackjackAction('surrender')}
             >
-              <b>1/2</b>
+              <b>Surrender</b>
               <span>SURRENDER</span>
             </button>
           </div>

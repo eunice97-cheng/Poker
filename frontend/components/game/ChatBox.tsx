@@ -13,6 +13,7 @@ interface ChatBoxProps {
   myPlayerId: string
   hasVipEmojis: boolean
   initialCollapsed?: boolean
+  placeholder?: string
 }
 
 const MAX_CHAT_LENGTH = 200
@@ -69,7 +70,14 @@ function VipEmojiIcon({ className = 'h-4 w-4' }: { className?: string }) {
   )
 }
 
-export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCollapsed = false }: ChatBoxProps) {
+export function ChatBox({
+  messages,
+  onSend,
+  myPlayerId,
+  hasVipEmojis,
+  initialCollapsed = false,
+  placeholder = 'Say something at the table...',
+}: ChatBoxProps) {
   const [input, setInput] = useState('')
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [activeEmojiTray, setActiveEmojiTray] = useState<'standard' | 'vip' | null>(null)
@@ -249,7 +257,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCol
               </button>
               <textarea
                 className="casino-table-chat__input min-w-0 flex-1 resize-none appearance-none rounded-2xl border border-[#f3d2a2]/16 bg-[rgba(12,7,7,0.82)] px-3 py-2 text-sm text-[#fff3e2] caret-[#f3d2a2] outline-none transition-colors placeholder:text-[#d4b89b]/55 focus:border-[#f3d2a2]/42 focus:bg-[rgba(12,7,7,0.92)]"
-                placeholder="Say something at the table..."
+                placeholder={placeholder}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
