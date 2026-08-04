@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
+import { ChatBox } from '@/components/game/ChatBox'
 import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
 import { ChatMessageText } from '@/components/ui/ChatMessageText'
 import { ExitIcon } from '@/components/ui/ExitIcon'
@@ -118,7 +119,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-25'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-26'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -1296,7 +1297,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
         </div>
 
         <div className="blackjack-mobile-chat-panel">
-          <BlackjackChatPanel
+          <ChatBox
             messages={chatMessages}
             onSend={(text) => { void sendChat(text) }}
             myPlayerId={blackjackState.myPlayerId}

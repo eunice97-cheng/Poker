@@ -2913,25 +2913,27 @@ button { font: inherit; }
   }
 
   .balance-panel {
-    min-width: 130px;
-    padding: 8px 10px;
-    border-radius: 11px;
+    min-width: 112px;
+    padding: 6px 9px;
+    border-radius: 10px;
     background: linear-gradient(180deg, rgba(6, 8, 7, .92), rgba(1, 3, 2, .76));
   }
 
   .balance-panel span {
-    font-size: .6rem;
-    letter-spacing: .14em;
+    font-size: .52rem;
+    letter-spacing: .13em;
   }
 
   .balance-panel strong {
     margin-top: 2px;
-    font-size: 1.15rem;
+    font-size: 1rem;
     line-height: 1;
   }
 
   .utility-buttons {
+    align-items: center;
     gap: 6px;
+    height: 34px;
   }
 
   .utility-button {
@@ -2939,7 +2941,12 @@ button { font: inherit; }
     height: 34px;
     min-width: 34px;
     min-height: 34px;
+    border: 1px solid rgba(214,173,72,.42);
     border-radius: 10px;
+    background-color: rgba(3, 6, 5, .7);
+    background-size: 21px 21px;
+    box-shadow: inset 0 1px rgba(255,255,255,.06), 0 8px 14px rgba(0,0,0,.26);
+    filter: none;
   }
 
   .audio-panel {
@@ -3018,9 +3025,29 @@ button { font: inherit; }
   }
 
   .dealer-tip-board,
-  .round-countdown,
-  .tip-control.table-tip-control {
+  .round-countdown {
     display: none !important;
+  }
+
+  .tip-control.table-tip-control {
+    display: block !important;
+    left: 50%;
+    top: 40%;
+    width: 66px;
+    height: 30px;
+    min-width: 66px;
+    min-height: 30px;
+    transform: translate(-50%, -50%);
+  }
+
+  .tip-control.table-tip-control #tipBtn::before {
+    top: 5px;
+    font-size: .62rem;
+  }
+
+  .tip-control.table-tip-control #tipBtn::after {
+    bottom: 4px;
+    font-size: .48rem;
   }
 
   .table-logo {
@@ -3340,17 +3367,17 @@ button { font: inherit; }
 
   .chip-selector {
     position: fixed;
-    left: 12px;
-    top: 86px;
+    left: 24px;
+    top: 84px;
     z-index: 76;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 4px 5px;
+    padding: 6px;
     border-radius: 13px;
     background: rgba(5,5,4,.72);
-    max-height: calc(100svh - 102px);
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .chip-selector:not(:has(.chip:not(:disabled))) {
@@ -3358,8 +3385,8 @@ button { font: inherit; }
   }
 
   .chip {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
   }
 
   .chip:hover,
@@ -3511,8 +3538,8 @@ button { font: inherit; }
     }
 
     .chip {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
     }
 
     .action-row {
