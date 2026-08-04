@@ -119,7 +119,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-41'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-42'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -170,6 +170,8 @@ const DEALER_AUDIO_FILES: Record<string, string> = {
   'A tie this round.': 'A tie this round.mp3',
   'Dealer shows an Ace. Would you like to buy insurance?': 'Dealer shows an Ace. Would you like to buy insurance.mp3',
 }
+const PLAYER_BLACKJACK_AUDIO_LINES = new Set(['Natural twenty-one.', 'Blackjack! Congratulations.'])
+const DEALER_BLACKJACK_AUDIO_LINES = new Set(['Natural blackjack for the dealer.', "That's a dealer blackjack."])
 
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
@@ -307,11 +309,31 @@ function isBlackjackHand(hand: ClientBlackjackHand) {
   return hand.status === 'blackjack' || hand.result === 'Blackjack'
 }
 
-function blackjackCelebrationForState(state: BlackjackState): Omit<BlackjackCelebration, 'id'> | null {
-  const dealerHasNatural = state.phase === 'settled'
+function dealerHasNaturalBlackjack(state: BlackjackState) {
+  return state.phase === 'settled'
     && state.dealerCards.length === 2
     && state.dealerCards.every((card) => card !== null)
     && state.dealerScore === 21
+}
+
+function blackjackVoiceEventKey(state: BlackjackState, line: string) {
+  const trimmed = line.trim()
+
+  if (DEALER_BLACKJACK_AUDIO_LINES.has(trimmed)) {
+    return `${state.tableId}:${state.roundNumber}:dealer-blackjack`
+  }
+
+  if (!PLAYER_BLACKJACK_AUDIO_LINES.has(trimmed)) return null
+
+  const playersWithBlackjack = state.players.filter((player) => player.hands.some(isBlackjackHand))
+  if (playersWithBlackjack.length === 0) return null
+
+  const playerIds = playersWithBlackjack.map((player) => player.playerId).sort().join('|')
+  return `${state.tableId}:${state.roundNumber}:player-blackjack:${playerIds}`
+}
+
+function blackjackCelebrationForState(state: BlackjackState): Omit<BlackjackCelebration, 'id'> | null {
+  const dealerHasNatural = dealerHasNaturalBlackjack(state)
 
   if (dealerHasNatural) {
     return {
@@ -399,6 +421,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const dealerSwitchTimeoutsRef = useRef<number[]>([])
   const activeDealerRef = useRef(activeDealer)
   const blackjackSfxRef = useRef({ roundKey: '', cardCount: 0, resultKey: '' })
+  const blackjackVoiceEventsRef = useRef<Set<string>>(new Set())
   const dealerVoiceKeyRef = useRef('')
 
   const {
@@ -537,6 +560,7 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     setSessionHistory([])
     recordedRoundRef.current = null
     seenBlackjackCelebrationsRef.current.clear()
+    blackjackVoiceEventsRef.current.clear()
   }, [tableId])
 
   useEffect(() => {
@@ -634,8 +658,13 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   }, [blackjackState?.message, blackjackState?.messageUpdatedAt])
 
   useEffect(() => {
+    if (!blackjackState) return
+
     const src = dealerAudioForLine(displayedDealerLine, viewerName, isMyTurn)
     if (!src) return
+
+    const blackjackEventKey = blackjackVoiceEventKey(blackjackState, displayedDealerLine)
+    if (blackjackEventKey && blackjackVoiceEventsRef.current.has(blackjackEventKey)) return
 
     const voiceKey = dealerSwitchLine
       ? `switch:${dealerTransitionState}:${dealerSwitchLine}`
@@ -643,8 +672,9 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
 
     if (dealerVoiceKeyRef.current === voiceKey) return
     dealerVoiceKeyRef.current = voiceKey
+    if (blackjackEventKey) blackjackVoiceEventsRef.current.add(blackjackEventKey)
     playDealerVoice(src)
-  }, [blackjackState?.messageUpdatedAt, dealerSwitchLine, dealerTransitionState, displayedDealerLine, isMyTurn, playDealerVoice, viewerName])
+  }, [blackjackState, dealerSwitchLine, dealerTransitionState, displayedDealerLine, isMyTurn, playDealerVoice, viewerName])
 
   useEffect(() => {
     if (!blackjackState || !me || blackjackState.phase !== 'settled' || !me.lastResult) return
@@ -694,6 +724,8 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
     if (blackjackSfxRef.current.resultKey === resultKey) return
 
     blackjackSfxRef.current.resultKey = resultKey
+    if (dealerHasNaturalBlackjack(blackjackState) || me.lastResult.toLowerCase().includes('blackjack')) return
+
     if (me.lastNet > 0) playSfx('win')
     else if (me.lastNet < 0) playSfx('lose')
     else playSfx('click')

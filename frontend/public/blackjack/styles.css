@@ -3680,10 +3680,10 @@ button { font: inherit; }
     align-items: center;
     justify-content: center;
     padding: 0 8px;
-    border: 1px solid #b68a35;
+    border: 1px solid #f1c24d;
     border-radius: 11px;
-    background: linear-gradient(180deg, #314561, #142239) !important;
-    color: #fff7d8;
+    background: linear-gradient(180deg, #ffd767, #e3a72c 54%, #956015) !important;
+    color: #120c04;
     opacity: 1 !important;
     filter: none !important;
     box-shadow: inset 0 1px rgba(255,255,255,.18), 0 8px 14px rgba(0,0,0,.38);
@@ -3783,10 +3783,10 @@ button { font: inherit; }
   .action-row .action-button.secondary,
   .action-row .action-button.insurance-button,
   .action-row .action-button.primary {
-    border-color: #b68a35 !important;
-    background: linear-gradient(180deg, #314561, #142239) !important;
+    border-color: #f1c24d !important;
+    background: linear-gradient(180deg, #ffd767, #e3a72c 54%, #956015) !important;
     background-clip: padding-box !important;
-    color: #fff7d8 !important;
+    color: #120c04 !important;
     opacity: 1 !important;
     filter: none !important;
   }
@@ -3833,6 +3833,23 @@ button { font: inherit; }
     border-color: #5bdbea !important;
     background: linear-gradient(180deg, #218293, #0b3f4c) !important;
     color: #eaffff !important;
+  }
+
+  .action-row .action-button:not(:disabled),
+  .action-row #undoBtn:not(:disabled),
+  .action-row #clearBtn:not(:disabled),
+  .action-row #dealBtn:not(:disabled),
+  .action-row #hitBtn:not(:disabled),
+  .action-row #standBtn:not(:disabled),
+  .action-row #doubleBtn:not(:disabled),
+  .action-row #splitBtn:not(:disabled),
+  .action-row #surrenderBtn:not(:disabled),
+  .action-row #insuranceBtn:not(:disabled),
+  .action-row #newRoundBtn:not(:disabled) {
+    border-color: #f1c24d !important;
+    background: linear-gradient(180deg, #ffd767, #e3a72c 54%, #956015) !important;
+    color: #120c04 !important;
+    text-shadow: 0 1px rgba(255,255,255,.24) !important;
   }
 
   .action-row .action-button:disabled,
