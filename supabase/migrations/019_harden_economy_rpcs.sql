@@ -141,18 +141,34 @@ REVOKE EXECUTE ON FUNCTION public.add_chips(UUID, UUID, INTEGER, TEXT) FROM PUBL
 REVOKE EXECUTE ON FUNCTION public.deduct_chips(UUID, UUID, INTEGER) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.increment_games_played(UUID[]) FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.increment_games_won(UUID[]) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.mark_player_broke(UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.award_daily_chips() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.recover_abandoned_tables(INTERVAL) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.redeem_chip_code(TEXT, UUID) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.record_blackjack_dealer_tip(TEXT, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.add_chips(UUID, UUID, INTEGER, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.deduct_chips(UUID, UUID, INTEGER) TO service_role;
 GRANT EXECUTE ON FUNCTION public.increment_games_played(UUID[]) TO service_role;
 GRANT EXECUTE ON FUNCTION public.increment_games_won(UUID[]) TO service_role;
-GRANT EXECUTE ON FUNCTION public.mark_player_broke(UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.award_daily_chips() TO service_role;
 GRANT EXECUTE ON FUNCTION public.recover_abandoned_tables(INTERVAL) TO service_role;
-GRANT EXECUTE ON FUNCTION public.redeem_chip_code(TEXT, UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.record_blackjack_dealer_tip(TEXT, TEXT, INTEGER) TO service_role;
+
+DO $$
+BEGIN
+  IF to_regprocedure('public.mark_player_broke(uuid)') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.mark_player_broke(UUID) FROM PUBLIC, anon, authenticated';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.mark_player_broke(UUID) TO service_role';
+  END IF;
+
+  IF to_regprocedure('public.award_daily_chips()') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.award_daily_chips() FROM PUBLIC, anon, authenticated';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.award_daily_chips() TO service_role';
+  END IF;
+
+  IF to_regprocedure('public.redeem_chip_code(text,uuid)') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.redeem_chip_code(TEXT, UUID) FROM PUBLIC, anon, authenticated';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.redeem_chip_code(TEXT, UUID) TO service_role';
+  END IF;
+
+  IF to_regprocedure('public.record_blackjack_dealer_tip(text,text,integer)') IS NOT NULL THEN
+    EXECUTE 'REVOKE EXECUTE ON FUNCTION public.record_blackjack_dealer_tip(TEXT, TEXT, INTEGER) FROM PUBLIC, anon, authenticated';
+    EXECUTE 'GRANT EXECUTE ON FUNCTION public.record_blackjack_dealer_tip(TEXT, TEXT, INTEGER) TO service_role';
+  END IF;
+END;
+$$;
