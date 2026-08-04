@@ -300,7 +300,7 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
                   <div className="casino-poker-lobby__eyebrow inline-flex rounded-full border border-[#f3d2a2]/18 bg-[#f1b45b]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#f7dfba]">
                     Pre-game lounge
                   </div>
-                  <h1 className="casino-poker-lobby__headline mt-5 max-w-xl font-serif text-[2.6rem] leading-[0.94] text-[#fff3e2] sm:text-5xl md:text-7xl">
+                  <h1 className="casino-poker-lobby__headline mt-5 max-w-xl font-serif text-[2.15rem] leading-[1.02] text-[#fff3e2] sm:text-4xl md:text-[3.35rem] xl:text-[3.65rem]">
                     Hang out by the drinks before the cards hit the felt.
                   </h1>
                   <p className="casino-poker-lobby__copy mt-4 max-w-xl text-sm leading-7 text-[#ffe8ca]/76 sm:text-base">
