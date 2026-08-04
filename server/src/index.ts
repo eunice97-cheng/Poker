@@ -159,17 +159,6 @@ async function reconcileLobbyTables() {
 }
 
 async function initializeServerState() {
-  try {
-    const recovery = await supabaseService.recoverAbandonedTables()
-    if (recovery.recoveredTables > 0 || recovery.refundedPlayers > 0) {
-      console.log(
-        `[Recovery] Cleared ${recovery.recoveredTables} abandoned tables and refunded ${recovery.refundedPlayers} players (${recovery.refundedChips} chips)`
-      )
-    }
-  } catch (error) {
-    console.error('[Recovery] Failed to recover abandoned tables:', error)
-  }
-
   await supabaseService.cleanupDevTables().catch(console.error)
   await supabaseService.cleanupOrphanedTables().catch(console.error)
   await reconcileLobbyTables().catch(console.error)

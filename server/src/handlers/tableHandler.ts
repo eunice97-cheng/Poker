@@ -19,6 +19,8 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
     maxBuyin?: number
     buyIn: number
   }, callback) => {
+    let tableId = ''
+    let deducted = 0
     try {
       const bigBlind = params.bigBlind ?? 50
       const smallBlind = params.smallBlind ?? bigBlind / 2
@@ -96,12 +98,15 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
         minBuyin,
         maxBuyin,
       })
+      tableId = tableInfo.id
 
       const room = roomManager.createRoom(tableInfo)
 
       // Deduct buy-in from profile and add to table
       const balanceAfter = await supabaseService.deductChips(socket.userId, tableInfo.id, buyIn)
+      deducted = buyIn
       await supabaseService.addTablePlayer(tableInfo.id, socket.userId, 0, buyIn)
+      deducted = 0
 
       const player: ServerPlayer = {
         socketId: socket.id,
@@ -130,6 +135,13 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       callback?.({ tableId: tableInfo.id, seat: 0, stack: buyIn, balance: balanceAfter })
     } catch (err) {
       console.error('create_table error:', err)
+      if (deducted > 0 && tableId) {
+        await supabaseService.addChips(socket.userId, tableId, deducted, 'refund').catch(console.error)
+      }
+      if (tableId) {
+        roomManager.deleteRoom(tableId)
+        await supabaseService.deleteTable(tableId).catch(console.error)
+      }
       callback?.({ error: 'Failed to create table' })
     }
   })
@@ -137,6 +149,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
   // Join an existing table
   socket.on('join_table', async (params: { tableId: string; buyIn: number }, callback) => {
     let room = null as ReturnType<typeof roomManager.getRoom>
+    let deducted = 0
     try {
       const { tableId, buyIn } = params
       room = roomManager.getRoom(tableId)
@@ -177,6 +190,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       const balanceAfter = localOnly || socket.userId === LOCAL_ADMIN_ID
         ? 100000 - actualBuyIn
         : await supabaseService.deductChips(socket.userId, tableId, actualBuyIn)
+      deducted = localOnly || socket.userId === LOCAL_ADMIN_ID ? 0 : actualBuyIn
 
       if (handInProgress) {
         const observer: ServerObserver = existingObserver
@@ -210,6 +224,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
 
         room.engine.broadcastGameState()
         callback?.({ observer: true, stack: observer.stack, balance: balanceAfter })
+        deducted = 0
         return
       }
 
@@ -228,6 +243,7 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
           await supabaseService.addTablePlayer(tableId, socket.userId, seat, seatedStack)
         }
       }
+      deducted = 0
 
       const player: ServerPlayer = {
         socketId: socket.id,
@@ -276,6 +292,9 @@ export function registerTableHandlers(io: Server, socket: AuthenticatedSocket) {
       callback?.({ seat, stack: seatedStack, balance: balanceAfter })
     } catch (err) {
       console.error('join_table error:', err)
+      if (deducted > 0) {
+        await supabaseService.addChips(socket.userId, params.tableId, deducted, 'refund').catch(console.error)
+      }
       callback?.({ error: 'Failed to join table' })
     } finally {
       room?.endPendingJoin(socket.userId)

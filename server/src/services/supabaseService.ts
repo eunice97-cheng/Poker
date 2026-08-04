@@ -19,6 +19,12 @@ function dealerTipsMap(rows: BlackjackDealerTipRow[] | null | undefined) {
   return tips
 }
 
+function assertPositiveChipAmount(amount: number, operation: string) {
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error(`${operation} amount must be a positive integer`)
+  }
+}
+
 export const supabaseService = {
   // ─── Tables ────────────────────────────────────────────────────────────
 
@@ -65,10 +71,11 @@ export const supabaseService = {
   },
 
   async updateTableStatus(tableId: string, status: string, playerCount: number) {
-    await supabase
+    const { error } = await supabase
       .from('tables')
       .update({ status, player_count: playerCount })
       .eq('id', tableId)
+    if (error) throw new Error(`Failed to update table status: ${error.message}`)
   },
 
   async listTables() {
@@ -81,12 +88,15 @@ export const supabaseService = {
   },
 
   async deleteTable(tableId: string) {
-    await supabase.from('tables').delete().eq('id', tableId)
+    const { error } = await supabase.from('tables').delete().eq('id', tableId)
+    if (error) throw new Error(`Failed to delete table: ${error.message}`)
   },
 
   // ─── Chip Management ───────────────────────────────────────────────────
 
   async deductChips(playerId: string, tableId: string, amount: number): Promise<number> {
+    assertPositiveChipAmount(amount, 'Chip deduction')
+
     // Atomic: subtract chips and return new balance
     const { data, error } = await supabase.rpc('deduct_chips', {
       p_player_id: playerId,
@@ -98,6 +108,8 @@ export const supabaseService = {
   },
 
   async addChips(playerId: string, tableId: string | null, amount: number, type: string = 'cashout'): Promise<number> {
+    assertPositiveChipAmount(amount, 'Chip addition')
+
     const { data, error } = await supabase.rpc('add_chips', {
       p_player_id: playerId,
       p_table_id: tableId,
@@ -134,6 +146,8 @@ export const supabaseService = {
   },
 
   async recordBlackjackDealerTip(dealerId: string, dealerName: string, amount: number): Promise<Record<string, number>> {
+    assertPositiveChipAmount(amount, 'Dealer tip')
+
     const { data, error } = await supabase.rpc('record_blackjack_dealer_tip', {
       p_dealer_id: dealerId,
       p_dealer_name: dealerName,
@@ -183,63 +197,94 @@ export const supabaseService = {
         .eq('table_id', tableId)
         .eq('player_id', p.playerId)
     )
-    await Promise.all(updates)
+    const results = await Promise.all(updates)
+    const failed = results.find((result) => result.error)
+    if (failed?.error) throw new Error(`Failed to update chip balances: ${failed.error.message}`)
   },
 
   // ─── Table Players ─────────────────────────────────────────────────────
 
   async addTablePlayer(tableId: string, playerId: string, seat: number, stack: number) {
-    await supabase.from('table_players').insert({
+    if (!Number.isInteger(seat) || seat < 0) {
+      throw new Error('Seat must be a non-negative integer')
+    }
+    if (!Number.isSafeInteger(stack) || stack < 0) {
+      throw new Error('Stack must be a non-negative integer')
+    }
+
+    const { error: insertError } = await supabase.from('table_players').insert({
       table_id: tableId,
       player_id: playerId,
       seat,
       stack,
     })
+    if (insertError) throw new Error(`Failed to add table player: ${insertError.message}`)
+
     // Update player count
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from('table_players')
       .select('*', { count: 'exact', head: true })
       .eq('table_id', tableId)
-    await supabase.from('tables').update({ player_count: count ?? 0 }).eq('id', tableId)
+    if (countError) throw new Error(`Failed to count table players: ${countError.message}`)
+
+    const { error: updateError } = await supabase.from('tables').update({ player_count: count ?? 0 }).eq('id', tableId)
+    if (updateError) throw new Error(`Failed to update table player count: ${updateError.message}`)
   },
 
   async removeTablePlayer(tableId: string, playerId: string) {
-    await supabase
+    const { error: deleteError } = await supabase
       .from('table_players')
       .delete()
       .eq('table_id', tableId)
       .eq('player_id', playerId)
-    const { count } = await supabase
+    if (deleteError) throw new Error(`Failed to remove table player: ${deleteError.message}`)
+
+    const { count, error: countError } = await supabase
       .from('table_players')
       .select('*', { count: 'exact', head: true })
       .eq('table_id', tableId)
-    await supabase.from('tables').update({ player_count: count ?? 0 }).eq('id', tableId)
+    if (countError) throw new Error(`Failed to count table players: ${countError.message}`)
+
+    const { error: updateError } = await supabase.from('tables').update({ player_count: count ?? 0 }).eq('id', tableId)
+    if (updateError) throw new Error(`Failed to update table player count: ${updateError.message}`)
   },
 
   async updateTablePlayerSeat(tableId: string, playerId: string, seat: number) {
-    await supabase
+    if (!Number.isInteger(seat) || seat < 0) {
+      throw new Error('Seat must be a non-negative integer')
+    }
+
+    const { error } = await supabase
       .from('table_players')
       .update({ seat })
       .eq('table_id', tableId)
       .eq('player_id', playerId)
+    if (error) throw new Error(`Failed to update table player seat: ${error.message}`)
   },
 
   async updateTablePlayerStack(tableId: string, playerId: string, stack: number) {
-    await supabase
+    if (!Number.isSafeInteger(stack) || stack < 0) {
+      throw new Error('Stack must be a non-negative integer')
+    }
+
+    const { error } = await supabase
       .from('table_players')
       .update({ stack })
       .eq('table_id', tableId)
       .eq('player_id', playerId)
+    if (error) throw new Error(`Failed to update table player stack: ${error.message}`)
   },
 
   async incrementGamesPlayed(playerIds: string[]) {
     if (playerIds.length === 0) return
-    await supabase.rpc('increment_games_played', { player_ids: playerIds })
+    const { error } = await supabase.rpc('increment_games_played', { player_ids: playerIds })
+    if (error) throw new Error(`Failed to increment games played: ${error.message}`)
   },
 
   async incrementGamesWon(playerIds: string[]) {
     if (playerIds.length === 0) return
-    await supabase.rpc('increment_games_won', { player_ids: playerIds })
+    const { error } = await supabase.rpc('increment_games_won', { player_ids: playerIds })
+    if (error) throw new Error(`Failed to increment games won: ${error.message}`)
   },
 
   // ─── Hand History ──────────────────────────────────────────────────────
@@ -260,7 +305,7 @@ export const supabaseService = {
       is_bot: p.isBot,
     }))
 
-    await supabase.from('hand_history').insert({
+    const { error } = await supabase.from('hand_history').insert({
       table_id: state.tableId,
       hand_number: state.handNumber,
       community: state.community,
@@ -269,6 +314,9 @@ export const supabaseService = {
       players: playerSnapshot,
       started_at: state.handStartedAt ?? new Date(),
     })
+    if (error) {
+      console.error(`Failed to record hand: ${error.message}`)
+    }
 
     // Update games_played and games_won
     const winnerIds = winners
@@ -279,10 +327,10 @@ export const supabaseService = {
       .map((p) => p.playerId)
 
     if (allPlayerIds.length > 0) {
-      await supabase.rpc('increment_games_played', { player_ids: allPlayerIds })
+      await this.incrementGamesPlayed(allPlayerIds)
     }
     if (winnerIds.length > 0) {
-      await supabase.rpc('increment_games_won', { player_ids: winnerIds })
+      await this.incrementGamesWon(winnerIds)
     }
   },
 
@@ -290,17 +338,19 @@ export const supabaseService = {
 
   async cleanupDevTables() {
     // On server start, purge any dev tables left over from previous sessions
-    await supabase.from('tables').delete().ilike('name', '%Dev Table%')
+    const { error } = await supabase.from('tables').delete().ilike('name', '%Dev Table%')
+    if (error) throw new Error(`Failed to cleanup dev tables: ${error.message}`)
   },
 
   async cleanupOrphanedTables() {
     // Delete empty tables that have been abandoned for a while after crashes/disconnects.
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-    await supabase
+    const { error } = await supabase
       .from('tables')
       .delete()
       .eq('player_count', 0)
       .lt('created_at', fiveMinutesAgo)
+    if (error) throw new Error(`Failed to cleanup orphaned tables: ${error.message}`)
   },
 
   // ─── Daily Chip Recovery ───────────────────────────────────────────────
