@@ -3328,6 +3328,24 @@ button { font: inherit; }
       linear-gradient(180deg, rgba(40, 18, 15, .98), rgba(10, 7, 7, .96));
   }
 
+  .blackjack-mobile-seat-controls .table-status-button:disabled {
+    opacity: 1 !important;
+    border-color: rgba(214,173,72,.34);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 226, 129, .13), transparent 46%),
+      linear-gradient(180deg, rgba(42, 34, 19, .96), rgba(12, 11, 8, .98));
+    color: rgba(255,232,170,.68);
+    filter: none;
+  }
+
+  .blackjack-mobile-seat-controls .table-status-button.is-cashout:disabled {
+    border-color: rgba(191, 88, 70, .34);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 140, 118, .12), transparent 48%),
+      linear-gradient(180deg, rgba(34, 18, 15, .96), rgba(10, 7, 7, .98));
+    color: rgba(255, 220, 204, .66);
+  }
+
   .blackjack-mobile-chat-panel {
     position: absolute;
     right: 10px;
