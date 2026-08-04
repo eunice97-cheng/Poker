@@ -2964,48 +2964,6 @@ button { font: inherit; }
   }
 
   .session-history {
-    left: 10px;
-    top: 70px;
-    z-index: 35;
-    width: 132px;
-    max-height: none;
-    padding: 8px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(5, 8, 6, .82), rgba(1, 3, 2, .68));
-  }
-
-  .session-history header {
-    gap: 4px;
-    padding-bottom: 5px;
-  }
-
-  .history-heading {
-    gap: 5px;
-  }
-
-  .history-heading span,
-  .history-heading strong {
-    font-size: .5rem;
-    letter-spacing: .09em;
-  }
-
-  .history-toggle {
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-  }
-
-  .history-summary {
-    gap: 4px;
-    margin-top: 6px;
-  }
-
-  .history-summary span {
-    padding: 4px 2px;
-    font-size: .58rem;
-  }
-
-  .history-list {
     display: none;
   }
 
@@ -3189,16 +3147,50 @@ button { font: inherit; }
   }
 
   .blackjack-chat-panel {
+    display: block !important;
+    position: absolute !important;
+    left: auto !important;
+    right: 142px !important;
+    top: 8px !important;
+    z-index: 82 !important;
+    width: auto !important;
+    pointer-events: none !important;
+  }
+
+  .blackjack-chat-panel .blackjack-chat {
     display: none !important;
+  }
+
+  .chat-seat-controls {
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: auto;
+  }
+
+  .chat-seat-controls .table-status-button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: .54rem;
+    letter-spacing: .06em;
+    box-shadow: inset 0 1px rgba(255,255,255,.06), 0 8px 14px rgba(0,0,0,.26);
   }
 
   .bottom-console {
     position: absolute;
     left: 150px;
-    right: 70px;
+    right: 112px;
     bottom: 8px;
     z-index: 42;
     display: flex;
+    width: auto;
     min-height: 0;
     align-items: center;
     justify-content: center;
@@ -3211,7 +3203,7 @@ button { font: inherit; }
   }
 
   .message {
-    flex: 0 1 170px;
+    flex: 0 1 190px;
     width: auto;
     min-width: 0;
     margin: 0;
@@ -3292,11 +3284,16 @@ button { font: inherit; }
   }
 
   .action-row {
-    position: static;
+    position: fixed;
+    right: 52px;
+    top: 50%;
+    z-index: 76;
     flex: 0 0 auto;
     justify-self: auto;
+    flex-direction: column;
     flex-wrap: nowrap;
     gap: 4px;
+    transform: translateY(-50%);
   }
 
   .action-row:not(:has(.action-button:not(:disabled))) {
@@ -3310,9 +3307,9 @@ button { font: inherit; }
   .action-button,
   .tip-control {
     width: auto;
-    min-width: 43px;
-    height: 31px;
-    min-height: 31px;
+    min-width: 74px;
+    height: 34px;
+    min-height: 34px;
   }
 
   .action-button {
@@ -3376,5 +3373,45 @@ button { font: inherit; }
   #undoBtn {
     border-color: rgba(161, 181, 206, .46);
     color: #d9e5f5;
+  }
+
+  @media (max-width: 860px) {
+    .blackjack-chat-panel {
+      right: 136px !important;
+    }
+
+    .chat-seat-controls .table-status-button {
+      padding-inline: 8px;
+      font-size: .5rem;
+    }
+
+    .bottom-console {
+      left: 136px;
+      right: 104px;
+    }
+
+    .message {
+      flex-basis: 170px;
+    }
+
+    .chip {
+      width: 32px;
+      height: 32px;
+    }
+
+    .action-row {
+      right: 46px;
+    }
+
+    .action-button,
+    .tip-control {
+      min-width: 68px;
+      height: 32px;
+      min-height: 32px;
+    }
+
+    .action-button b {
+      font-size: .56rem;
+    }
   }
 }
