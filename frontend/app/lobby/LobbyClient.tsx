@@ -295,31 +295,33 @@ export function LobbyClient({ initialTables, profile, token, unreadMailCount, is
         <main className="casino-poker-lobby mx-auto max-w-7xl px-4 pb-24 pt-5 md:pb-8 md:pt-10">
           <section className="casino-poker-lobby__grid grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
             <div className="casino-poker-lobby__card casino-poker-lobby__summary rounded-[30px] border border-[#f3d2a2]/12 bg-[linear-gradient(180deg,rgba(18,9,7,0.68),rgba(18,9,7,0.26))] p-5 shadow-[0_40px_120px_rgba(0,0,0,0.44)] backdrop-blur-md md:rounded-[38px] md:p-8">
-              <div className="casino-poker-lobby__summary-content flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="casino-poker-lobby__summary-content flex flex-col gap-6">
                 <div className="max-w-2xl">
                   <div className="casino-poker-lobby__eyebrow inline-flex rounded-full border border-[#f3d2a2]/18 bg-[#f1b45b]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#f7dfba]">
                     Pre-game lounge
                   </div>
-                  <h1 className="casino-poker-lobby__headline mt-5 max-w-xl font-serif text-[2.15rem] leading-[1.02] text-[#fff3e2] sm:text-4xl md:text-[3.35rem] xl:text-[3.65rem]">
-                    Hang out by the drinks before the cards hit the felt.
+                  <h1 className="casino-poker-lobby__headline mt-5 max-w-[34rem] font-serif text-[2.35rem] leading-[1.08] text-[#fff3e2] sm:text-[2.7rem] md:text-[3rem] xl:text-[3.2rem]">
+                    <span className="block">Hang out by the drinks</span>
+                    <span className="block">before the cards</span>
+                    <span className="block">hit the felt.</span>
                   </h1>
                   <p className="casino-poker-lobby__copy mt-4 max-w-xl text-sm leading-7 text-[#ffe8ca]/76 sm:text-base">
                     This is the spot to idle, talk, and see who is ready to play. When a table feels right, step out of the lounge and sit down with the room already warm.
                   </p>
                 </div>
 
-                <div className="casino-poker-lobby__cta flex flex-col items-stretch gap-3">
+                <div className="casino-poker-lobby__cta flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                   <Button
                     variant="primary"
-                    size="lg"
-                    className="casino-poker-lobby__primary-action w-full max-w-[176px] rounded-full px-7 shadow-[0_18px_48px_rgba(241,180,91,0.24)]"
+                    size="md"
+                    className="casino-poker-lobby__primary-action min-h-12 w-full min-w-[150px] whitespace-nowrap rounded-full px-6 text-sm font-bold leading-none shadow-[0_18px_48px_rgba(241,180,91,0.24)] sm:w-auto"
                     onClick={() => setShowCreate(true)}
                   >
                     Start a table
                   </Button>
                   <button
                     onClick={handleInvite}
-                    className="casino-poker-lobby__secondary-action w-full max-w-[176px] rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white"
+                    className="casino-poker-lobby__secondary-action min-h-12 w-full min-w-[150px] whitespace-nowrap rounded-full border border-white/15 bg-black/18 px-6 py-3 text-sm font-semibold leading-none text-white/80 transition-colors hover:border-[#f3d2a2]/28 hover:text-white sm:w-auto"
                   >
                     {inviteLabel === 'done' ? 'Copied to clipboard' : 'Text the crew'}
                   </button>
