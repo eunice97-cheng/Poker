@@ -130,7 +130,7 @@ export function ChatBox({ messages, onSend, myPlayerId, hasVipEmojis, initialCol
 
   const showEmojiTray = activeEmojiTray === 'standard'
   const showVipEmojiTray = activeEmojiTray === 'vip'
-  const messageCountLabel = messages.length === 1 ? '1 msg' : `${messages.length} msgs`
+  const messageCountLabel = unreadCount === 1 ? '1 unread' : `${unreadCount} unread`
   const unreadLabel = unreadCount > 99 ? '99+' : unreadCount.toString()
 
   return (
