@@ -3074,6 +3074,7 @@ button { font: inherit; }
     padding: 4px 7px 5px;
     border-radius: 999px;
     background: linear-gradient(180deg, rgba(7, 9, 8, .92), rgba(1, 3, 3, .82));
+    transform: translateY(-50%);
   }
 
   .round-countdown span {
@@ -3305,10 +3306,9 @@ button { font: inherit; }
     height: 34px;
     min-height: 34px;
     padding: 0 9px;
+    border-color: #9b7728;
     border-radius: 10px;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255, 226, 129, .24), transparent 45%),
-      linear-gradient(180deg, rgba(59, 45, 20, .98), rgba(13, 11, 7, .96));
+    background: linear-gradient(180deg, #76551d, #201709) !important;
     color: #ffe7a2;
     font-size: .52rem;
     letter-spacing: .06em;
@@ -3323,27 +3323,22 @@ button { font: inherit; }
     height: 34px;
     min-height: 34px;
     padding: 0;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255, 140, 118, .18), transparent 48%),
-      linear-gradient(180deg, rgba(40, 18, 15, .98), rgba(10, 7, 7, .96));
+    border-color: #a94b3d;
+    background: linear-gradient(180deg, #6a241e, #180b09) !important;
   }
 
   .blackjack-mobile-seat-controls .table-status-button:disabled {
     opacity: 1 !important;
-    border-color: rgba(214,173,72,.34);
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255, 226, 129, .13), transparent 46%),
-      linear-gradient(180deg, rgba(42, 34, 19, .96), rgba(12, 11, 8, .98));
-    color: rgba(255,232,170,.68);
-    filter: none;
+    border-color: #7b6026;
+    background: linear-gradient(180deg, #4b3a18, #181208) !important;
+    color: #f4d889;
+    filter: none !important;
   }
 
   .blackjack-mobile-seat-controls .table-status-button.is-cashout:disabled {
-    border-color: rgba(191, 88, 70, .34);
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255, 140, 118, .12), transparent 48%),
-      linear-gradient(180deg, rgba(34, 18, 15, .96), rgba(10, 7, 7, .98));
-    color: rgba(255, 220, 204, .66);
+    border-color: #713329;
+    background: linear-gradient(180deg, #43211c, #150a08) !important;
+    color: #efc5b8;
   }
 
   .blackjack-mobile-chat-panel {
@@ -3684,37 +3679,25 @@ button { font: inherit; }
     align-items: center;
     justify-content: center;
     padding: 0 8px;
-    border: 1px solid rgba(243, 212, 125, .32);
+    border: 1px solid #b68a35;
     border-radius: 11px;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255,255,255,.12), transparent 48%),
-      linear-gradient(180deg, rgba(27, 29, 31, .96), rgba(7, 8, 10, .92));
-    color: #f8f1d4;
-    filter: none;
-    box-shadow: inset 0 1px rgba(255,255,255,.09), 0 8px 14px rgba(0,0,0,.3);
+    background: linear-gradient(180deg, #314561, #142239) !important;
+    color: #fff7d8;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: inset 0 1px rgba(255,255,255,.18), 0 8px 14px rgba(0,0,0,.38);
     text-align: center;
   }
 
-  #undoBtn,
-  #clearBtn,
-  #insuranceBtn,
-  #dealBtn,
-  #hitBtn,
-  #standBtn,
-  #doubleBtn,
-  #splitBtn,
-  #surrenderBtn,
-  #newRoundBtn {
-    background-image: none !important;
-  }
-
   .action-button:hover:not(:disabled) {
-    filter: brightness(1.07);
+    filter: brightness(1.07) !important;
     transform: translateY(-1px);
   }
 
   .action-row .action-button:disabled {
-    display: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    cursor: not-allowed;
   }
 
   .action-button b {
@@ -3741,34 +3724,34 @@ button { font: inherit; }
   }
 
   #hitBtn {
-    border-color: rgba(83, 227, 142, .55);
-    background: linear-gradient(180deg, rgba(19, 113, 63, .98), rgba(4, 40, 24, .96));
-    color: #d8ffe6;
+    border-color: #45d17d;
+    background: linear-gradient(180deg, #1bb866, #07522e) !important;
+    color: #f0fff5;
   }
 
   #standBtn {
-    border-color: rgba(139, 177, 222, .56);
-    background: linear-gradient(180deg, rgba(45, 69, 98, .98), rgba(12, 19, 31, .96));
-    color: #e8f2ff;
+    border-color: #7aa9e8;
+    background: linear-gradient(180deg, #4477b8, #173963) !important;
+    color: #f1f7ff;
   }
 
   #doubleBtn {
-    border-color: rgba(255, 214, 79, .78);
-    background: linear-gradient(180deg, #ffd45c, #d9931e);
+    border-color: #ffd64f;
+    background: linear-gradient(180deg, #ffd45c, #d9931e) !important;
     color: #0b0905;
     text-shadow: 0 1px rgba(255,255,255,.22);
   }
 
   #splitBtn {
-    border-color: rgba(183, 133, 255, .62);
-    background: linear-gradient(180deg, rgba(97, 55, 163, .98), rgba(35, 18, 75, .96));
-    color: #f0e4ff;
+    border-color: #bb8cff;
+    background: linear-gradient(180deg, #8d55dd, #432381) !important;
+    color: #fbf5ff;
   }
 
   #surrenderBtn {
-    border-color: rgba(255, 103, 103, .58);
-    background: linear-gradient(180deg, rgba(126, 35, 35, .98), rgba(49, 11, 13, .96));
-    color: #ffe0df;
+    border-color: #ff7777;
+    background: linear-gradient(180deg, #c23b3b, #681719) !important;
+    color: #fff1ef;
   }
 
   #surrenderBtn b {
@@ -3776,22 +3759,78 @@ button { font: inherit; }
   }
 
   #insuranceBtn {
-    border-color: rgba(91, 219, 234, .6);
-    background: linear-gradient(180deg, rgba(23, 104, 118, .98), rgba(6, 39, 48, .96));
-    color: #d8fbff;
+    border-color: #5bdbea;
+    background: linear-gradient(180deg, #218293, #0b3f4c) !important;
+    color: #eaffff;
   }
 
   #newRoundBtn {
-    border-color: rgba(243, 212, 125, .68);
-    background: linear-gradient(180deg, #ffd45c, #d9931e);
+    border-color: #f3d47d;
+    background: linear-gradient(180deg, #ffd45c, #d9931e) !important;
     color: #0b0905;
   }
 
   #undoBtn,
   #clearBtn {
-    border-color: rgba(161, 181, 206, .46);
-    background: linear-gradient(180deg, rgba(46, 54, 66, .98), rgba(12, 15, 20, .96));
-    color: #d9e5f5;
+    border-color: #8fb0dd;
+    background: linear-gradient(180deg, #3c5f91, #162947) !important;
+    color: #f5f9ff;
+  }
+
+  .action-row .action-button,
+  .action-row .action-button.secondary,
+  .action-row .action-button.insurance-button,
+  .action-row .action-button.primary {
+    border-color: #b68a35 !important;
+    background: linear-gradient(180deg, #314561, #142239) !important;
+    background-clip: padding-box !important;
+    color: #fff7d8 !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .action-row #undoBtn,
+  .action-row #clearBtn {
+    border-color: #8fb0dd !important;
+    background: linear-gradient(180deg, #3c5f91, #162947) !important;
+    color: #f5f9ff !important;
+  }
+
+  .action-row #hitBtn {
+    border-color: #45d17d !important;
+    background: linear-gradient(180deg, #1bb866, #07522e) !important;
+    color: #f0fff5 !important;
+  }
+
+  .action-row #standBtn {
+    border-color: #7aa9e8 !important;
+    background: linear-gradient(180deg, #4477b8, #173963) !important;
+    color: #f1f7ff !important;
+  }
+
+  .action-row #doubleBtn,
+  .action-row #newRoundBtn {
+    border-color: #ffd64f !important;
+    background: linear-gradient(180deg, #ffd45c, #d9931e) !important;
+    color: #0b0905 !important;
+  }
+
+  .action-row #splitBtn {
+    border-color: #bb8cff !important;
+    background: linear-gradient(180deg, #8d55dd, #432381) !important;
+    color: #fbf5ff !important;
+  }
+
+  .action-row #surrenderBtn {
+    border-color: #ff7777 !important;
+    background: linear-gradient(180deg, #c23b3b, #681719) !important;
+    color: #fff1ef !important;
+  }
+
+  .action-row #insuranceBtn {
+    border-color: #5bdbea !important;
+    background: linear-gradient(180deg, #218293, #0b3f4c) !important;
+    color: #eaffff !important;
   }
 
   @media (max-width: 860px) {
