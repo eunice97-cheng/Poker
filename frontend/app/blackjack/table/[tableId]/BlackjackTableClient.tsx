@@ -117,7 +117,7 @@ const DEALER_SWITCH_THANK_MS = 3200
 const DEALER_SWITCH_GAP_MS = 650
 const DEALER_SWITCH_INTRO_MS = 3600
 const PERSISTENT_DEALER_LINES = new Set(['Place your bets, please.', 'Betting is now open.'])
-const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-22'
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-23'
 const DEALER_AUDIO_BASE = '/blackjack/Audio/Dealer/'
 const SUIT_SYMBOLS: Record<BlackjackCard['suit'], string> = {
   S: '\u2660',
@@ -1264,6 +1264,42 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
           </div>
         </div>
 
+        <div className="blackjack-mobile-seat-controls" aria-label="Mobile table seating controls">
+          {me && (
+            <button
+              type="button"
+              className="table-status-button"
+              disabled={isRoundLocked && playerHands.length > 0}
+              onClick={handleSitOut}
+            >
+              Stand Up
+            </button>
+          )}
+          {waitingMe && (
+            <button
+              type="button"
+              className="table-status-button"
+              disabled={blackjackState.players.length >= blackjackState.maxPlayers}
+              onClick={() => handleSitIn()}
+            >
+              Sit Down
+            </button>
+          )}
+          <button type="button" className="table-status-button is-cashout" disabled={leaving} onClick={leaveTable}>
+            {leaving ? 'Leaving' : 'Cash Out'}
+          </button>
+        </div>
+
+        <div className="blackjack-mobile-chat-panel">
+          <BlackjackChatPanel
+            messages={chatMessages}
+            onSend={(text) => { void sendChat(text) }}
+            myPlayerId={blackjackState.myPlayerId}
+            hasVipEmojis={false}
+            initialCollapsed
+          />
+        </div>
+
         <section className="bottom-console">
           <div className="message" id="message">{displayMessage}</div>
 
@@ -1569,14 +1605,16 @@ function BlackjackChatPanel({
   onSend,
   myPlayerId,
   hasVipEmojis,
+  initialCollapsed = false,
 }: {
   messages: ChatMessage[]
   onSend: (text: string) => void
   myPlayerId: string
   hasVipEmojis: boolean
+  initialCollapsed?: boolean
 }) {
   const [input, setInput] = useState('')
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [showEmojiTray, setShowEmojiTray] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 

@@ -2392,6 +2392,11 @@ button { font: inherit; }
   pointer-events: auto;
 }
 
+.blackjack-mobile-seat-controls,
+.blackjack-mobile-chat-panel {
+  display: none;
+}
+
 .blackjack-chat {
   display: flex;
   flex-direction: column;
@@ -2977,8 +2982,8 @@ button { font: inherit; }
   }
 
   .dealer-portrait {
-    top: -3%;
-    width: clamp(92px, 12vw, 116px);
+    top: -16%;
+    width: clamp(92px, 11vw, 112px);
   }
 
   .dealer-speech {
@@ -3147,33 +3152,20 @@ button { font: inherit; }
   }
 
   .blackjack-chat-panel {
-    display: block !important;
-    position: absolute !important;
-    left: auto !important;
-    right: 142px !important;
-    top: 8px !important;
-    z-index: 82 !important;
-    width: auto !important;
-    pointer-events: none !important;
-  }
-
-  .blackjack-chat-panel .blackjack-chat {
     display: none !important;
   }
 
-  .chat-seat-controls {
+  .blackjack-mobile-seat-controls {
+    position: absolute;
+    right: 142px;
+    top: 8px;
+    z-index: 82;
     display: flex;
     gap: 5px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
     pointer-events: auto;
   }
 
-  .chat-seat-controls .table-status-button {
+  .blackjack-mobile-seat-controls .table-status-button {
     flex: 0 0 auto;
     min-height: 34px;
     padding: 0 10px;
@@ -3181,6 +3173,98 @@ button { font: inherit; }
     font-size: .54rem;
     letter-spacing: .06em;
     box-shadow: inset 0 1px rgba(255,255,255,.06), 0 8px 14px rgba(0,0,0,.26);
+  }
+
+  .blackjack-mobile-chat-panel {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 76;
+    display: block;
+    width: min(300px, 42vw);
+    max-width: calc(100vw - 20px);
+    pointer-events: auto;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat {
+    height: min(292px, calc(100svh - 96px));
+    border-radius: 22px;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed {
+    width: 48px;
+    height: 48px;
+    margin-left: auto;
+    overflow: visible;
+    border-color: rgba(214,173,72,.78);
+    border-radius: 999px;
+    color: var(--gold-light);
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat-header {
+    min-height: 42px;
+    padding: 0 12px;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed .blackjack-chat-header {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed .blackjack-chat-header span,
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed .blackjack-chat-header strong {
+    display: none;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed .blackjack-chat-header::before {
+    content: "";
+    width: 17px;
+    height: 13px;
+    border: 2px solid currentColor;
+    border-radius: 5px;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat.is-collapsed .blackjack-chat-header::after {
+    content: "";
+    position: absolute;
+    left: 25px;
+    top: 29px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    background: rgba(4, 7, 5, .96);
+    transform: rotate(45deg);
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat-messages {
+    padding: 7px;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat-line {
+    margin-bottom: 5px;
+    font-size: .74rem;
+    line-height: 1.25;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat-compose {
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .blackjack-mobile-chat-panel .blackjack-chat-emoji-button,
+  .blackjack-mobile-chat-panel .blackjack-chat-send,
+  .blackjack-mobile-chat-panel .blackjack-chat-compose input {
+    height: 34px;
+    border-radius: 12px;
+    font-size: .66rem;
   }
 
   .bottom-console {
@@ -3376,11 +3460,11 @@ button { font: inherit; }
   }
 
   @media (max-width: 860px) {
-    .blackjack-chat-panel {
-      right: 136px !important;
+    .blackjack-mobile-seat-controls {
+      right: 136px;
     }
 
-    .chat-seat-controls .table-status-button {
+    .blackjack-mobile-seat-controls .table-status-button {
       padding-inline: 8px;
       font-size: .5rem;
     }
