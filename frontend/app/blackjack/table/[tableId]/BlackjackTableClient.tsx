@@ -497,13 +497,19 @@ export function BlackjackTableClient({ tableId, token, chipBalance: initialChipB
   const dealerLine = blackjackState?.message ?? ''
   const visibleDealerLine = showDealerLine ? dealerLine : ''
   const displayedDealerLine = dealerSwitchLine || visibleDealerLine
-  const tablePrompt = blackjackState?.phase === 'insurance'
-    ? me?.insuranceBet
-      ? `Insurance placed: ${money(me.insuranceBet)}`
-      : 'Dealer shows ace. Insurance is open.'
-    : needsTableBuyIn
-      ? 'Buy in to continue playing.'
-    : 'Click a chip to place your bet'
+  const tablePrompt = waitingMe
+    ? canSitAtSeat
+      ? 'Tap a vacant seat to sit down'
+      : 'Table is full. Watching this round.'
+    : blackjackState?.phase === 'insurance'
+      ? me?.insuranceBet
+        ? `Insurance placed: ${money(me.insuranceBet)}`
+        : 'Dealer shows ace. Insurance is open.'
+      : needsTableBuyIn
+        ? 'Buy in to continue playing.'
+      : canBet
+        ? 'Tap a chip to place your bet'
+        : 'Waiting for the next round.'
   const displayMessage = tableMessage(leaveError || lastError || bustedInfo?.message || tablePrompt)
   const bgmVolume = Math.round(musicVol * 100)
   const sfxVolume = Math.round(sfxVol * 100)
