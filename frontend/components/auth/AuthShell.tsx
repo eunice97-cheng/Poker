@@ -5,11 +5,12 @@ import authBackground from '@/public/casino-lobby/lobby-background.png'
 
 interface AuthShellProps {
   children: ReactNode
+  variant?: 'default' | 'login'
 }
 
-export function AuthShell({ children }: AuthShellProps) {
+export function AuthShell({ children, variant = 'default' }: AuthShellProps) {
   return (
-    <div className="auth-shell relative min-h-screen overflow-hidden bg-[#120907]">
+    <div className={`auth-shell auth-shell--${variant} relative min-h-screen overflow-hidden bg-[#120907]`}>
       <div className="auth-shell__backdrop pointer-events-none fixed inset-0 z-0">
         <Image
           src={authBackground}
@@ -19,6 +20,16 @@ export function AuthShell({ children }: AuthShellProps) {
           sizes="100vw"
           className="auth-shell__image object-cover"
         />
+        {variant === 'login' && (
+          <Image
+            src="/auth/desktop-login-frame.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="auth-shell__desktop-frame hidden object-cover"
+          />
+        )}
         <div className="auth-shell__veil absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(94,52,27,0.28),rgba(7,4,3,0.66)_56%,rgba(0,0,0,0.86)_100%)]" />
       </div>
 

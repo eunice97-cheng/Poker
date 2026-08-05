@@ -4,7 +4,7 @@ import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function LoginPage({ searchParams }: { searchParams: { verified?: string } }) {
   return (
-    <AuthShell>
+    <AuthShell variant="login">
       <div className="auth-login w-full max-w-md">
         <div className="auth-login__hero text-center mb-10">
           <div className="auth-login__logo mb-4">
