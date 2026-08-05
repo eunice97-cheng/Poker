@@ -125,13 +125,13 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-gray-400 text-sm mb-1">Email</label>
+    <form onSubmit={handleSubmit} className="auth-login-form space-y-4">
+      <div className="auth-login-form__field">
+        <label className="auth-login-form__label mb-1 block text-sm text-gray-400">Email</label>
         <input
           type="email"
           required
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white outline-none focus:border-yellow-500 transition-colors"
+          className="auth-login-form__input w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-3 text-white outline-none transition-colors focus:border-yellow-500"
           placeholder="you@example.com"
           value={email}
           onChange={(e) => {
@@ -142,31 +142,31 @@ export function LoginForm() {
         />
       </div>
 
-      <div>
-        <label className="block text-gray-400 text-sm mb-1">Password</label>
+      <div className="auth-login-form__field">
+        <label className="auth-login-form__label mb-1 block text-sm text-gray-400">Password</label>
         <input
           type="password"
           required
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white outline-none focus:border-yellow-500 transition-colors"
-          placeholder="••••••••"
+          className="auth-login-form__input w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-3 text-white outline-none transition-colors focus:border-yellow-500"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
 
-      <label className="flex items-center gap-2 cursor-pointer select-none">
+      <label className="auth-login-form__remember flex cursor-pointer select-none items-center gap-2">
         <input
           type="checkbox"
           checked={rememberEmail}
           onChange={(e) => setRememberEmail(e.target.checked)}
-          className="w-4 h-4 accent-yellow-400"
+          className="h-4 w-4 accent-yellow-400"
         />
-        <span className="text-gray-400 text-sm">Remember my email</span>
+        <span className="text-sm text-gray-400">Remember my email</span>
       </label>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="auth-login-form__message text-sm text-red-400">{error}</p>}
       {showResendConfirmation && (
-        <div className="space-y-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3">
+        <div className="auth-login-form__resend space-y-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3">
           <p className="text-sm text-yellow-100">
             Your account is registered, but your email still needs confirmation. We can send you a fresh
             verification link.
@@ -181,16 +181,16 @@ export function LoginForm() {
           >
             Resend Confirmation Email
           </Button>
-          {resendMessage && <p className="text-sm text-green-400">{resendMessage}</p>}
-          {resendError && <p className="text-sm text-red-400">{resendError}</p>}
+          {resendMessage && <p className="auth-login-form__message text-sm text-green-400">{resendMessage}</p>}
+          {resendError && <p className="auth-login-form__message text-sm text-red-400">{resendError}</p>}
         </div>
       )}
 
-      <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full">
+      <Button type="submit" variant="primary" size="lg" loading={loading} className="auth-login-form__submit w-full">
         Sign In
       </Button>
 
-      <p className="text-center text-gray-500 text-sm">
+      <p className="auth-login-form__links text-center text-sm text-gray-500">
         No account?{' '}
         <Link href="/auth/register" className="text-yellow-400 hover:text-yellow-300">
           Register

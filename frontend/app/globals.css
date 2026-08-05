@@ -927,6 +927,165 @@
   }
 
   @media (max-width: 940px) and (orientation: landscape), (max-height: 560px) and (orientation: landscape) {
+    .auth-shell {
+      height: 100svh !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .auth-shell__image {
+      object-position: center 52% !important;
+    }
+
+    .auth-shell__veil {
+      background:
+        linear-gradient(90deg, rgba(4, 3, 2, 0.86) 0%, rgba(12, 6, 4, 0.28) 46%, rgba(3, 2, 2, 0.9) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.72) 100%) !important;
+    }
+
+    .auth-shell__content {
+      height: 100svh !important;
+      min-height: 0 !important;
+      padding: 8px 54px 8px 14px !important;
+    }
+
+    .auth-shell__audio {
+      position: fixed !important;
+      right: 10px !important;
+      top: 10px !important;
+      z-index: 10040 !important;
+      padding: 0 !important;
+    }
+
+    .auth-shell__stage {
+      height: 100% !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+    }
+
+    .auth-shell__panel {
+      width: min(720px, calc(100vw - 92px)) !important;
+      max-width: none !important;
+      max-height: calc(100svh - 18px) !important;
+      overflow: hidden !important;
+      border-radius: 22px !important;
+      padding: 14px !important;
+      background: linear-gradient(135deg, rgba(13, 7, 5, 0.86), rgba(30, 14, 9, 0.5)) !important;
+      backdrop-filter: blur(8px) !important;
+    }
+
+    .auth-login {
+      display: grid !important;
+      max-width: none !important;
+      grid-template-columns: minmax(0, 0.86fr) minmax(280px, 1.14fr) !important;
+      align-items: center !important;
+      gap: 14px !important;
+    }
+
+    .auth-login__hero {
+      margin-bottom: 0 !important;
+      text-align: left !important;
+    }
+
+    .auth-login__logo {
+      margin-bottom: 8px !important;
+    }
+
+    .auth-brand-mark {
+      height: 68px !important;
+      width: 96px !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .auth-login__title {
+      background: linear-gradient(90deg, #fffaf0 0%, #f7d781 48%, #bd8231 100%) !important;
+      background-clip: text !important;
+      color: transparent !important;
+      font-family: Georgia, 'Times New Roman', serif !important;
+      font-size: 32px !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.02em !important;
+      line-height: 0.95 !important;
+      text-shadow: none !important;
+    }
+
+    .auth-login__subtitle {
+      margin-top: 6px !important;
+      max-width: 230px !important;
+      color: rgba(255, 232, 202, 0.62) !important;
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+    }
+
+    .auth-login__notice {
+      grid-column: 1 / -1 !important;
+      margin-bottom: 0 !important;
+      padding: 7px 10px !important;
+      font-size: 11px !important;
+      line-height: 1.25 !important;
+    }
+
+    .auth-login__form-card {
+      border-color: rgba(243, 210, 162, 0.18) !important;
+      border-radius: 18px !important;
+      background: rgba(5, 5, 8, 0.72) !important;
+      padding: 12px !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32) !important;
+    }
+
+    .auth-login-form {
+      display: grid !important;
+      gap: 8px !important;
+    }
+
+    .auth-login-form > * {
+      margin: 0 !important;
+    }
+
+    .auth-login-form__label {
+      margin-bottom: 4px !important;
+      font-size: 10px !important;
+      line-height: 1 !important;
+    }
+
+    .auth-login-form__input {
+      height: 38px !important;
+      border-radius: 12px !important;
+      padding: 0 12px !important;
+      font-size: 13px !important;
+    }
+
+    .auth-login-form__remember {
+      gap: 6px !important;
+    }
+
+    .auth-login-form__remember input {
+      height: 14px !important;
+      width: 14px !important;
+    }
+
+    .auth-login-form__remember span,
+    .auth-login-form__links,
+    .auth-login-form__message {
+      font-size: 11px !important;
+      line-height: 1.25 !important;
+    }
+
+    .auth-login-form__resend {
+      gap: 6px !important;
+      border-radius: 12px !important;
+      padding: 8px !important;
+    }
+
+    .auth-login-form__submit {
+      min-height: 38px !important;
+      border-radius: 12px !important;
+      padding: 0 12px !important;
+      font-size: 13px !important;
+      line-height: 1 !important;
+    }
+
     .casino-room-header {
       z-index: 10030 !important;
       height: 64px !important;
