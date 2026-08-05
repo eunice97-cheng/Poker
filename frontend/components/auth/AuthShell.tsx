@@ -45,7 +45,7 @@ export function AuthShell({ children, variant = 'default' }: AuthShellProps) {
 
       <div className="auth-shell__content relative z-10 min-h-screen px-4">
         <div className="auth-shell__audio flex justify-end px-1 pt-5 sm:px-3">
-          <AudioControls />
+          <AudioControls buttonClassName="auth-shell__audio-button flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-black/35 text-white/82 shadow-[0_14px_34px_rgba(0,0,0,0.42)] backdrop-blur-md transition-colors hover:border-[#f3d2a2]/36 hover:text-white" />
         </div>
 
         <div className="auth-shell__stage flex min-h-[calc(100vh-4.5rem)] items-center justify-center py-8">

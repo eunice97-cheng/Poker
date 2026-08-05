@@ -784,7 +784,7 @@
     display: none;
   }
 
-  @media (max-width: 900px) and (orientation: portrait) {
+  @media (hover: none) and (pointer: coarse) and (orientation: portrait), (max-width: 900px) and (orientation: portrait) {
     .landscape-only-guard {
       position: fixed;
       inset: 0;
@@ -947,9 +947,17 @@
       padding: 0 !important;
     }
 
-    .auth-shell--login .auth-shell__audio,
     .auth-shell--login a[href="/api/dev/local-admin-login"] {
       display: none !important;
+    }
+
+    .auth-shell--login .auth-shell__audio {
+      position: fixed !important;
+      right: 22px !important;
+      top: 22px !important;
+      z-index: 10040 !important;
+      display: flex !important;
+      padding: 0 !important;
     }
 
     .auth-shell--login .auth-shell__stage {
@@ -1247,15 +1255,30 @@
       padding: 0 !important;
     }
 
-    .auth-shell--login .auth-shell__audio,
     .auth-shell--login a[href="/api/dev/local-admin-login"] {
       display: none !important;
+    }
+
+    .auth-shell--login .auth-shell__audio {
+      right: 10px !important;
+      top: 10px !important;
+      display: flex !important;
+    }
+
+    .auth-shell--login .auth-shell__audio-button {
+      height: 34px !important;
+      width: 34px !important;
+    }
+
+    .auth-shell--login .auth-shell__audio-button svg {
+      height: 16px !important;
+      width: 16px !important;
     }
 
     .auth-shell--login .auth-shell__panel {
       position: absolute !important;
       left: 50% !important;
-      top: 34.6% !important;
+      top: 39.8% !important;
       width: clamp(214px, 27.4vw, 255px) !important;
       max-height: none !important;
       transform: translateX(-50%) !important;

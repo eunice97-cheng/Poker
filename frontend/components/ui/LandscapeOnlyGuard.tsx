@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 
 function isWideCasinoRoute(pathname: string) {
   return (
+    pathname === '/' ||
     pathname === '/lobby' ||
     pathname.startsWith('/table/') ||
     pathname === '/blackjack' ||
