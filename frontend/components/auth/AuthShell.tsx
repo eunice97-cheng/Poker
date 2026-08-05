@@ -21,14 +21,24 @@ export function AuthShell({ children, variant = 'default' }: AuthShellProps) {
           className="auth-shell__image object-cover"
         />
         {variant === 'login' && (
-          <Image
-            src="/auth/desktop-login-frame.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="auth-shell__desktop-frame hidden object-cover"
-          />
+          <>
+            <Image
+              src="/auth/desktop-login-frame.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="auth-shell__desktop-frame hidden object-cover"
+            />
+            <Image
+              src="/auth/mobile-login-frame.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="auth-shell__mobile-frame hidden object-cover"
+            />
+          </>
         )}
         <div className="auth-shell__veil absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(94,52,27,0.28),rgba(7,4,3,0.66)_56%,rgba(0,0,0,0.86)_100%)]" />
       </div>

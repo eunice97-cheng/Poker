@@ -1232,6 +1232,122 @@
       line-height: 1 !important;
     }
 
+    .auth-shell--login .auth-shell__image,
+    .auth-shell--login .auth-shell__veil,
+    .auth-shell--login .auth-shell__desktop-frame {
+      display: none !important;
+    }
+
+    .auth-shell--login .auth-shell__mobile-frame {
+      display: block !important;
+      object-position: center center !important;
+    }
+
+    .auth-shell--login .auth-shell__content {
+      padding: 0 !important;
+    }
+
+    .auth-shell--login .auth-shell__audio,
+    .auth-shell--login a[href="/api/dev/local-admin-login"] {
+      display: none !important;
+    }
+
+    .auth-shell--login .auth-shell__panel {
+      position: absolute !important;
+      left: 50% !important;
+      top: 34.6% !important;
+      width: clamp(214px, 27.4vw, 255px) !important;
+      max-height: none !important;
+      transform: translateX(-50%) !important;
+      overflow: visible !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+
+    .auth-shell--login .auth-login {
+      display: block !important;
+      width: 100% !important;
+      max-width: none !important;
+    }
+
+    .auth-shell--login .auth-login__hero {
+      display: none !important;
+    }
+
+    .auth-shell--login .auth-login__notice {
+      margin-bottom: 5px !important;
+      border-color: rgba(243, 210, 162, 0.22) !important;
+      background: rgba(8, 6, 4, 0.86) !important;
+      padding: 5px 7px !important;
+      font-size: 8px !important;
+      line-height: 1.2 !important;
+    }
+
+    .auth-shell--login .auth-login__form-card {
+      border: 0 !important;
+      background: transparent !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .auth-shell--login .auth-login-form {
+      display: grid !important;
+      gap: 5px !important;
+    }
+
+    .auth-shell--login .auth-login-form__label {
+      margin-bottom: 3px !important;
+      color: rgba(255, 255, 255, 0.78) !important;
+      font-size: 8px !important;
+    }
+
+    .auth-shell--login .auth-login-form__input {
+      height: 30px !important;
+      border: 1px solid rgba(126, 156, 179, 0.68) !important;
+      border-radius: 8px !important;
+      background: linear-gradient(180deg, rgba(32, 48, 64, 0.94), rgba(19, 31, 43, 0.96)) !important;
+      color: #f7fbff !important;
+      font-size: 10px !important;
+      padding: 0 11px !important;
+    }
+
+    .auth-shell--login .auth-login-form__remember {
+      gap: 5px !important;
+    }
+
+    .auth-shell--login .auth-login-form__remember input {
+      height: 10px !important;
+      width: 10px !important;
+    }
+
+    .auth-shell--login .auth-login-form__remember span,
+    .auth-shell--login .auth-login-form__links,
+    .auth-shell--login .auth-login-form__message {
+      font-size: 9px !important;
+      line-height: 1.2 !important;
+    }
+
+    .auth-shell--login .auth-login-form__submit {
+      min-height: 31px !important;
+      border-radius: 8px !important;
+      background: linear-gradient(180deg, #ffe46c 0%, #ffc928 48%, #eda609 100%) !important;
+      color: #080604 !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+    }
+
+    .auth-shell--login .auth-login-form__links {
+      color: rgba(255, 255, 255, 0.54) !important;
+    }
+
+    .auth-shell--login .auth-login-form__links a {
+      color: #ffd91f !important;
+    }
+
     .casino-room-header {
       z-index: 10030 !important;
       height: 64px !important;
