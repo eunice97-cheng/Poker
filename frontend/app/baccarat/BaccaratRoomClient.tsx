@@ -284,7 +284,7 @@ function Card({ card }: { card: BaccaratCard }) {
   const isRed = card.suit === 'H' || card.suit === 'D'
 
   return (
-    <div className={classNames('card', isRed && 'red')}>
+    <div className={classNames('card baccarat-card', isRed && 'red')}>
       <span className="rank">{card.rank}</span>
       <span className="suit">{SUIT_SYMBOLS[card.suit]}</span>
       <span className="bottom">{card.rank}</span>
@@ -1413,9 +1413,41 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         }
 
         .baccarat-game-shell .baccarat-hand-area .card {
+          position: relative;
           width: 40px;
           height: 60px;
+          overflow: hidden;
+          padding: 4px;
           border-radius: 7px;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .baccarat-card .rank,
+        .baccarat-game-shell .baccarat-hand-area .baccarat-card .bottom {
+          position: absolute;
+          font-size: .68rem;
+          line-height: 1;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .baccarat-card .rank {
+          left: 6px;
+          top: 6px;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .baccarat-card .bottom {
+          right: 6px;
+          bottom: 6px;
+          align-self: auto;
+          transform: rotate(180deg);
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .baccarat-card .suit {
+          position: absolute;
+          left: 50%;
+          top: 52%;
+          align-self: auto;
+          font-size: 1.24rem;
+          line-height: 1;
+          transform: translate(-50%, -50%);
         }
 
         .baccarat-card-back {
