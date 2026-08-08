@@ -1518,7 +1518,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         .baccarat-spot-chip-stack {
           position: absolute;
           left: 50%;
-          top: 60%;
+          top: 68%;
           width: 60px;
           height: 54px;
           z-index: 36;
@@ -1534,7 +1534,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         .baccarat-zone-amount {
           position: absolute;
           left: 50%;
-          top: calc(50% + 30px);
+          top: calc(50% + 46px);
           z-index: 38;
           min-width: 72px;
           padding: 4px 9px;
@@ -1694,11 +1694,11 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           grid-row: 1 / span 2;
           align-self: center;
           justify-self: end;
-          width: min(100%, 240px);
+          width: min(100%, 286px);
         }
 
         .baccarat-bottom-console .baccarat-round-info {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: minmax(156px, 1.2fr) minmax(92px, .8fr);
           grid-template-rows: 34px 42px;
         }
 
@@ -1708,6 +1708,12 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        .baccarat-round-info span {
+          padding-inline: 6px;
+          font-size: .58rem;
+          letter-spacing: .08em;
         }
 
         .baccarat-round-info span:nth-of-type(1) { grid-column: 1; grid-row: 1; }
