@@ -1238,8 +1238,8 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         }
 
         .baccarat-wood-rail .dealer-portrait {
-          top: -28%;
-          width: clamp(220px, 14vw, 266px);
+          top: -34%;
+          width: clamp(186px, 10.8vw, 210px);
           z-index: 7;
         }
 
@@ -1786,8 +1786,8 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           }
 
           .baccarat-wood-rail .dealer-portrait {
-            top: -18%;
-            width: clamp(176px, 11.5vw, 205px);
+            top: -34%;
+            width: clamp(168px, 10.4vw, 190px);
           }
 
           .baccarat-tip-board {
