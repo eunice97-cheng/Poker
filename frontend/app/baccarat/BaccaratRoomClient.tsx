@@ -677,6 +677,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
   const lastStake = totalBets(lastBets)
   const dealing = roundPhase === 'dealing'
   const roundClosed = roundPhase !== 'betting'
+  const waitingForBets = roundPhase === 'betting' && currentStake <= 0
   const canTipDealer = isSeated && stack >= DEALER_TIP_AMOUNT
   const activeDealerTipTotal = dealerTips[activeDealer.id] ?? 0
   const myPlayerId = 'baccarat-room-gm'
@@ -738,18 +739,28 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
   useEffect(() => {
     if (roundPhase === 'dealing') return
+    if (waitingForBets) return
 
     const interval = window.setInterval(() => {
       setRoundTimeLeft((current) => Math.max(0, current - 1))
     }, 1000)
 
     return () => window.clearInterval(interval)
-  }, [roundPhase])
+  }, [roundPhase, waitingForBets])
+
+  useEffect(() => {
+    if (!waitingForBets) return
+    setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
+  }, [waitingForBets])
 
   useEffect(() => {
     if (roundTimeLeft > 0) return
 
     if (roundPhase === 'betting') {
+      if (currentStake <= 0) {
+        setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
+        return
+      }
       setRoundPhase('dealing')
       return
     }
@@ -759,7 +770,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
       setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
       setRoundPhase('betting')
     }
-  }, [roundPhase, roundTimeLeft])
+  }, [currentStake, roundPhase, roundTimeLeft])
 
   useEffect(() => {
     if (roundPhase !== 'dealing') return
@@ -796,8 +807,8 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
     return isSeated ? 'Place your bets, please.' : 'Take a seat to play.'
   }, [currentStake, dealing, isSeated, roundPhase, tableCallLine])
 
-  const timerLabel = roundPhase === 'betting' ? 'Betting Closes' : roundPhase === 'dealing' ? 'No More Bets' : 'Next Round'
-  const timerValue = roundPhase === 'dealing' ? '--' : `${roundTimeLeft}s`
+  const timerLabel = waitingForBets ? 'Waiting For Bets' : roundPhase === 'betting' ? 'Betting Closes' : roundPhase === 'dealing' ? 'No More Bets' : 'Next Round'
+  const timerValue = waitingForBets || roundPhase === 'dealing' ? '--' : `${roundTimeLeft}s`
 
   const displayMessage = dealing ? 'Cards are in motion.' : tableCallLine
 
@@ -1278,13 +1289,13 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
         .baccarat-wood-rail .dealer-speech {
           left: calc(50% + 112px);
-          top: -1%;
+          top: -4%;
         }
 
         .baccarat-tip-board {
           position: absolute !important;
           left: calc(50% - 386px) !important;
-          top: -35% !important;
+          top: -26% !important;
           z-index: 24 !important;
           width: 292px !important;
         }
@@ -1302,7 +1313,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         .baccarat-table-timer {
           position: absolute;
           left: calc(50% - 386px);
-          top: -18%;
+          top: -8%;
           z-index: 24;
           display: grid;
           grid-template-columns: 1fr auto;
@@ -1961,7 +1972,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-tip-board {
             left: calc(50% - 346px) !important;
-            top: -32% !important;
+            top: -24% !important;
             width: 260px !important;
           }
 
@@ -1971,7 +1982,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-table-timer {
             left: calc(50% - 346px);
-            top: -15%;
+            top: -6%;
             width: 260px;
           }
 
