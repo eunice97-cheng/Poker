@@ -1521,7 +1521,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           height: 60px;
           overflow: hidden;
           padding: 4px;
-          border-radius: 7px;
+          border-radius: 3px;
         }
 
         .baccarat-game-shell .baccarat-hand-area .baccarat-card .rank,
