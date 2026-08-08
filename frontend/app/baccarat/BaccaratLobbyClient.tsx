@@ -46,7 +46,7 @@ function ChipFace({ value }: { value: number }) {
       <img
         src="/baccarat/Images/Chips/5000.png"
         alt="5,000 chip"
-        className="h-12 w-12 rounded-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.42)]"
+        className="-mx-1.5 -my-1.5 h-[60px] w-[60px] rounded-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.42)]"
       />
     )
   }

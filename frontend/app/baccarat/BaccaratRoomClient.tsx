@@ -1288,6 +1288,7 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
         .baccarat-game-shell .chip-5000,
         .baccarat-game-shell .chip-face-5000 {
           background-image: url("/baccarat/Images/Chips/5000.png");
+          background-size: 122%;
         }
 
         .baccarat-road {
@@ -1755,6 +1756,12 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
         .baccarat-spot-chip-stack .spot-chip {
           width: 38px;
           height: 38px;
+        }
+
+        .baccarat-spot-chip-stack .chip-face-5000 {
+          width: 44px;
+          height: 44px;
+          background-size: 118%;
         }
 
         .baccarat-zone-amount {
