@@ -8,7 +8,7 @@ import { AudioProvider } from '@/hooks/useAudio'
 
 export const metadata: Metadata = {
   title: 'Arcana Casino',
-  description: 'Arcana Studio Labs casino lobby for Poker and BlackJack Lounge',
+  description: 'Arcana Studio Labs casino lobby for Poker, Baccarat, and BlackJack Lounge',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

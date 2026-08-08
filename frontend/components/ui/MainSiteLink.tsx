@@ -86,7 +86,7 @@ export function MainSiteLink() {
     }
   }, [])
 
-  if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/')) {
+  if (pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/') || pathname?.startsWith('/baccarat/table/')) {
     return null
   }
 

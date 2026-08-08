@@ -31,7 +31,7 @@ export const supabaseService = {
   async createTable(params: {
     name: string
     hostId: string
-    gameType?: 'poker' | 'blackjack'
+    gameType?: 'poker' | 'blackjack' | 'baccarat'
     maxPlayers: number
     smallBlind: number
     bigBlind: number

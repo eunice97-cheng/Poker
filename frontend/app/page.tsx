@@ -35,6 +35,18 @@ function buildGameStats(tables: CasinoTableRow[] | null | undefined): CasinoGame
   }
 }
 
+function buildBaccaratStats(tables: CasinoTableRow[] | null | undefined): CasinoGameStats {
+  const liveStats = buildGameStats(tables)
+  if (liveStats.tableCount > 0) return liveStats
+
+  return {
+    tableCount: 1,
+    playerCount: 0,
+    openSeats: 6,
+    featuredLimit: '100-10,000 table open',
+  }
+}
+
 export default async function HomePage() {
   const supabase = createClient()
   const {
@@ -60,6 +72,7 @@ export default async function HomePage() {
         }}
         pokerStats={buildGameStats([])}
         blackjackStats={buildGameStats([])}
+        baccaratStats={buildBaccaratStats([])}
         unreadMailCount={0}
         token={LOCAL_ADMIN_TOKEN}
         hasVipEmojis
@@ -70,7 +83,7 @@ export default async function HomePage() {
   }
 
   const user = session!.user
-  const [{ data: pokerTables }, { data: blackjackTables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] =
+  const [{ data: pokerTables }, { data: blackjackTables }, { data: baccaratTables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] =
     await Promise.all([
       supabase
         .from('tables')
@@ -82,6 +95,11 @@ export default async function HomePage() {
         .from('tables')
         .select('small_blind,big_blind,max_players,player_count,status')
         .eq('game_type', 'blackjack')
+        .neq('status', 'finished'),
+      supabase
+        .from('tables')
+        .select('small_blind,big_blind,max_players,player_count,status')
+        .eq('game_type', 'baccarat')
         .neq('status', 'finished'),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       hasVipEmojiAccess(supabase, user.id, user.email),
@@ -97,6 +115,7 @@ export default async function HomePage() {
       profile={profile as Profile | null}
       pokerStats={buildGameStats(pokerTables as CasinoTableRow[])}
       blackjackStats={buildGameStats(blackjackTables as CasinoTableRow[])}
+      baccaratStats={buildBaccaratStats(baccaratTables as CasinoTableRow[])}
       unreadMailCount={unreadMailCount ?? 0}
       token={session!.access_token}
       hasVipEmojis={canUseVipEmojis}

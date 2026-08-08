@@ -24,6 +24,7 @@ interface CasinoLobbyClientProps {
   profile: Profile | null
   pokerStats: CasinoGameStats
   blackjackStats: CasinoGameStats
+  baccaratStats: CasinoGameStats
   unreadMailCount: number
   token: string | null
   hasVipEmojis: boolean
@@ -32,13 +33,13 @@ interface CasinoLobbyClientProps {
 }
 
 type CasinoGameCard = {
-  id: 'poker' | 'blackjack'
+  id: 'poker' | 'baccarat' | 'blackjack'
   title: string
   roomLabel: string
   href: string
   image: string
   mobileImage: string
-  tone: 'gold' | 'teal'
+  tone: 'gold' | 'jade' | 'teal'
   stats: CasinoGameStats
 }
 
@@ -51,6 +52,15 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
     image: '/casino-lobby/poker-poster.png',
     mobileImage: '/casino-lobby/poker-poster-mobile.png',
     tone: 'gold',
+  },
+  {
+    id: 'baccarat',
+    title: 'Baccarat Lounge',
+    roomLabel: 'Punto Banco',
+    href: '/baccarat',
+    image: '/casino-lobby/baccarat-poster.png',
+    mobileImage: '/casino-lobby/baccarat-poster-mobile.png',
+    tone: 'jade',
   },
   {
     id: 'blackjack',
@@ -77,7 +87,9 @@ function GameCard({ game }: { game: CasinoGameCard }) {
   const badge =
     game.tone === 'gold'
       ? 'border-[#f8d86a]/45 bg-[#f8d86a]/14 text-[#fff0be]'
-      : 'border-[#76f4dc]/42 bg-[#1da58e]/15 text-[#c8fff4]'
+      : game.tone === 'jade'
+        ? 'border-[#9ee7b7]/42 bg-[#13804b]/18 text-[#d8ffe2]'
+        : 'border-[#76f4dc]/42 bg-[#1da58e]/15 text-[#c8fff4]'
 
   return (
     <Link
@@ -127,30 +139,14 @@ function GameCard({ game }: { game: CasinoGameCard }) {
   )
 }
 
-function ComingSoonCard() {
-  return (
-    <div
-      className="casino-game-card casino-game-card--coming-soon relative flex aspect-[9/16] min-h-[34rem] max-h-[44rem] overflow-hidden rounded-[22px] border border-[#d9ad5a]/18 bg-black/60 shadow-[0_30px_90px_rgba(0,0,0,0.36)]"
-      aria-label="Coming soon"
-    >
-      <img
-        src="/casino-lobby/coming-soon.png"
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.08)_54%,rgba(0,0,0,0.5)_100%)]" />
-      <div className="pointer-events-none absolute inset-[10px] rounded-[16px] border border-[#f5d07c]/14" />
-    </div>
-  )
-}
-
 function CompactGameCard({ game }: { game: CasinoGameCard }) {
   const { playSfx } = useAudio()
   const badge =
     game.tone === 'gold'
       ? 'border-[#f8d86a]/45 bg-[#f8d86a]/14 text-[#fff0be]'
-      : 'border-[#76f4dc]/42 bg-[#1da58e]/15 text-[#c8fff4]'
+      : game.tone === 'jade'
+        ? 'border-[#9ee7b7]/42 bg-[#13804b]/18 text-[#d8ffe2]'
+        : 'border-[#76f4dc]/42 bg-[#1da58e]/15 text-[#c8fff4]'
 
   return (
     <Link
@@ -193,20 +189,11 @@ function CompactGameCard({ game }: { game: CasinoGameCard }) {
   )
 }
 
-function CompactComingSoonCard() {
-  return (
-    <div className="relative h-full min-h-0 overflow-hidden rounded-xl border border-[#d9ad5a]/18 bg-black/60 shadow-[0_18px_44px_rgba(0,0,0,0.32)]" aria-label="Coming soon">
-      <img src="/casino-lobby/coming-soon-mobile.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02)_0%,rgba(0,0,0,0.08)_54%,rgba(0,0,0,0.48)_100%)]" />
-      <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#f5d07c]/14" />
-    </div>
-  )
-}
-
 export function CasinoLobbyClient({
   profile,
   pokerStats,
   blackjackStats,
+  baccaratStats,
   unreadMailCount,
   token,
   hasVipEmojis,
@@ -220,11 +207,12 @@ export function CasinoLobbyClient({
   const [compactLandscape, setCompactLandscape] = useState(false)
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
   const playerName = profile?.username ?? 'Player'
-  const canPreviewBaccarat = isAdmin || isLocalAdmin
   const gameCards: CasinoGameCard[] = games.map((game) => ({
     ...game,
-    stats: game.id === 'poker' ? pokerStats : blackjackStats,
+    stats: game.id === 'poker' ? pokerStats : game.id === 'baccarat' ? baccaratStats : blackjackStats,
   }))
+  const liveTableCount = pokerStats.tableCount + baccaratStats.tableCount + blackjackStats.tableCount
+  const playerCount = pokerStats.playerCount + baccaratStats.playerCount + blackjackStats.playerCount
 
   const handleSignOut = async () => {
     playSfx('click')
@@ -307,13 +295,13 @@ export function CasinoLobbyClient({
                   )}
                 </Link>
                 <AudioControls buttonClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
-                {canPreviewBaccarat && (
+                {isAdmin && (
                   <Link
-                    href="/baccarat"
+                    href="/gm"
                     onClick={() => playSfx('click')}
-                    className="flex h-10 items-center justify-center rounded-xl border border-[#f8d86a]/24 bg-[#f8d86a]/10 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#fff2bf] transition-colors hover:border-[#f8d86a]/50 hover:bg-[#f8d86a]/18"
+                    className="flex h-10 items-center justify-center rounded-xl border border-white/10 bg-black/24 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-white/72 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
                   >
-                    Baccarat
+                    GM
                   </Link>
                 )}
                 <button
@@ -337,18 +325,16 @@ export function CasinoLobbyClient({
               </div>
               <div className="flex min-h-0 flex-col justify-center rounded-xl border border-white/10 bg-black/34 px-3 py-2 backdrop-blur-md">
                 <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/42">Live Tables</div>
-                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{pokerStats.tableCount + blackjackStats.tableCount}</div>
+                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{liveTableCount}</div>
               </div>
               <div className="flex min-h-0 flex-col justify-center rounded-xl border border-white/10 bg-black/34 px-3 py-2 backdrop-blur-md">
                 <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/42">Players Seated</div>
-                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{pokerStats.playerCount + blackjackStats.playerCount}</div>
+                <div className="mt-1 text-xl font-black leading-none text-[#fff8df]">{playerCount}</div>
               </div>
             </div>
 
             <div className="grid min-h-0 grid-cols-3 gap-2">
-              <CompactGameCard game={gameCards[0]} />
-              <CompactComingSoonCard />
-              <CompactGameCard game={gameCards[1]} />
+              {gameCards.map((game) => <CompactGameCard key={game.id} game={game} />)}
             </div>
           </section>
 
@@ -416,13 +402,13 @@ export function CasinoLobbyClient({
                 )}
               </Link>
               <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
-              {canPreviewBaccarat && (
+              {isAdmin && (
                 <Link
-                  href="/baccarat"
+                  href="/gm"
                   onClick={() => playSfx('click')}
-                  className="rounded-xl border border-[#f8d86a]/24 bg-[#f8d86a]/10 px-4 py-3 text-sm font-semibold text-[#fff2bf] transition-colors hover:border-[#f8d86a]/50 hover:bg-[#f8d86a]/18 hover:text-white"
+                  className="rounded-xl border border-white/10 bg-black/24 px-4 py-3 text-sm font-semibold text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white"
                 >
-                  Baccarat Preview
+                  GM
                 </Link>
               )}
               <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/24 px-3 py-3 text-xs font-semibold text-white/62 xl:flex">
@@ -458,18 +444,16 @@ export function CasinoLobbyClient({
             </div>
             <div className="rounded-xl border border-white/10 bg-black/28 p-4 backdrop-blur-md">
               <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/42">Live Tables</div>
-              <div className="mt-2 text-2xl font-black text-[#fff8df]">{pokerStats.tableCount + blackjackStats.tableCount}</div>
+              <div className="mt-2 text-2xl font-black text-[#fff8df]">{liveTableCount}</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-black/28 p-4 backdrop-blur-md">
               <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/42">Players Seated</div>
-              <div className="mt-2 text-2xl font-black text-[#fff8df]">{pokerStats.playerCount + blackjackStats.playerCount}</div>
+              <div className="mt-2 text-2xl font-black text-[#fff8df]">{playerCount}</div>
             </div>
           </div>
 
           <div className="casino-game-lobby__games grid gap-3 sm:grid-cols-3">
-            <GameCard game={gameCards[0]} />
-            <ComingSoonCard />
-            <GameCard game={gameCards[1]} />
+            {gameCards.map((game) => <GameCard key={game.id} game={game} />)}
           </div>
         </section>
 

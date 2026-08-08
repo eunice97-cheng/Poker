@@ -51,16 +51,21 @@ type RoundResult = RoadItem & {
 }
 
 type BaccaratRoomClientProps = {
+  playerId: string
   username: string
+  avatar: string
   chipBalance: number
   hasVipEmojis: boolean
+  isAdmin?: boolean
 }
 
 const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-42'
 const SUITS: Suit[] = ['S', 'H', 'D', 'C']
 const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-const CHIP_VALUES = [10, 20, 50, 100, 500, 1000]
-const CHIP_STACK_VALUES = [1000, 500, 100, 50, 20, 10]
+const BACCARAT_MIN_BET = 100
+const BACCARAT_MAX_BET = 10000
+const CHIP_VALUES = [100, 500, 1000, 5000]
+const CHIP_STACK_VALUES = [5000, 1000, 500, 100]
 const CHIP_STACK_OFFSETS = [
   [0, 1, -5],
   [-4, -2, 8],
@@ -71,7 +76,7 @@ const CHIP_STACK_OFFSETS = [
 ] as const
 const EMPTY_BETS: Bets = { player: 0, tie: 0, banker: 0 }
 const MAX_CHAT_LENGTH = 200
-const DEALER_TIP_AMOUNT = 10
+const DEALER_TIP_AMOUNT = 100
 const DEALER_ROTATION_MS = 2 * 60 * 60 * 1000
 const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
@@ -224,7 +229,7 @@ function chipFacesForBet(value: number) {
     }
   }
 
-  return faces.length > 0 ? faces : [10]
+  return faces.length > 0 ? faces : [BACCARAT_MIN_BET]
 }
 
 function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
@@ -426,11 +431,13 @@ function DealerTipBoard({ dealerName, total }: { dealerName: string; total: numb
 
 function BaccaratSeatRail({
   username,
+  avatar,
   stake,
   stack,
   isSeated,
 }: {
   username: string
+  avatar: string
   stake: number
   stack: number
   isSeated: boolean
@@ -449,7 +456,7 @@ function BaccaratSeatRail({
         <div key={seat.id} className={classNames('baccarat-seat', `baccarat-seat-${seat.id}`, seat.active && 'is-active')}>
           <span className="baccarat-seat__avatar">
             {seat.active ? (
-              <AvatarDisplay avatarId="avatar_gm" size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
+              <AvatarDisplay avatarId={avatar} size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
             ) : (
               <span aria-hidden="true" />
             )}
@@ -642,6 +649,8 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             <h3>Objective</h3>
             <ul>
               <li>Bet on Player, Banker, or Tie.</li>
+              <li>Table stakes run from 100 to 10,000 chips.</li>
+              <li>Baccarat chips are 100, 500, 1,000, and 5,000.</li>
               <li>The hand closest to 9 wins.</li>
               <li>Only the last digit of the hand total counts.</li>
             </ul>
@@ -691,7 +700,7 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   )
 }
 
-export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: BaccaratRoomClientProps) {
+export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, hasVipEmojis, isAdmin = false }: BaccaratRoomClientProps) {
   const {
     musicVol,
     sfxVol,
@@ -704,7 +713,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
   } = useAudio()
   const [shoe, setShoe] = useState(() => createShoe())
   const [selectedChip, setSelectedChip] = useState(100)
-  const [stack, setStack] = useState(() => Math.max(1000, Math.floor(chipBalance)))
+  const [stack, setStack] = useState(() => Math.max(0, Math.floor(chipBalance)))
   const [bets, setBets] = useState<Bets>(EMPTY_BETS)
   const [lastBets, setLastBets] = useState<Bets>(EMPTY_BETS)
   const [road, setRoad] = useState<RoadItem[]>([])
@@ -725,10 +734,10 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
   const lastStake = totalBets(lastBets)
   const dealing = roundPhase === 'dealing'
   const roundClosed = roundPhase !== 'betting'
-  const waitingForBets = roundPhase === 'betting' && currentStake <= 0
+  const waitingForBets = roundPhase === 'betting' && currentStake < BACCARAT_MIN_BET
   const canTipDealer = isSeated && stack >= DEALER_TIP_AMOUNT
   const activeDealerTipTotal = dealerTips[activeDealer.id] ?? 0
-  const myPlayerId = 'baccarat-room-gm'
+  const myPlayerId = playerId
   const bgmEffectivelyMuted = musicMute || musicVol === 0
   const sfxEffectivelyMuted = sfxMute || sfxVol === 0
 
@@ -805,7 +814,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
     if (roundTimeLeft > 0) return
 
     if (roundPhase === 'betting') {
-      if (currentStake <= 0) {
+      if (currentStake < BACCARAT_MIN_BET) {
         setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
         return
       }
@@ -852,7 +861,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
     if (dealing) return 'No more bets.'
     if (roundPhase === 'settled') return tableCallLine
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
-    return isSeated ? 'Place your bets, please.' : 'Take a seat to play.'
+    return isSeated ? `Place your bets. ${money(BACCARAT_MIN_BET)} minimum.` : 'Take a seat to play.'
   }, [currentStake, dealing, isSeated, roundPhase, tableCallLine])
 
   const timerLabel = waitingForBets ? 'Waiting For Bets' : roundPhase === 'betting' ? 'Betting Closes' : roundPhase === 'dealing' ? 'No More Bets' : 'Next Round'
@@ -900,7 +909,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
   }
 
   const placeBet = (key: BetKey) => {
-    if (!isSeated || roundClosed || stack < selectedChip) return
+    if (!isSeated || roundClosed || stack < selectedChip || currentStake + selectedChip > BACCARAT_MAX_BET) return
     setStack((current) => current - selectedChip)
     setBets((current) => ({ ...current, [key]: current[key] + selectedChip }))
   }
@@ -914,14 +923,14 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
   const rebet = () => {
     if (!isSeated || roundClosed || lastStake <= 0) return
     const available = stack + currentStake
-    if (available < lastStake) return
+    if (available < lastStake || lastStake > BACCARAT_MAX_BET) return
 
     setStack(available - lastStake)
     setBets(lastBets)
   }
 
   const doubleBets = () => {
-    if (!isSeated || roundClosed || currentStake <= 0 || stack < currentStake) return
+    if (!isSeated || roundClosed || currentStake <= 0 || stack < currentStake || currentStake * 2 > BACCARAT_MAX_BET) return
     setStack((current) => current - currentStake)
     setBets((current) => ({
       player: current.player * 2,
@@ -953,7 +962,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
       {
         playerId: myPlayerId,
         username,
-        avatar: 'avatar_gm',
+        avatar,
         text: trimmed,
         timestamp: new Date().toISOString(),
       },
@@ -1041,9 +1050,9 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
               </button>
             )}
             <TopbarLink href="/">Main Lobby</TopbarLink>
-            <TopbarLink href="/gm">GM</TopbarLink>
+            {isAdmin && <TopbarLink href="/gm">GM</TopbarLink>}
             <Link
-              href="/"
+              href="/baccarat"
               className="table-status-button is-cashout"
               aria-label="Cash out and leave Baccarat table"
               title="Cash out"
@@ -1108,7 +1117,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
               <TableBetZone label="Player" payout="1 to 1" amount={bets.player} className="baccarat-zone-player" onClick={() => placeBet('player')} />
               <TableBetZone label="Tie" payout="8 to 1" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
               <TableBetZone label="Banker" payout="0.95 to 1" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
-              <BaccaratSeatRail username={username} stake={currentStake} stack={stack} isSeated={isSeated} />
+              <BaccaratSeatRail username={username} avatar={avatar} stake={currentStake} stack={stack} isSeated={isSeated} />
             </div>
           </div>
         </section>
@@ -1141,7 +1150,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
                 className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
                 data-value={value}
                 aria-label={`${money(value)} chip`}
-                disabled={!isSeated || roundClosed || stack < value}
+                disabled={!isSeated || roundClosed || stack < value || currentStake + value > BACCARAT_MAX_BET}
                 onClick={() => setSelectedChip(value)}
               >
                 <span>{value}</span>
@@ -1150,7 +1159,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           </div>
 
           <div className="action-row baccarat-action-row" data-mode={currentStake > 0 ? 'betting' : 'idle'}>
-            <button type="button" id="undoBtn" className="secondary action-button" disabled={!isSeated || lastStake <= 0 || roundClosed || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
+            <button type="button" id="undoBtn" className="secondary action-button" disabled={!isSeated || lastStake <= 0 || lastStake > BACCARAT_MAX_BET || roundClosed || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
               <b>Rebet</b>
               <span>REBET</span>
             </button>
@@ -1158,7 +1167,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
               <b>Clear</b>
               <span>CLEAR BET</span>
             </button>
-            <button type="button" id="doubleBtn" className="action-button" disabled={currentStake <= 0 || roundClosed || stack < currentStake} onClick={doubleBets}>
+            <button type="button" id="doubleBtn" className="action-button" disabled={currentStake <= 0 || roundClosed || stack < currentStake || currentStake * 2 > BACCARAT_MAX_BET} onClick={doubleBets}>
               <b>Double</b>
               <span>DOUBLE</span>
             </button>
@@ -1274,6 +1283,11 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           min-width: 42px;
           height: 42px;
           min-height: 42px;
+        }
+
+        .baccarat-game-shell .chip-5000,
+        .baccarat-game-shell .chip-face-5000 {
+          background-image: url("/baccarat/Images/Chips/5000.png");
         }
 
         .baccarat-road {

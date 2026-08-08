@@ -1,47 +1,72 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { isAdminEmail } from '@/lib/admin'
 import { hasVipEmojiAccess } from '@/lib/supporter-access'
-import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled } from '@/lib/local-admin'
-import { BaccaratRoomClient } from './BaccaratRoomClient'
+import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
+import { isAdminEmail } from '@/lib/admin'
+import { BaccaratLobbyClient } from './BaccaratLobbyClient'
+import type { Profile } from '@/types/poker'
 
-type RoomProfile = {
-  username: string | null
-  chip_balance: number | null
-}
-
-export default async function BaccaratRoomPage() {
+export default async function BaccaratLobbyPage() {
   const supabase = createClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()
   const isLocalAdmin = isLocalAdminEnabled() && cookies().get(LOCAL_ADMIN_COOKIE)?.value === 'true'
-  const canViewRoom = isLocalAdmin || Boolean(session?.user.email && isAdminEmail(session.user.email))
 
   if (!session && !isLocalAdmin) redirect('/auth/login')
-  if (!canViewRoom) redirect('/')
 
   if (isLocalAdmin && !session) {
-    return <BaccaratRoomClient username="LocalAdmin" chipBalance={100000} hasVipEmojis />
+    return (
+      <BaccaratLobbyClient
+        profile={{
+          id: 'local-admin',
+          username: 'LocalAdmin',
+          chip_balance: 100000,
+          games_played: 0,
+          games_won: 0,
+          avatar: 'avatar_m1',
+          created_at: new Date().toISOString(),
+        }}
+        token={LOCAL_ADMIN_TOKEN}
+        hasVipEmojis
+        unreadMailCount={0}
+        isAdmin
+        isLocalAdmin
+      />
+    )
   }
 
-  const [{ data: profile }, canUseVipEmojis] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('username, chip_balance')
-      .eq('id', session!.user.id)
-      .single(),
+  const [{ data: profile }, canUseVipEmojis, { count: unreadMailCount }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', session!.user.id).single(),
     hasVipEmojiAccess(supabase, session!.user.id, session!.user.email),
+    supabase
+      .from('player_mail')
+      .select('id', { count: 'exact', head: true })
+      .eq('player_id', session!.user.id)
+      .eq('is_read', false),
   ])
 
-  const roomProfile = profile as RoomProfile | null
+  if (!profile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-950 px-4 text-center text-white">
+        <div>
+          <p className="mb-4 text-lg text-red-300">Profile not found.</p>
+          <Link href="/" className="text-amber-300 hover:underline">Main Lobby</Link>
+        </div>
+      </main>
+    )
+  }
 
   return (
-    <BaccaratRoomClient
-      username={roomProfile?.username ?? 'GM'}
-      chipBalance={roomProfile?.chip_balance ?? 100000}
+    <BaccaratLobbyClient
+      profile={profile as Profile}
+      token={session!.access_token}
       hasVipEmojis={canUseVipEmojis}
+      unreadMailCount={unreadMailCount ?? 0}
+      isAdmin={isAdminEmail(session!.user.email)}
+      isLocalAdmin={false}
     />
   )
 }

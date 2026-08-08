@@ -64,7 +64,7 @@ function GoldRim() {
 
 export function FloatingButtons() {
   const pathname = usePathname()
-  const isTablePage = pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/') || pathname === '/baccarat'
+  const isTablePage = pathname?.startsWith('/table/') || pathname?.startsWith('/blackjack/table/') || pathname?.startsWith('/baccarat/table/')
   const [supportOpen, setSupportOpen] = useState(false)
   const [buttonsOpen, setButtonsOpen] = useState(false)
   const supportRef = useRef<HTMLDivElement | null>(null)

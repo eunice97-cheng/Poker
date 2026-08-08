@@ -8,7 +8,9 @@ function isWideCasinoRoute(pathname: string) {
     pathname === '/lobby' ||
     pathname.startsWith('/table/') ||
     pathname === '/blackjack' ||
-    pathname.startsWith('/blackjack/table/')
+    pathname.startsWith('/blackjack/table/') ||
+    pathname === '/baccarat' ||
+    pathname.startsWith('/baccarat/table/')
   )
 }
 
@@ -29,7 +31,7 @@ export function LandscapeOnlyGuard() {
         <div className="landscape-only-guard__eyebrow">Casino table view</div>
         <h2 id="landscapeGuardTitle">Rotate your phone</h2>
         <p>
-          Poker and BlackJack Lounge are built for a wide table. Turn your device sideways to play.
+          Poker, Baccarat, and BlackJack Lounge are built for a wide table. Turn your device sideways to play.
         </p>
       </div>
     </div>
