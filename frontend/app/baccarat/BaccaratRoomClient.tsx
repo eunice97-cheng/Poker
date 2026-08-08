@@ -13,9 +13,19 @@ import type { ChatMessage } from '@/types/poker'
 
 type Suit = 'S' | 'H' | 'D' | 'C'
 type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K'
-type BetKey = 'dealer' | 'tie' | 'banker'
+type BetKey = 'player' | 'tie' | 'banker'
 type Winner = BetKey
 type DealerPortraitKey = 'normal' | 'smiling' | 'blinking'
+
+type DealerAssets = {
+  id: string
+  name: string
+  portraits: Record<DealerPortraitKey, string>
+  thankYou: {
+    normal: string
+    wink: string
+  }
+}
 
 type BaccaratCard = {
   rank: Rank
@@ -27,19 +37,19 @@ type Bets = Record<BetKey, number>
 type RoadItem = {
   id: number
   winner: Winner
-  dealerTotal: number
+  playerTotal: number
   bankerTotal: number
   natural: boolean
 }
 
 type RoundResult = RoadItem & {
-  dealerCards: BaccaratCard[]
+  playerCards: BaccaratCard[]
   bankerCards: BaccaratCard[]
   net: number
   label: string
 }
 
-type BaccaratPreviewClientProps = {
+type BaccaratRoomClientProps = {
   username: string
   chipBalance: number
 }
@@ -57,17 +67,54 @@ const CHIP_STACK_OFFSETS = [
   [2, 3, -4],
   [0, -5, 7],
 ] as const
-const EMPTY_BETS: Bets = { dealer: 0, tie: 0, banker: 0 }
+const EMPTY_BETS: Bets = { player: 0, tie: 0, banker: 0 }
 const MAX_CHAT_LENGTH = 200
 const DEALER_TIP_AMOUNT = 10
+const DEALER_ROTATION_MS = 2 * 60 * 60 * 1000
 const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
 const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
-const DEALER_PORTRAITS: Record<DealerPortraitKey, string> = {
-  normal: '/blackjack/Images/Dealers/Eunice4.png',
-  smiling: '/blackjack/Images/Dealers/Eunice4%20-%20smiling.png',
-  blinking: '/blackjack/Images/Dealers/Eunice4%20-%20blinking.png',
-}
+const DEALERS: DealerAssets[] = [
+  {
+    id: 'chloe',
+    name: 'Chloe',
+    portraits: {
+      normal: '/blackjack/Images/Dealers/Chloe.png',
+      smiling: '/blackjack/Images/Dealers/Chloe%20-%20smiling.png',
+      blinking: '/blackjack/Images/Dealers/Chloe%20-%20blinking.png',
+    },
+    thankYou: {
+      normal: '/blackjack/Images/Dealers/chloe%20thank%20you.png',
+      wink: '/blackjack/Images/Dealers/chloe%20thank%20you%20wink.png',
+    },
+  },
+  {
+    id: 'eunice',
+    name: 'Eunice',
+    portraits: {
+      normal: '/blackjack/Images/Dealers/Eunice4.png',
+      smiling: '/blackjack/Images/Dealers/Eunice4%20-%20smiling.png',
+      blinking: '/blackjack/Images/Dealers/Eunice4%20-%20blinking.png',
+    },
+    thankYou: {
+      normal: '/blackjack/Images/Dealers/thank%20you.png',
+      wink: '/blackjack/Images/Dealers/thank%20you%20wink.png',
+    },
+  },
+  {
+    id: 'julie',
+    name: 'Julie',
+    portraits: {
+      normal: '/blackjack/Images/Dealers/Julie.png',
+      smiling: '/blackjack/Images/Dealers/Julie%20-%20smiling.png',
+      blinking: '/blackjack/Images/Dealers/Julie%20-%20blinking.png',
+    },
+    thankYou: {
+      normal: '/blackjack/Images/Dealers/Julie%20-%20thank%20you.png',
+      wink: '/blackjack/Images/Dealers/Julie%20-%20thank%20you%20wink.png',
+    },
+  },
+]
 const SUIT_SYMBOLS: Record<Suit, string> = {
   S: '\u2660',
   H: '\u2665',
@@ -91,6 +138,10 @@ function classNames(...classes: Array<string | false | null | undefined>) {
 
 function randomMs([min, max]: readonly [number, number]) {
   return Math.round(min + Math.random() * (max - min))
+}
+
+function dealerForTime(time: number) {
+  return DEALERS[Math.floor(time / DEALER_ROTATION_MS) % DEALERS.length] ?? DEALERS[0]
 }
 
 function createShoe() {
@@ -122,20 +173,20 @@ function handTotal(cards: BaccaratCard[]) {
   return cards.reduce((sum, card) => sum + baccaratValue(card), 0) % 10
 }
 
-function shouldBankerDraw(bankerTotal: number, dealerThirdCard: BaccaratCard | null) {
-  if (!dealerThirdCard) return bankerTotal <= 5
+function shouldBankerDraw(bankerTotal: number, playerThirdCard: BaccaratCard | null) {
+  if (!playerThirdCard) return bankerTotal <= 5
 
-  const dealerThirdValue = baccaratValue(dealerThirdCard)
+  const playerThirdValue = baccaratValue(playerThirdCard)
   if (bankerTotal <= 2) return true
-  if (bankerTotal === 3) return dealerThirdValue !== 8
-  if (bankerTotal === 4) return dealerThirdValue >= 2 && dealerThirdValue <= 7
-  if (bankerTotal === 5) return dealerThirdValue >= 4 && dealerThirdValue <= 7
-  if (bankerTotal === 6) return dealerThirdValue === 6 || dealerThirdValue === 7
+  if (bankerTotal === 3) return playerThirdValue !== 8
+  if (bankerTotal === 4) return playerThirdValue >= 2 && playerThirdValue <= 7
+  if (bankerTotal === 5) return playerThirdValue >= 4 && playerThirdValue <= 7
+  if (bankerTotal === 6) return playerThirdValue === 6 || playerThirdValue === 7
   return false
 }
 
 function totalBets(bets: Bets) {
-  return bets.dealer + bets.tie + bets.banker
+  return bets.player + bets.tie + bets.banker
 }
 
 function chipFacesForBet(value: number) {
@@ -160,38 +211,38 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
     return card
   }
 
-  const dealerCards = [draw(), draw()]
+  const playerCards = [draw(), draw()]
   const bankerCards = [draw(), draw()]
-  let dealerTotal = handTotal(dealerCards)
+  let playerTotal = handTotal(playerCards)
   let bankerTotal = handTotal(bankerCards)
-  const natural = dealerTotal >= 8 || bankerTotal >= 8
-  let dealerThirdCard: BaccaratCard | null = null
+  const natural = playerTotal >= 8 || bankerTotal >= 8
+  let playerThirdCard: BaccaratCard | null = null
 
   if (!natural) {
-    if (dealerTotal <= 5) {
-      dealerThirdCard = draw()
-      dealerCards.push(dealerThirdCard)
-      dealerTotal = handTotal(dealerCards)
+    if (playerTotal <= 5) {
+      playerThirdCard = draw()
+      playerCards.push(playerThirdCard)
+      playerTotal = handTotal(playerCards)
     }
 
-    if (shouldBankerDraw(bankerTotal, dealerThirdCard)) {
+    if (shouldBankerDraw(bankerTotal, playerThirdCard)) {
       bankerCards.push(draw())
       bankerTotal = handTotal(bankerCards)
     }
   }
 
-  const winner: Winner = dealerTotal > bankerTotal ? 'dealer' : bankerTotal > dealerTotal ? 'banker' : 'tie'
+  const winner: Winner = playerTotal > bankerTotal ? 'player' : bankerTotal > playerTotal ? 'banker' : 'tie'
   const stake = totalBets(bets)
   let returns = 0
 
-  if (winner === 'dealer') returns += bets.dealer * 2
+  if (winner === 'player') returns += bets.player * 2
   if (winner === 'banker') returns += bets.banker + Math.floor(bets.banker * 0.95)
   if (winner === 'tie') {
     returns += bets.tie * 9
-    returns += bets.dealer + bets.banker
+    returns += bets.player + bets.banker
   }
 
-  const label = winner === 'dealer' ? 'Dealer wins' : winner === 'banker' ? 'Banker wins' : 'Tie hand'
+  const label = winner === 'player' ? 'Player wins' : winner === 'banker' ? 'Banker wins' : 'Tie hand'
 
   return {
     nextShoe: workingShoe,
@@ -199,9 +250,9 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
     result: {
       id: roundId,
       winner,
-      dealerCards,
+      playerCards,
       bankerCards,
-      dealerTotal,
+      playerTotal,
       bankerTotal,
       natural,
       net: returns - stake,
@@ -276,11 +327,13 @@ function BetChipStack({ amount }: { amount: number }) {
 
 function TableBetZone({
   label,
+  payout,
   amount,
   className,
   onClick,
 }: {
   label: string
+  payout: string
   amount: number
   className: string
   onClick: () => void
@@ -293,7 +346,8 @@ function TableBetZone({
       title={`Bet on ${label}`}
       onClick={onClick}
     >
-      <span>{label}</span>
+      <span className="baccarat-zone-label">{label}</span>
+      <small className="baccarat-zone-payout">{payout}</small>
       <BetChipStack amount={amount} />
       {amount > 0 && <em className="baccarat-zone-amount">{label} {money(amount)}</em>}
     </button>
@@ -319,7 +373,7 @@ function RoadPanel({ road }: { road: RoadItem[] }) {
 
           return (
             <span key={index} className={classNames('baccarat-road__cell', `is-${item.winner}`)}>
-              {item.winner === 'dealer' ? 'D' : item.winner === 'banker' ? 'B' : 'T'}
+              {item.winner === 'player' ? 'P' : item.winner === 'banker' ? 'B' : 'T'}
             </span>
           )
         })}
@@ -328,17 +382,17 @@ function RoadPanel({ road }: { road: RoadItem[] }) {
   )
 }
 
-function DealerTipBoard({ total }: { total: number }) {
+function DealerTipBoard({ dealerName, total }: { dealerName: string; total: number }) {
   return (
     <aside className="dealer-tip-board baccarat-tip-board" aria-label="Dealer tip ranking">
       <header className="dealer-tip-board__header">
-        <span>Dealer Support</span>
+        <span>Dealer Tips</span>
         <strong>{money(total)}</strong>
       </header>
       <ol className="dealer-tip-board__list">
         <li className="dealer-tip-row is-leading is-active">
           <span className="dealer-tip-row__rank">01</span>
-          <span className="dealer-tip-row__name">Dealer Eunice</span>
+          <span className="dealer-tip-row__name">Dealer {dealerName}</span>
           <span className="dealer-tip-row__label">Total Tip Received</span>
           <strong>{money(total)}</strong>
         </li>
@@ -347,12 +401,23 @@ function DealerTipBoard({ total }: { total: number }) {
   )
 }
 
-function BaccaratSeatRail({ username, stake }: { username: string; stake: number }) {
+function BaccaratSeatRail({
+  username,
+  stake,
+  stack,
+  isSeated,
+}: {
+  username: string
+  stake: number
+  stack: number
+  isSeated: boolean
+}) {
   const seats = Array.from({ length: 6 }, (_, index) => ({
     id: index + 1,
-    label: index === 0 ? username : `Seat ${index + 1}`,
-    stake: index === 0 ? stake : 0,
-    active: index === 0,
+    label: index === 0 && isSeated ? username : `Seat ${index + 1}`,
+    stake: index === 0 && isSeated ? stake : 0,
+    stack: index === 0 && isSeated ? stack : 0,
+    active: index === 0 && isSeated,
   }))
 
   return (
@@ -363,11 +428,12 @@ function BaccaratSeatRail({ username, stake }: { username: string; stake: number
             {seat.active ? (
               <AvatarDisplay avatarId="avatar_gm" size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
             ) : (
-              <span aria-hidden="true" />
+              <span aria-hidden="true">{seat.id}</span>
             )}
           </span>
           <span className="baccarat-seat__name">{seat.label}</span>
-          <strong>{seat.stake > 0 ? `BET ${money(seat.stake)}` : seat.active ? 'BET 0' : 'OPEN'}</strong>
+          <strong>{seat.stake > 0 ? `Bet ${money(seat.stake)}` : seat.active ? 'No bet' : 'Open'}</strong>
+          <em>{seat.active ? `${money(seat.stack)} chips` : 'Available'}</em>
         </div>
       ))}
     </div>
@@ -505,7 +571,7 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           <section className="rules-block">
             <h3>Objective</h3>
             <ul>
-              <li>Bet on Dealer, Banker, or Tie.</li>
+              <li>Bet on Player, Banker, or Tie.</li>
               <li>The hand closest to 9 wins.</li>
               <li>Only the last digit of the hand total counts.</li>
             </ul>
@@ -527,11 +593,11 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             </ul>
           </section>
           <section className="rules-block">
-            <h3>Dealer</h3>
+            <h3>Player</h3>
             <ul>
-              <li>Dealer draws a third card on totals 0-5.</li>
-              <li>Dealer stands on totals 6 or 7.</li>
-              <li>Dealer wins pay 1:1.</li>
+              <li>Player draws a third card on totals 0-5.</li>
+              <li>Player stands on totals 6 or 7.</li>
+              <li>Player wins pay 1:1.</li>
             </ul>
           </section>
           <section className="rules-block">
@@ -539,15 +605,15 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             <ul>
               <li>Banker drawing follows the standard third-card table.</li>
               <li>Banker wins pay 0.95:1 after commission.</li>
-              <li>Preview commission is shown in the bottom console.</li>
+              <li>The banker fee is shown in the bottom console.</li>
             </ul>
           </section>
           <section className="rules-block">
             <h3>Tie</h3>
             <ul>
               <li>Tie wins pay 8:1.</li>
-              <li>Dealer and Banker bets push on a tie.</li>
-              <li>The bead plate records D, B, or T results.</li>
+              <li>Player and Banker bets push on a tie.</li>
+              <li>The bead plate records P, B, or T results.</li>
             </ul>
           </section>
         </div>
@@ -556,7 +622,7 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   )
 }
 
-export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreviewClientProps) {
+export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClientProps) {
   const {
     musicVol,
     sfxVol,
@@ -576,19 +642,35 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const [result, setResult] = useState<RoundResult | null>(null)
   const [dealing, setDealing] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [activeDealer, setActiveDealer] = useState(() => dealerForTime(Date.now()))
   const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
-  const [dealerTipTotal, setDealerTipTotal] = useState(0)
+  const [dealerTips, setDealerTips] = useState<Record<string, number>>({})
+  const [tipImage, setTipImage] = useState(() => dealerForTime(Date.now()).thankYou.normal)
   const [tipVisible, setTipVisible] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [isSeated, setIsSeated] = useState(true)
   const tipTimeoutRef = useRef<number | null>(null)
 
   const currentStake = totalBets(bets)
   const lastStake = totalBets(lastBets)
-  const canDeal = currentStake > 0 && !dealing
-  const canTipDealer = stack >= DEALER_TIP_AMOUNT
-  const myPlayerId = 'baccarat-preview-gm'
+  const bankerFee = Math.floor(bets.banker * 0.05)
+  const canDeal = isSeated && currentStake > 0 && !dealing
+  const canTipDealer = isSeated && stack >= DEALER_TIP_AMOUNT
+  const activeDealerTipTotal = dealerTips[activeDealer.id] ?? 0
+  const myPlayerId = 'baccarat-room-gm'
   const bgmEffectivelyMuted = musicMute || musicVol === 0
   const sfxEffectivelyMuted = sfxMute || sfxVol === 0
+
+  useEffect(() => {
+    const syncActiveDealer = () => setActiveDealer(dealerForTime(Date.now()))
+    syncActiveDealer()
+    const interval = window.setInterval(syncActiveDealer, 60_000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    setTipImage(activeDealer.thankYou.normal)
+  }, [activeDealer])
 
   useEffect(() => {
     let blinkTimer: number | undefined
@@ -635,11 +717,11 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const dealerLine = useMemo(() => {
     if (dealing) return 'No more bets.'
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
-    return 'Place your bets, please.'
-  }, [currentStake, dealing])
+    return isSeated ? 'Place your bets, please.' : 'Take a seat to play.'
+  }, [currentStake, dealing, isSeated])
 
   const resultLine = result
-    ? `${result.label} / ${result.dealerTotal}-${result.bankerTotal} / ${signedMoney(result.net)}`
+    ? `${result.label} / ${result.playerTotal}-${result.bankerTotal} / ${signedMoney(result.net)}`
     : 'No result yet'
 
   const displayMessage = dealing ? 'Cards are in motion.' : resultLine
@@ -667,26 +749,36 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const handleTip = () => {
     if (!canTipDealer) return
     setStack((current) => current - DEALER_TIP_AMOUNT)
-    setDealerTipTotal((current) => current + DEALER_TIP_AMOUNT)
+    setDealerTips((current) => ({
+      ...current,
+      [activeDealer.id]: (current[activeDealer.id] ?? 0) + DEALER_TIP_AMOUNT,
+    }))
+    setTipImage(activeDealer.thankYou.normal)
     setTipVisible(true)
     if (tipTimeoutRef.current) window.clearTimeout(tipTimeoutRef.current)
-    tipTimeoutRef.current = window.setTimeout(() => setTipVisible(false), 1600)
+    const winkTimeout = window.setTimeout(() => setTipImage(activeDealer.thankYou.wink), 260)
+    const normalTimeout = window.setTimeout(() => setTipImage(activeDealer.thankYou.normal), 620)
+    tipTimeoutRef.current = window.setTimeout(() => {
+      window.clearTimeout(winkTimeout)
+      window.clearTimeout(normalTimeout)
+      setTipVisible(false)
+    }, 1600)
   }
 
   const placeBet = (key: BetKey) => {
-    if (dealing || stack < selectedChip) return
+    if (!isSeated || dealing || stack < selectedChip) return
     setStack((current) => current - selectedChip)
     setBets((current) => ({ ...current, [key]: current[key] + selectedChip }))
   }
 
   const clearBets = () => {
-    if (dealing || currentStake <= 0) return
+    if (!isSeated || dealing || currentStake <= 0) return
     setStack((current) => current + currentStake)
     setBets(EMPTY_BETS)
   }
 
   const rebet = () => {
-    if (dealing || lastStake <= 0) return
+    if (!isSeated || dealing || lastStake <= 0) return
     const available = stack + currentStake
     if (available < lastStake) return
 
@@ -695,16 +787,30 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   }
 
   const doubleBets = () => {
-    if (dealing || currentStake <= 0 || stack < currentStake) return
+    if (!isSeated || dealing || currentStake <= 0 || stack < currentStake) return
     setStack((current) => current - currentStake)
     setBets((current) => ({
-      dealer: current.dealer * 2,
+      player: current.player * 2,
       tie: current.tie * 2,
       banker: current.banker * 2,
     }))
   }
 
-  const dealPreviewRound = () => {
+  const handleStand = () => {
+    if (dealing) return
+    if (currentStake > 0) {
+      setStack((current) => current + currentStake)
+      setBets(EMPTY_BETS)
+    }
+    setIsSeated(false)
+  }
+
+  const handleSit = () => {
+    if (dealing) return
+    setIsSeated(true)
+  }
+
+  const dealBaccaratRound = () => {
     if (!canDeal) return
 
     setDealing(true)
@@ -720,7 +826,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
       setRoad((current) => [...current.slice(-41), {
         id: resolved.result.id,
         winner: resolved.result.winner,
-        dealerTotal: resolved.result.dealerTotal,
+        playerTotal: resolved.result.playerTotal,
         bankerTotal: resolved.result.bankerTotal,
         natural: resolved.result.natural,
       }])
@@ -818,12 +924,15 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
             <button type="button" className="table-status-button baccarat-tip-top-button" disabled={!canTipDealer} onClick={handleTip}>
               Tip Dealer
             </button>
-            <button type="button" className="table-status-button" disabled>
-              Stand
-            </button>
-            <button type="button" className="table-status-button" disabled>
-              Sit
-            </button>
+            {isSeated ? (
+              <button type="button" className="table-status-button" disabled={dealing} onClick={handleStand}>
+                Stand
+              </button>
+            ) : (
+              <button type="button" className="table-status-button" disabled={dealing} onClick={handleSit}>
+                Sit
+              </button>
+            )}
             <TopbarLink href="/">Main Lobby</TopbarLink>
             <TopbarLink href="/gm">GM</TopbarLink>
             <Link
@@ -844,19 +953,19 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
             <img
               id="dealerPortrait"
               className="dealer-portrait"
-              src={DEALER_PORTRAITS[dealerPortrait]}
+              src={activeDealer.portraits[dealerPortrait]}
               alt=""
               aria-hidden="true"
             />
             <div className="dealer-speech" id="dealerSpeech" aria-live="polite">{dealerLine}</div>
-            <DealerTipBoard total={dealerTipTotal} />
+            <DealerTipBoard dealerName={activeDealer.name} total={activeDealerTipTotal} />
             <div className="round-countdown" id="roundCountdown" aria-live="polite">
               <span>SHOE</span>
               <strong>{shoe.length}</strong>
             </div>
 
             <div className="felt-table baccarat-felt-table">
-              <img className="baccarat-table-image" src="/baccarat/Images/baccarat-table.png" alt="" aria-hidden="true" />
+              <img className="baccarat-table-image" src="/baccarat/Images/baccarat-table-2.png" alt="" aria-hidden="true" />
               <div className="tip-control table-tip-control baccarat-table-tip-control">
                 <button
                   type="button"
@@ -869,7 +978,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                   <span>TIP DEALER</span>
                 </button>
                 <div className={classNames('tip-popup', tipVisible && 'is-visible')} id="tipPopup" aria-hidden={!tipVisible}>
-                  <img src="/blackjack/Images/Dealers/thank%20you.png" alt="" aria-hidden="true" />
+                  <img src={tipImage} alt="" aria-hidden="true" />
                   <span>Thank you for the tip!</span>
                 </div>
               </div>
@@ -877,16 +986,11 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                 <span>{result?.natural ? 'NATURAL CHECKED' : 'TABLE CALL'}</span>
                 <strong>{dealing ? 'No more bets' : resultLine}</strong>
               </div>
-              <div className="baccarat-table-label baccarat-table-label-dealer" aria-hidden="true">
-                <strong>DEALER</strong>
-                <span>1 TO 1</span>
-              </div>
-
               <HandArea
-                label="Dealer"
-                cards={result?.dealerCards ?? []}
-                total={result?.dealerTotal ?? null}
-                className="baccarat-dealer-hand"
+                label="Player"
+                cards={result?.playerCards ?? []}
+                total={result?.playerTotal ?? null}
+                className="baccarat-player-hand"
               />
               <HandArea
                 label="Banker"
@@ -895,10 +999,10 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                 className="baccarat-banker-hand"
               />
 
-              <TableBetZone label="Dealer" amount={bets.dealer} className="baccarat-zone-dealer" onClick={() => placeBet('dealer')} />
-              <TableBetZone label="Tie" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
-              <TableBetZone label="Banker" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
-              <BaccaratSeatRail username={username} stake={currentStake} />
+              <TableBetZone label="Player" payout="1 to 1" amount={bets.player} className="baccarat-zone-player" onClick={() => placeBet('player')} />
+              <TableBetZone label="Tie" payout="8 to 1" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
+              <TableBetZone label="Banker" payout="0.95 to 1" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
+              <BaccaratSeatRail username={username} stake={currentStake} stack={stack} isSeated={isSeated} />
             </div>
           </div>
         </section>
@@ -915,12 +1019,18 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         <section className="bottom-console baccarat-bottom-console">
           <div className="message" id="message">{displayMessage}</div>
 
-          <aside className="round-info" aria-label="Round totals">
+          <aside className="round-info baccarat-round-info" aria-label="Round totals">
             <span>CURRENT BET</span>
             <strong id="currentBet">{money(currentStake)}</strong>
             <div />
+            <span>BANKER FEE</span>
+            <strong>{money(bankerFee)}</strong>
+            <div />
             <span>WIN</span>
             <strong id="winAmount">{result ? signedMoney(result.net) : '0'}</strong>
+            <div />
+            <span>ROOM</span>
+            <strong>Private</strong>
           </aside>
 
           <div className="chip-selector" id="chipRow">
@@ -931,7 +1041,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                 className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
                 data-value={value}
                 aria-label={`${money(value)} chip`}
-                disabled={dealing || stack < value}
+                disabled={!isSeated || dealing || stack < value}
                 onClick={() => setSelectedChip(value)}
               >
                 <span>{value}</span>
@@ -940,11 +1050,11 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           </div>
 
           <div className="action-row baccarat-action-row" data-mode={currentStake > 0 ? 'betting' : 'idle'}>
-            <button type="button" id="undoBtn" className="secondary action-button" disabled={lastStake <= 0 || dealing || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
+            <button type="button" id="undoBtn" className="secondary action-button" disabled={!isSeated || lastStake <= 0 || dealing || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
               <b>Rebet</b>
               <span>REBET</span>
             </button>
-            <button type="button" id="clearBtn" className="secondary action-button" disabled={currentStake <= 0 || dealing} onClick={clearBets} aria-label="Clear bet">
+            <button type="button" id="clearBtn" className="secondary action-button" disabled={!isSeated || currentStake <= 0 || dealing} onClick={clearBets} aria-label="Clear bet">
               <b>Clear</b>
               <span>CLEAR BET</span>
             </button>
@@ -952,7 +1062,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
               <b>Double</b>
               <span>DOUBLE</span>
             </button>
-            <button type="button" id="dealBtn" className="action-button" disabled={!canDeal} onClick={dealPreviewRound}>
+            <button type="button" id="dealBtn" className="action-button" disabled={!canDeal} onClick={dealBaccaratRound}>
               <b>{dealing ? 'Dealing' : 'Deal'}</b>
               <span>DEAL</span>
             </button>
@@ -1105,7 +1215,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           line-height: 1;
         }
 
-        .baccarat-road__cell.is-dealer {
+        .baccarat-road__cell.is-player {
           border-color: rgba(130,195,255,.62);
           background: #2474bc;
         }
@@ -1121,33 +1231,34 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-wood-rail {
-          width: min(100%, 1090px);
+          width: min(100%, 1120px);
           max-height: calc(100svh - 144px);
           align-self: end;
-          transform: translateY(6px);
+          transform: translateY(8px);
         }
 
         .baccarat-wood-rail .dealer-portrait {
-          top: -20%;
-          width: clamp(192px, 12.2vw, 226px);
-          z-index: 5;
+          top: -28%;
+          width: clamp(220px, 14vw, 266px);
+          z-index: 7;
         }
 
         .baccarat-wood-rail .dealer-speech {
-          left: calc(50% + 142px);
-          top: -8%;
+          left: calc(50% + 158px);
+          top: -10%;
         }
 
         .baccarat-tip-board {
-          left: 6%;
-          top: 12%;
+          position: fixed;
+          left: 20px;
+          top: 382px;
           z-index: 24;
-          width: 218px;
+          width: 186px;
         }
 
         .baccarat-wood-rail .round-countdown {
-          left: calc(50% - 328px);
-          top: -7%;
+          left: calc(50% - 350px);
+          top: -8%;
         }
 
         .baccarat-felt-table {
@@ -1168,7 +1279,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         .baccarat-result-ribbon {
           position: absolute;
           left: 50%;
-          top: 17%;
+          top: 18.5%;
           z-index: 18;
           min-width: min(420px, 48%);
           max-width: 560px;
@@ -1205,59 +1316,39 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           white-space: nowrap;
         }
 
-        .baccarat-table-tip-control {
-          left: 25.8%;
-          top: 36.5%;
-          z-index: 25;
-        }
-
-        .baccarat-table-label {
-          position: absolute;
-          z-index: 12;
-          display: grid;
-          place-items: center;
-          min-width: 156px;
-          min-height: 72px;
-          padding: 8px 18px;
-          border-radius: 999px;
-          background:
-            radial-gradient(ellipse at 50% 55%, rgba(8,73,40,.96), rgba(8,73,40,.72) 48%, rgba(8,73,40,.18) 72%, transparent 100%);
-          color: var(--gold-light);
-          font-family: var(--font-display);
-          text-align: center;
-          pointer-events: none;
-          text-shadow: 0 2px 0 rgba(0,0,0,.85);
-        }
-
-        .baccarat-table-label strong {
-          display: block;
-          font-size: 1.35rem;
-          font-weight: 900;
-          letter-spacing: .09em;
-          line-height: 1;
-        }
-
-        .baccarat-table-label span {
-          display: block;
-          margin-top: 6px;
-          color: #fff0af;
-          font-size: .78rem;
-          font-weight: 800;
-          letter-spacing: .1em;
-          line-height: 1;
-        }
-
-        .baccarat-table-label-dealer {
-          left: 33%;
-          top: 62%;
+        .baccarat-felt-table .baccarat-table-tip-control {
+          left: 25%;
+          top: 43%;
+          z-index: 52;
+          width: 74px;
+          height: 48px;
+          min-width: 74px;
+          min-height: 48px;
           transform: translate(-50%, -50%);
         }
 
+        .baccarat-felt-table .baccarat-table-tip-control #tipBtn {
+          border-color: rgba(243,212,125,.86);
+          background:
+            radial-gradient(circle at 50% 18%, rgba(255,226,129,.22), transparent 34%),
+            linear-gradient(180deg, #1d160d, #050504);
+        }
+
+        .baccarat-felt-table .baccarat-table-tip-control #tipBtn::before {
+          top: 7px;
+          font-size: .82rem;
+        }
+
+        .baccarat-felt-table .baccarat-table-tip-control #tipBtn::after {
+          bottom: 6px;
+          font-size: .62rem;
+        }
+
         .baccarat-game-shell .baccarat-hand-area {
-          z-index: 32;
-          width: 24%;
-          min-width: 205px;
-          padding: 9px 10px 10px;
+          z-index: 44;
+          width: 20%;
+          min-width: 180px;
+          padding: 8px 9px 10px;
           border: 1px solid rgba(214,173,72,.52);
           border-radius: 10px;
           background:
@@ -1272,7 +1363,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           margin: 0 0 6px;
           color: var(--gold-light);
           font-family: var(--font-display);
-          font-size: .7rem;
+          font-size: .72rem;
           font-weight: 900;
           letter-spacing: .16em;
           line-height: 1;
@@ -1280,13 +1371,13 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-game-shell .baccarat-hand-area .cards {
-          min-height: 82px;
-          gap: 8px;
+          min-height: 76px;
+          gap: 7px;
         }
 
         .baccarat-game-shell .baccarat-hand-area .card {
-          width: 50px;
-          height: 75px;
+          width: 48px;
+          height: 72px;
           border-radius: 7px;
         }
 
@@ -1298,71 +1389,99 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           padding: 4px 8px;
         }
 
-        .baccarat-dealer-hand {
-          left: 30%;
-          top: 35.5%;
+        .baccarat-player-hand {
+          left: 34%;
+          top: 38%;
         }
 
         .baccarat-banker-hand {
-          left: 70%;
-          top: 35.5%;
+          left: 66%;
+          top: 38%;
         }
 
         .baccarat-bet-zone {
           position: absolute;
           z-index: 26;
           display: grid;
-          place-items: center;
-          border: 1px solid transparent;
-          border-radius: 22px;
-          background: rgba(255,255,255,0);
-          color: transparent;
+          grid-template-rows: auto auto 1fr;
+          place-items: start center;
+          padding: 22px 12px 12px;
+          border: 1px solid rgba(214,173,72,.72);
+          border-radius: 24px;
+          background:
+            radial-gradient(circle at 50% 18%, rgba(243,212,125,.14), transparent 42%),
+            linear-gradient(180deg, rgba(5,52,30,.48), rgba(3,20,12,.18));
+          color: var(--gold-light);
           cursor: pointer;
           transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+          box-shadow: inset 0 1px rgba(255,255,255,.08), inset 0 0 24px rgba(214,173,72,.06);
         }
 
-        .baccarat-bet-zone span {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          overflow: hidden;
-          clip: rect(0 0 0 0);
+        .baccarat-zone-label {
+          color: #f4c65b;
+          font-family: var(--font-display);
+          font-size: clamp(1.25rem, 2.1vw, 2.05rem);
+          font-weight: 900;
+          letter-spacing: .08em;
+          line-height: .95;
+          text-transform: uppercase;
+          text-shadow: 0 2px 0 rgba(0,0,0,.82), 0 0 16px rgba(214,173,72,.24);
+        }
+
+        .baccarat-zone-payout {
+          display: block;
+          margin-top: 9px;
+          color: #fff0af;
+          font-family: var(--font-display);
+          font-size: .82rem;
+          font-weight: 800;
+          letter-spacing: .14em;
+          line-height: 1;
+          text-transform: uppercase;
+          text-shadow: 0 1px 0 rgba(0,0,0,.82);
         }
 
         .baccarat-bet-zone:hover,
         .baccarat-bet-zone:focus-visible {
-          border-color: rgba(243,212,125,.68);
-          background: rgba(255,255,255,.035);
+          border-color: rgba(243,212,125,.92);
+          background:
+            radial-gradient(circle at 50% 18%, rgba(243,212,125,.2), transparent 42%),
+            linear-gradient(180deg, rgba(5,61,34,.58), rgba(3,24,14,.22));
           outline: 0;
-          box-shadow: inset 0 0 24px rgba(243,212,125,.08);
+          box-shadow: inset 0 1px rgba(255,255,255,.1), inset 0 0 28px rgba(243,212,125,.1), 0 0 0 1px rgba(243,212,125,.08);
         }
 
-        .baccarat-zone-dealer {
-          left: 19.5%;
-          top: 52%;
-          width: 27%;
-          height: 25%;
+        .baccarat-zone-player {
+          left: 21%;
+          top: 52.5%;
+          width: 28%;
+          height: 24%;
         }
 
         .baccarat-zone-tie {
-          left: 43%;
-          top: 52%;
-          width: 14%;
-          height: 25%;
+          left: 43.5%;
+          top: 52.5%;
+          width: 13%;
+          height: 24%;
+          padding-inline: 8px;
         }
 
         .baccarat-zone-banker {
-          right: 19.5%;
-          top: 52%;
-          width: 27%;
-          height: 25%;
+          right: 21%;
+          top: 52.5%;
+          width: 28%;
+          height: 24%;
         }
 
         .baccarat-spot-chip-stack {
+          position: absolute;
+          left: 50%;
+          top: 56%;
           width: 94px;
           height: 94px;
           z-index: 36;
           pointer-events: none;
+          transform: translate(-50%, -50%);
         }
 
         .baccarat-spot-chip-stack .spot-chip {
@@ -1415,12 +1534,12 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         .baccarat-seat-rail {
           position: absolute;
           left: 50%;
-          bottom: 9.5%;
+          bottom: 7.8%;
           z-index: 34;
           display: grid;
-          width: min(760px, 74%);
+          width: min(830px, 81%);
           grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 7px;
+          gap: 8px;
           transform: translateX(-50%);
           pointer-events: none;
         }
@@ -1432,8 +1551,8 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           align-items: center;
           gap: 1px 7px;
           min-width: 0;
-          min-height: 50px;
-          padding: 6px 9px;
+          min-height: 58px;
+          padding: 7px 9px;
           border: 1px solid rgba(214,173,72,.18);
           border-radius: 12px;
           background: rgba(3,12,8,.78);
@@ -1459,16 +1578,21 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-seat__avatar > span {
-          display: block;
+          display: grid;
+          place-items: center;
           width: 30px;
           height: 30px;
           border: 1px solid rgba(214,173,72,.2);
           border-radius: 999px;
           background: rgba(255,255,255,.04);
+          color: rgba(247,240,215,.42);
+          font-size: .58rem;
+          font-weight: 900;
         }
 
         .baccarat-seat__name,
-        .baccarat-seat strong {
+        .baccarat-seat strong,
+        .baccarat-seat em {
           display: block;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -1488,12 +1612,25 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         .baccarat-seat strong {
           grid-column: 2;
           grid-row: 2;
-          margin-top: 4px;
+          margin-top: 2px;
           color: #fff;
           font-family: var(--font-number);
-          font-size: .72rem;
+          font-size: .74rem;
           font-weight: 900;
           line-height: 1;
+        }
+
+        .baccarat-seat em {
+          grid-column: 1 / span 2;
+          grid-row: 3;
+          margin-top: 4px;
+          color: rgba(247,240,215,.54);
+          font-family: var(--font-body);
+          font-size: .62rem;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 1;
+          text-align: center;
         }
 
         .baccarat-chat-panel {
@@ -1534,7 +1671,45 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           grid-row: 1 / span 2;
           align-self: center;
           justify-self: end;
-          width: min(100%, 270px);
+          width: min(100%, 430px);
+        }
+
+        .baccarat-bottom-console .baccarat-round-info {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-rows: 34px 42px;
+        }
+
+        .baccarat-round-info span,
+        .baccarat-round-info strong {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .baccarat-round-info span:nth-of-type(1) { grid-column: 1; grid-row: 1; }
+        .baccarat-round-info span:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+        .baccarat-round-info span:nth-of-type(3) { grid-column: 3; grid-row: 1; }
+        .baccarat-round-info span:nth-of-type(4) { grid-column: 4; grid-row: 1; }
+        .baccarat-round-info strong:nth-of-type(1) { grid-column: 1; grid-row: 2; }
+        .baccarat-round-info strong:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+        .baccarat-round-info strong:nth-of-type(3) { grid-column: 3; grid-row: 2; }
+        .baccarat-round-info strong:nth-of-type(4) { grid-column: 4; grid-row: 2; }
+
+        .baccarat-round-info div {
+          grid-row: 1 / span 2;
+          border-left: 1px solid rgba(214,173,72,.28);
+        }
+
+        .baccarat-round-info div:nth-of-type(1) { grid-column: 2; }
+        .baccarat-round-info div:nth-of-type(2) { grid-column: 3; }
+        .baccarat-round-info div:nth-of-type(3) { grid-column: 4; }
+
+        .baccarat-round-info strong:nth-of-type(4) {
+          font-family: var(--font-display);
+          font-size: .82rem;
+          letter-spacing: .08em;
+          text-transform: uppercase;
         }
 
         .baccarat-bottom-console .action-row[data-mode="idle"] {
@@ -1573,7 +1748,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           }
 
           .baccarat-bottom-console {
-            grid-template-columns: minmax(330px, 1fr) auto minmax(210px, .7fr);
+            grid-template-columns: minmax(330px, 1fr) auto minmax(300px, .85fr);
             gap: 8px 12px;
           }
         }
@@ -1616,7 +1791,8 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           }
 
           .baccarat-tip-board {
-            top: -18%;
+            top: 326px;
+            width: 176px;
           }
 
           .baccarat-road {

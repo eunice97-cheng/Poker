@@ -3,26 +3,26 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
 import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled } from '@/lib/local-admin'
-import { BaccaratPreviewClient } from './BaccaratPreviewClient'
+import { BaccaratRoomClient } from './BaccaratRoomClient'
 
-type PreviewProfile = {
+type RoomProfile = {
   username: string | null
   chip_balance: number | null
 }
 
-export default async function BaccaratPreviewPage() {
+export default async function BaccaratRoomPage() {
   const supabase = createClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()
   const isLocalAdmin = isLocalAdminEnabled() && cookies().get(LOCAL_ADMIN_COOKIE)?.value === 'true'
-  const canViewPreview = isLocalAdmin || Boolean(session?.user.email && isAdminEmail(session.user.email))
+  const canViewRoom = isLocalAdmin || Boolean(session?.user.email && isAdminEmail(session.user.email))
 
   if (!session && !isLocalAdmin) redirect('/auth/login')
-  if (!canViewPreview) redirect('/')
+  if (!canViewRoom) redirect('/')
 
   if (isLocalAdmin && !session) {
-    return <BaccaratPreviewClient username="LocalAdmin" chipBalance={100000} />
+    return <BaccaratRoomClient username="LocalAdmin" chipBalance={100000} />
   }
 
   const { data: profile } = await supabase
@@ -31,12 +31,12 @@ export default async function BaccaratPreviewPage() {
     .eq('id', session!.user.id)
     .single()
 
-  const previewProfile = profile as PreviewProfile | null
+  const roomProfile = profile as RoomProfile | null
 
   return (
-    <BaccaratPreviewClient
-      username={previewProfile?.username ?? 'GM'}
-      chipBalance={previewProfile?.chip_balance ?? 100000}
+    <BaccaratRoomClient
+      username={roomProfile?.username ?? 'GM'}
+      chipBalance={roomProfile?.chip_balance ?? 100000}
     />
   )
 }
