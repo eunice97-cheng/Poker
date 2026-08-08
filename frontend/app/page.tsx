@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CasinoLobbyClient, type CasinoGameStats } from './CasinoLobbyClient'
 import { hasVipEmojiAccess } from '@/lib/supporter-access'
 import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
+import { isAdminEmail } from '@/lib/admin'
 import type { Profile } from '@/types/poker'
 
 type CasinoTableRow = {
@@ -62,6 +63,7 @@ export default async function HomePage() {
         unreadMailCount={0}
         token={LOCAL_ADMIN_TOKEN}
         hasVipEmojis
+        isAdmin
         isLocalAdmin
       />
     )
@@ -98,6 +100,7 @@ export default async function HomePage() {
       unreadMailCount={unreadMailCount ?? 0}
       token={session!.access_token}
       hasVipEmojis={canUseVipEmojis}
+      isAdmin={isAdminEmail(session!.user.email)}
       isLocalAdmin={false}
     />
   )

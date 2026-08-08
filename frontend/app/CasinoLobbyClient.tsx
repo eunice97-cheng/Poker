@@ -27,6 +27,7 @@ interface CasinoLobbyClientProps {
   unreadMailCount: number
   token: string | null
   hasVipEmojis: boolean
+  isAdmin?: boolean
   isLocalAdmin?: boolean
 }
 
@@ -209,6 +210,7 @@ export function CasinoLobbyClient({
   unreadMailCount,
   token,
   hasVipEmojis,
+  isAdmin = false,
   isLocalAdmin = false,
 }: CasinoLobbyClientProps) {
   const router = useRouter()
@@ -218,6 +220,7 @@ export function CasinoLobbyClient({
   const [compactLandscape, setCompactLandscape] = useState(false)
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
   const playerName = profile?.username ?? 'Player'
+  const canPreviewBaccarat = isAdmin || isLocalAdmin
   const gameCards: CasinoGameCard[] = games.map((game) => ({
     ...game,
     stats: game.id === 'poker' ? pokerStats : blackjackStats,
@@ -304,6 +307,15 @@ export function CasinoLobbyClient({
                   )}
                 </Link>
                 <AudioControls buttonClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
+                {canPreviewBaccarat && (
+                  <Link
+                    href="/baccarat"
+                    onClick={() => playSfx('click')}
+                    className="flex h-10 items-center justify-center rounded-xl border border-[#f8d86a]/24 bg-[#f8d86a]/10 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#fff2bf] transition-colors hover:border-[#f8d86a]/50 hover:bg-[#f8d86a]/18"
+                  >
+                    Baccarat
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -404,6 +416,15 @@ export function CasinoLobbyClient({
                 )}
               </Link>
               <AudioControls buttonClassName="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-black/24 text-white/78 transition-colors hover:border-[#f8d86a]/34 hover:text-white" />
+              {canPreviewBaccarat && (
+                <Link
+                  href="/baccarat"
+                  onClick={() => playSfx('click')}
+                  className="rounded-xl border border-[#f8d86a]/24 bg-[#f8d86a]/10 px-4 py-3 text-sm font-semibold text-[#fff2bf] transition-colors hover:border-[#f8d86a]/50 hover:bg-[#f8d86a]/18 hover:text-white"
+                >
+                  Baccarat Preview
+                </Link>
+              )}
               <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-black/24 px-3 py-3 text-xs font-semibold text-white/62 xl:flex">
                 <span
                   className={`h-2 w-2 rounded-full ${

@@ -199,6 +199,19 @@ export function GMClient() {
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-10">
+      <div className="mx-auto mb-6 flex w-full max-w-6xl flex-col gap-4 rounded-2xl border border-yellow-500/20 bg-gray-900 p-5 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-[0.24em] text-yellow-500/70">Temporary GM Preview</div>
+          <h1 className="mt-1 text-2xl font-bold text-white">ASL Punto Banco Salon</h1>
+          <p className="mt-1 text-sm text-gray-400">Hidden from the public casino lobby until Baccarat is ready to launch.</p>
+        </div>
+        <Link
+          href="/baccarat"
+          className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-5 py-3 text-center text-sm font-bold text-yellow-200 transition-colors hover:border-yellow-400 hover:bg-yellow-500/20 hover:text-white"
+        >
+          Open Baccarat Preview
+        </Link>
+      </div>
       <div className="mx-auto flex w-full max-w-6xl flex-col items-stretch gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="w-full max-w-none rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-2xl sm:p-8 xl:max-w-lg">
           <div className="mb-6 flex items-center justify-between gap-3">
