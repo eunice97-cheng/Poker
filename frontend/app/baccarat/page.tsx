@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
+import { hasVipEmojiAccess } from '@/lib/supporter-access'
 import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled } from '@/lib/local-admin'
 import { BaccaratRoomClient } from './BaccaratRoomClient'
 
@@ -22,14 +23,17 @@ export default async function BaccaratRoomPage() {
   if (!canViewRoom) redirect('/')
 
   if (isLocalAdmin && !session) {
-    return <BaccaratRoomClient username="LocalAdmin" chipBalance={100000} />
+    return <BaccaratRoomClient username="LocalAdmin" chipBalance={100000} hasVipEmojis />
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, chip_balance')
-    .eq('id', session!.user.id)
-    .single()
+  const [{ data: profile }, canUseVipEmojis] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('username, chip_balance')
+      .eq('id', session!.user.id)
+      .single(),
+    hasVipEmojiAccess(supabase, session!.user.id, session!.user.email),
+  ])
 
   const roomProfile = profile as RoomProfile | null
 
@@ -37,6 +41,7 @@ export default async function BaccaratRoomPage() {
     <BaccaratRoomClient
       username={roomProfile?.username ?? 'GM'}
       chipBalance={roomProfile?.chip_balance ?? 100000}
+      hasVipEmojis={canUseVipEmojis}
     />
   )
 }

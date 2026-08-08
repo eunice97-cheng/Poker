@@ -53,6 +53,7 @@ type RoundResult = RoadItem & {
 type BaccaratRoomClientProps = {
   username: string
   chipBalance: number
+  hasVipEmojis: boolean
 }
 
 const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-42'
@@ -475,15 +476,17 @@ function BaccaratTableChat({
 }) {
   const [input, setInput] = useState('')
   const [collapsed, setCollapsed] = useState(false)
-  const [showEmojiTray, setShowEmojiTray] = useState(false)
+  const [activeEmojiTray, setActiveEmojiTray] = useState<'standard' | 'vip' | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const showEmojiTray = activeEmojiTray === 'standard'
+  const showVipEmojiTray = activeEmojiTray === 'vip'
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   useEffect(() => {
-    if (collapsed) setShowEmojiTray(false)
+    if (collapsed) setActiveEmojiTray(null)
   }, [collapsed])
 
   const handleSend = () => {
@@ -491,32 +494,39 @@ function BaccaratTableChat({
     if (!text) return
     onSend(text)
     setInput('')
-    setShowEmojiTray(false)
+    setActiveEmojiTray(null)
   }
 
   const appendEmoji = (emojiCode: string) => {
     setInput((current) => appendChatEmojiCode(current, emojiCode, MAX_CHAT_LENGTH))
-    setShowEmojiTray(false)
+    setActiveEmojiTray(null)
   }
 
   return (
     <div className="baccarat-chat-shell">
-      {!collapsed && showEmojiTray && (
-        <div className="casino-table-chat__emoji-popover baccarat-chat-emoji-popover" data-kind="standard">
-          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} variant="table" />
+      {!collapsed && activeEmojiTray && (
+        <div className="casino-table-chat__emoji-popover baccarat-chat-emoji-popover" data-kind={activeEmojiTray}>
+          <ChatEmojiTray
+            hasVipAccess={hasVipEmojis}
+            onSelect={appendEmoji}
+            variant="table"
+            category={activeEmojiTray}
+          />
         </div>
       )}
 
       <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
-        <button
-          type="button"
-          className="blackjack-chat-header"
-          onClick={() => setCollapsed((current) => !current)}
-          aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
-        >
+        <div className="blackjack-chat-header">
           <span>TABLE CHAT</span>
-          <strong>{collapsed ? 'SHOW' : 'HIDE'}</strong>
-        </button>
+          <button
+            type="button"
+            className="baccarat-chat-toggle"
+            onClick={() => setCollapsed((current) => !current)}
+            aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
+          >
+            {collapsed ? 'SHOW' : 'HIDE'}
+          </button>
+        </div>
 
         {!collapsed && (
           <>
@@ -553,11 +563,20 @@ function BaccaratTableChat({
               <button
                 type="button"
                 className={classNames('blackjack-chat-emoji-button', showEmojiTray && 'is-active')}
-                onClick={() => setShowEmojiTray((current) => !current)}
+                onClick={() => setActiveEmojiTray((current) => current === 'standard' ? null : 'standard')}
                 aria-pressed={showEmojiTray}
                 aria-label={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
               >
                 Emoji
+              </button>
+              <button
+                type="button"
+                className={classNames('blackjack-chat-emoji-button', showVipEmojiTray && 'is-active')}
+                onClick={() => setActiveEmojiTray((current) => current === 'vip' ? null : 'vip')}
+                aria-pressed={showVipEmojiTray}
+                aria-label={showVipEmojiTray ? 'Hide VIP emoji picker' : 'Show VIP emoji picker'}
+              >
+                VIP
               </button>
               <input
                 type="text"
@@ -652,7 +671,7 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   )
 }
 
-export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClientProps) {
+export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: BaccaratRoomClientProps) {
   const {
     musicVol,
     sfxVol,
@@ -1079,7 +1098,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
             messages={chatMessages}
             onSend={sendChat}
             myPlayerId={myPlayerId}
-            hasVipEmojis={false}
+            hasVipEmojis={hasVipEmojis}
           />
         </div>
 
@@ -1850,6 +1869,34 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
         .baccarat-chat-panel .blackjack-chat-header {
           width: 100%;
+          cursor: default;
+          padding-right: 8px;
+        }
+
+        .baccarat-chat-toggle {
+          height: 26px;
+          min-width: 58px;
+          border: 1px solid rgba(214,173,72,.42);
+          border-radius: 7px;
+          background: rgba(9,11,8,.76);
+          color: #fff1b8;
+          cursor: pointer;
+          font-family: var(--font-display);
+          font-size: .62rem;
+          font-weight: 900;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+
+        .baccarat-chat-toggle:hover,
+        .baccarat-chat-toggle:focus-visible {
+          border-color: rgba(255,222,122,.82);
+          color: #fff;
+          outline: none;
+        }
+
+        .baccarat-chat-panel .blackjack-chat-compose {
+          grid-template-columns: auto auto minmax(0, 1fr) auto;
         }
 
         .baccarat-chat-emoji-popover {
@@ -1857,6 +1904,10 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           bottom: 0;
           z-index: 90;
           width: min(288px, calc(100vw - 366px));
+        }
+
+        .baccarat-chat-emoji-popover[data-kind="vip"] {
+          width: min(352px, calc(100vw - 366px));
         }
 
         .baccarat-chat-emoji-popover > div {
@@ -2038,6 +2089,10 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-chat-emoji-popover {
             width: min(260px, calc(100vw - 334px));
+          }
+
+          .baccarat-chat-emoji-popover[data-kind="vip"] {
+            width: min(332px, calc(100vw - 334px));
           }
 
           .baccarat-bottom-console {
