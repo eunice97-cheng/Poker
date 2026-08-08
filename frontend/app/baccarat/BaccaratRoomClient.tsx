@@ -1295,8 +1295,8 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         }
 
         .baccarat-felt-table .baccarat-table-tip-control {
-          left: 23.5% !important;
-          top: 53% !important;
+          left: 50% !important;
+          top: 34.8% !important;
           z-index: 140 !important;
           display: block !important;
           width: 112px !important;
