@@ -1479,6 +1479,11 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           text-shadow: 0 1px 0 rgba(0,0,0,.82);
         }
 
+        .baccarat-bet-zone.has-bet .baccarat-zone-label,
+        .baccarat-bet-zone.has-bet .baccarat-zone-payout {
+          opacity: 0;
+        }
+
         .baccarat-bet-zone:hover,
         .baccarat-bet-zone:focus-visible {
           border-color: rgba(243,212,125,.92);
@@ -1518,7 +1523,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         .baccarat-spot-chip-stack {
           position: absolute;
           left: 50%;
-          top: 68%;
+          top: 48%;
           width: 60px;
           height: 54px;
           z-index: 36;
@@ -1534,7 +1539,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
         .baccarat-zone-amount {
           position: absolute;
           left: 50%;
-          top: calc(50% + 46px);
+          top: calc(50% + 34px);
           z-index: 38;
           min-width: 72px;
           padding: 4px 9px;
