@@ -1874,7 +1874,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
         .baccarat-chat-panel {
           right: 20px;
-          top: 244px;
+          top: 276px;
           z-index: 80;
           width: 318px;
         }
@@ -2105,7 +2105,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           }
 
           .baccarat-chat-panel {
-            top: 172px;
+            top: 198px;
           }
 
           .baccarat-chat-panel .blackjack-chat {
