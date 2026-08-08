@@ -441,7 +441,7 @@ function BaccaratSeatRail({
   return (
     <div className="baccarat-seat-rail" aria-label="Baccarat seats">
       {seats.map((seat) => (
-        <div key={seat.id} className={classNames('baccarat-seat', seat.active && 'is-active')}>
+        <div key={seat.id} className={classNames('baccarat-seat', `baccarat-seat-${seat.id}`, seat.active && 'is-active')}>
           <span className="baccarat-seat__avatar">
             {seat.active ? (
               <AvatarDisplay avatarId="avatar_gm" size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
@@ -1620,24 +1620,23 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
         .baccarat-seat-rail {
           position: absolute;
-          left: 50%;
-          bottom: 7.8%;
+          inset: 0;
           z-index: 34;
-          display: grid;
-          width: min(830px, 81%);
-          grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 8px;
-          transform: translateX(-50%);
+          display: block;
+          width: 100%;
+          height: 100%;
           pointer-events: none;
         }
 
         .baccarat-seat {
+          position: absolute;
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
           grid-template-rows: auto auto;
           align-items: center;
           gap: 1px 7px;
-          min-width: 0;
+          width: clamp(116px, 12.2%, 132px);
+          min-width: 116px;
           min-height: 58px;
           padding: 7px 9px;
           border: 1px solid rgba(214,173,72,.18);
@@ -1646,8 +1645,16 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           color: rgba(247,240,215,.56);
           font-family: var(--font-display);
           text-align: left;
+          transform: translate(-50%, -50%);
           box-shadow: inset 0 1px rgba(255,255,255,.04), 0 8px 14px rgba(0,0,0,.22);
         }
+
+        .baccarat-seat-1 { left: 18%; top: 68%; }
+        .baccarat-seat-2 { left: 30%; top: 78%; }
+        .baccarat-seat-3 { left: 43%; top: 84%; }
+        .baccarat-seat-4 { left: 57%; top: 84%; }
+        .baccarat-seat-5 { left: 70%; top: 78%; }
+        .baccarat-seat-6 { left: 82%; top: 68%; }
 
         .baccarat-seat.is-active {
           border-color: rgba(243,212,125,.56);
