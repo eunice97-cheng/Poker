@@ -1874,7 +1874,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
         .baccarat-chat-panel {
           right: 20px;
-          top: 336px;
+          top: 420px;
           z-index: 80;
           width: 318px;
         }
@@ -1885,7 +1885,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
         }
 
         .baccarat-chat-panel .blackjack-chat {
-          height: clamp(330px, 43vh, 438px);
+          height: clamp(260px, 34vh, 360px);
         }
 
         .baccarat-chat-panel .blackjack-chat.is-collapsed {
@@ -2105,11 +2105,11 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           }
 
           .baccarat-chat-panel {
-            top: 266px;
+            top: 330px;
           }
 
           .baccarat-chat-panel .blackjack-chat {
-            height: clamp(270px, 39vh, 330px);
+            height: clamp(220px, 31vh, 280px);
           }
 
           .baccarat-chat-panel .blackjack-chat.is-collapsed {
