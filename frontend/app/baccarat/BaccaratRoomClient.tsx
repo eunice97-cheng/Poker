@@ -1171,6 +1171,8 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
       <style jsx global>{`
         .baccarat-game-shell {
+          --baccarat-bottom-console-height: 132px;
+          --baccarat-chat-console-gap: 16px;
           height: 100svh;
           min-height: 0;
           grid-template-rows: minmax(0, 1fr) 132px;
@@ -1429,9 +1431,10 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           left: 50%;
           top: 18.5%;
           z-index: 18;
+          width: min(560px, 54%);
           min-width: min(420px, 48%);
           max-width: 560px;
-          padding: 10px 18px 12px;
+          padding: 9px 20px 11px;
           border: 1px solid rgba(214,173,72,.48);
           border-radius: 999px;
           background: linear-gradient(180deg, rgba(8,11,9,.92), rgba(2,5,4,.86));
@@ -1453,15 +1456,15 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
         .baccarat-result-ribbon strong {
           display: block;
           margin-top: 5px;
-          overflow: hidden;
           color: #fff;
           font-family: var(--font-display);
-          font-size: clamp(.92rem, 1.25vw, 1.18rem);
+          font-size: clamp(.8rem, 1.05vw, 1.06rem);
           font-weight: 900;
-          line-height: 1.08;
-          text-overflow: ellipsis;
+          line-height: 1.12;
+          overflow-wrap: normal;
+          text-wrap: balance;
           text-shadow: 0 1px 0 rgba(0,0,0,.75);
-          white-space: nowrap;
+          white-space: normal;
         }
 
         .baccarat-felt-table .baccarat-table-tip-control {
@@ -1875,7 +1878,8 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
         .blackjack-chat-panel.baccarat-chat-panel {
           position: absolute !important;
           right: 20px !important;
-          top: 420px !important;
+          top: auto !important;
+          bottom: calc(var(--baccarat-bottom-console-height) + var(--baccarat-chat-console-gap)) !important;
           z-index: 80 !important;
           display: block !important;
           width: 318px !important;
@@ -2051,6 +2055,8 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
         @media (max-height: 780px) {
           .baccarat-game-shell {
+            --baccarat-bottom-console-height: 116px;
+            --baccarat-chat-console-gap: 10px;
             grid-template-rows: minmax(0, 1fr) 116px;
           }
 
@@ -2104,10 +2110,6 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
           .baccarat-road {
             top: 86px;
-          }
-
-          .blackjack-chat-panel.baccarat-chat-panel {
-            top: 330px !important;
           }
 
           .baccarat-chat-panel .blackjack-chat {
