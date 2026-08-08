@@ -1,12 +1,15 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { AudioControls } from '@/components/ui/AudioControls'
+import { ChatMessageText } from '@/components/ui/ChatMessageText'
 
 type Suit = 'S' | 'H' | 'D' | 'C'
 type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K'
-type BetKey = 'punto' | 'banco' | 'tie' | 'puntoPair' | 'bancoPair'
-type Winner = 'punto' | 'banco' | 'tie'
+type BetKey = 'punto' | 'tie' | 'banco'
+type Winner = 'punto' | 'tie' | 'banco'
 
 type BaccaratCard = {
   rank: Rank
@@ -20,7 +23,6 @@ type RoadItem = {
   winner: Winner
   puntoTotal: number
   bancoTotal: number
-  pair: boolean
   natural: boolean
 }
 
@@ -36,39 +38,18 @@ type BaccaratPreviewClientProps = {
   chipBalance: number
 }
 
+type PreviewChatMessage = {
+  id: number
+  username: string
+  text: string
+  system?: boolean
+}
+
 const SUITS: Suit[] = ['S', 'H', 'D', 'C']
 const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 const CHIP_VALUES = [10, 20, 50, 100, 500, 1000]
 const CHIP_STACK_VALUES = [1000, 500, 100, 50, 20, 10]
-const EMPTY_BETS: Bets = {
-  punto: 0,
-  banco: 0,
-  tie: 0,
-  puntoPair: 0,
-  bancoPair: 0,
-}
-const INITIAL_PUNTO: BaccaratCard[] = [
-  { rank: '4', suit: 'S' },
-  { rank: '5', suit: 'H' },
-]
-const INITIAL_BANCO: BaccaratCard[] = [
-  { rank: 'K', suit: 'D' },
-  { rank: '8', suit: 'C' },
-]
-const STARTING_ROAD: RoadItem[] = [
-  { id: 1, winner: 'banco', puntoTotal: 3, bancoTotal: 7, pair: false, natural: false },
-  { id: 2, winner: 'banco', puntoTotal: 6, bancoTotal: 8, pair: false, natural: true },
-  { id: 3, winner: 'punto', puntoTotal: 9, bancoTotal: 1, pair: true, natural: true },
-  { id: 4, winner: 'tie', puntoTotal: 6, bancoTotal: 6, pair: false, natural: false },
-  { id: 5, winner: 'banco', puntoTotal: 2, bancoTotal: 5, pair: false, natural: false },
-  { id: 6, winner: 'punto', puntoTotal: 7, bancoTotal: 4, pair: false, natural: false },
-  { id: 7, winner: 'punto', puntoTotal: 8, bancoTotal: 0, pair: false, natural: true },
-  { id: 8, winner: 'banco', puntoTotal: 5, bancoTotal: 6, pair: true, natural: false },
-  { id: 9, winner: 'tie', puntoTotal: 9, bancoTotal: 9, pair: false, natural: true },
-  { id: 10, winner: 'banco', puntoTotal: 1, bancoTotal: 4, pair: false, natural: false },
-  { id: 11, winner: 'punto', puntoTotal: 6, bancoTotal: 5, pair: false, natural: false },
-  { id: 12, winner: 'banco', puntoTotal: 7, bancoTotal: 8, pair: false, natural: true },
-]
+const EMPTY_BETS: Bets = { punto: 0, tie: 0, banco: 0 }
 const SUIT_SYMBOLS: Record<Suit, string> = {
   S: '\u2660',
   H: '\u2665',
@@ -95,9 +76,7 @@ function createShoe() {
 
   for (let deck = 0; deck < 8; deck++) {
     for (const suit of SUITS) {
-      for (const rank of RANKS) {
-        cards.push({ rank, suit })
-      }
+      for (const rank of RANKS) cards.push({ rank, suit })
     }
   }
 
@@ -121,10 +100,6 @@ function handTotal(cards: BaccaratCard[]) {
   return cards.reduce((sum, card) => sum + baccaratValue(card), 0) % 10
 }
 
-function isPair(cards: BaccaratCard[]) {
-  return cards.length >= 2 && cards[0].rank === cards[1].rank
-}
-
 function shouldBancoDraw(bancoTotal: number, puntoThirdCard: BaccaratCard | null) {
   if (!puntoThirdCard) return bancoTotal <= 5
 
@@ -138,7 +113,7 @@ function shouldBancoDraw(bancoTotal: number, puntoThirdCard: BaccaratCard | null
 }
 
 function totalBets(bets: Bets) {
-  return Object.values(bets).reduce((sum, value) => sum + value, 0)
+  return bets.punto + bets.tie + bets.banco
 }
 
 function chipFacesForBet(value: number) {
@@ -184,9 +159,6 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
   }
 
   const winner: Winner = puntoTotal > bancoTotal ? 'punto' : bancoTotal > puntoTotal ? 'banco' : 'tie'
-  const puntoPair = isPair(puntoCards)
-  const bancoPair = isPair(bancoCards)
-  const pair = puntoPair || bancoPair
   const stake = totalBets(bets)
   let returns = 0
 
@@ -196,13 +168,12 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
     returns += bets.tie * 9
     returns += bets.punto + bets.banco
   }
-  if (puntoPair) returns += bets.puntoPair * 12
-  if (bancoPair) returns += bets.bancoPair * 12
 
   const label = winner === 'punto' ? 'Punto wins' : winner === 'banco' ? 'Banco wins' : 'Tie hand'
 
   return {
     nextShoe: workingShoe,
+    returns,
     result: {
       id: roundId,
       winner,
@@ -210,145 +181,112 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
       bancoCards,
       puntoTotal,
       bancoTotal,
-      pair,
       natural,
       net: returns - stake,
       label,
     } satisfies RoundResult,
-    returns,
   }
 }
 
-function Card({ card, revealDelay = 0 }: { card: BaccaratCard; revealDelay?: number }) {
+function Card({ card }: { card: BaccaratCard }) {
   const isRed = card.suit === 'H' || card.suit === 'D'
 
   return (
     <div
       className={classNames(
-        'relative flex aspect-[5/7] w-14 shrink-0 flex-col justify-between rounded-lg border border-[#2b1b13]/20 bg-[#fff7e8] p-2 shadow-[0_18px_28px_rgba(0,0,0,0.42)] sm:w-16 lg:w-20',
+        'flex aspect-[5/7] w-[3.4rem] shrink-0 flex-col justify-between rounded-md border border-[#2b1b13]/20 bg-[#fff7e8] p-1.5 shadow-[0_12px_20px_rgba(0,0,0,0.42)] 2xl:w-16',
         isRed ? 'text-[#b82032]' : 'text-[#151618]'
       )}
-      style={{ animationDelay: `${revealDelay}ms` }}
     >
-      <span className="text-sm font-black leading-none lg:text-base">{card.rank}</span>
-      <span className="self-center text-2xl font-black leading-none lg:text-3xl">{SUIT_SYMBOLS[card.suit]}</span>
-      <span className="self-end text-sm font-black leading-none lg:text-base">{card.rank}</span>
+      <span className="text-xs font-black leading-none 2xl:text-sm">{card.rank}</span>
+      <span className="self-center text-xl font-black leading-none 2xl:text-2xl">{SUIT_SYMBOLS[card.suit]}</span>
+      <span className="self-end text-xs font-black leading-none 2xl:text-sm">{card.rank}</span>
     </div>
   )
 }
 
-function HandZone({
-  title,
+function CardBack() {
+  return (
+    <div className="flex aspect-[5/7] w-[3.4rem] shrink-0 items-center justify-center rounded-md border border-[#d9ad5a]/25 bg-[linear-gradient(135deg,#15100a,#3b210d)] p-1.5 shadow-[0_12px_20px_rgba(0,0,0,0.42)] 2xl:w-16">
+      <span className="h-full w-full rounded border border-[#d9ad5a]/28 bg-[radial-gradient(circle,#6d4215,transparent_58%)]" />
+    </div>
+  )
+}
+
+function HandDisplay({
+  label,
   cards,
   total,
-  tone,
+  side,
 }: {
-  title: string
+  label: string
   cards: BaccaratCard[]
-  total: number
-  tone: 'punto' | 'banco'
+  total: number | null
+  side: 'punto' | 'banco'
 }) {
-  const toneClass = tone === 'punto'
-    ? 'border-[#78bdff]/28 bg-[#062f45]/34 text-[#dff1ff]'
-    : 'border-[#ff9f92]/28 bg-[#4b100d]/34 text-[#ffe1dd]'
+  const tone = side === 'punto' ? 'text-[#dbefff] border-[#85c8ff]/26' : 'text-[#ffe2dd] border-[#ffad9f]/26'
 
   return (
-    <section className={`rounded-2xl border px-4 py-3 text-center backdrop-blur-sm ${toneClass}`}>
-      <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-72">{title}</div>
-      <div className="mt-3 flex min-h-[5.4rem] items-center justify-center gap-2">
-        {cards.map((card, index) => <Card key={`${card.rank}-${card.suit}-${index}`} card={card} revealDelay={index * 110} />)}
+    <section className={`min-w-[12rem] rounded-2xl border bg-black/38 px-4 py-3 text-center shadow-[0_18px_36px_rgba(0,0,0,0.35)] backdrop-blur-md ${tone}`}>
+      <div className="text-[10px] font-black uppercase tracking-[0.28em] opacity-75">{label}</div>
+      <div className="mt-2 flex min-h-[4.8rem] items-center justify-center gap-2">
+        {cards.length > 0 ? cards.map((card, index) => <Card key={`${card.rank}-${card.suit}-${index}`} card={card} />) : (
+          <>
+            <CardBack />
+            <CardBack />
+          </>
+        )}
       </div>
-      <div className="mt-3 inline-flex h-11 min-w-11 items-center justify-center rounded-full border border-white/45 bg-black/34 px-3 text-2xl font-black shadow-[0_10px_20px_rgba(0,0,0,0.34)]">
-        {total}
+      <div className="mt-2 inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-white/35 bg-black/42 px-2 text-xl font-black text-white">
+        {total ?? '-'}
       </div>
     </section>
   )
 }
 
-function BetSpot({
+function ChipStack({ amount }: { amount: number }) {
+  if (amount <= 0) return null
+
+  return (
+    <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      {chipFacesForBet(amount).map((chip, index) => (
+        <img
+          key={`${chip}-${index}`}
+          src={`/blackjack/Images/Chips/${chip}.png`}
+          alt=""
+          aria-hidden="true"
+          className="-mx-2 h-12 w-12 object-contain drop-shadow-[0_9px_9px_rgba(0,0,0,0.46)] 2xl:h-14 2xl:w-14"
+          style={{ transform: `translateY(${-index * 4}px) rotate(${index % 2 === 0 ? -7 : 8}deg)` }}
+        />
+      ))}
+      <span className="absolute mt-16 rounded-full border border-black/40 bg-[#fff3c4] px-3 py-1 text-xs font-black text-[#221205] shadow-[0_8px_18px_rgba(0,0,0,0.34)]">
+        {money(amount)}
+      </span>
+    </span>
+  )
+}
+
+function TableBetZone({
   label,
-  payout,
   amount,
-  tone,
+  className,
   onClick,
 }: {
   label: string
-  payout: string
   amount: number
-  tone: 'punto' | 'banco' | 'tie' | 'pair'
+  className: string
   onClick: () => void
 }) {
-  const toneClass = {
-    punto: 'border-[#78bdff]/45 bg-[linear-gradient(145deg,rgba(16,77,119,0.78),rgba(6,36,58,0.9))] hover:border-[#b9ddff]',
-    banco: 'border-[#ff9f92]/45 bg-[linear-gradient(145deg,rgba(119,28,23,0.84),rgba(58,8,7,0.92))] hover:border-[#ffd0c8]',
-    tie: 'border-[#98ffc4]/40 bg-[linear-gradient(145deg,rgba(22,103,64,0.8),rgba(8,52,34,0.92))] hover:border-[#ceffdf]',
-    pair: 'border-[#f1ce7a]/32 bg-[linear-gradient(145deg,rgba(90,68,26,0.72),rgba(31,24,11,0.9))] hover:border-[#ffe3a1]',
-  }[tone]
-
   return (
     <button
       type="button"
+      aria-label={`Bet on ${label}`}
+      title={`Bet on ${label}`}
       onClick={onClick}
-      className={`relative min-h-[5.8rem] overflow-hidden rounded-2xl border px-3 py-3 text-center text-white shadow-[inset_0_0_32px_rgba(255,255,255,0.05),0_16px_38px_rgba(0,0,0,0.28)] transition ${toneClass}`}
+      className={`absolute rounded-[30px] border border-transparent transition hover:border-[#ffe2a2]/55 hover:bg-white/[0.035] focus:outline-none focus-visible:border-[#ffe2a2] ${className}`}
     >
-      <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-white/58">{label}</span>
-      <strong className="mt-2 block text-xl font-black text-[#fff8de]">{payout}</strong>
-      {amount > 0 && (
-        <span className="absolute inset-x-0 bottom-2 flex items-end justify-center">
-          {chipFacesForBet(amount).map((chip, index) => (
-            <img
-              key={`${chip}-${index}`}
-              src={`/blackjack/Images/Chips/${chip}.png`}
-              alt=""
-              aria-hidden="true"
-              className="-mx-2 h-10 w-10 object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.45)]"
-              style={{ transform: `translateY(${-index * 3}px) rotate(${index % 2 === 0 ? -8 : 8}deg)` }}
-            />
-          ))}
-        </span>
-      )}
+      <ChipStack amount={amount} />
     </button>
-  )
-}
-
-function RoadPanel({ road }: { road: RoadItem[] }) {
-  const recent = road.slice(-42)
-  const columns = Array.from({ length: 7 }, (_, columnIndex) => recent.slice(columnIndex * 6, columnIndex * 6 + 6))
-
-  return (
-    <section className="rounded-2xl border border-[#efc979]/18 bg-black/42 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Road</div>
-          <h2 className="mt-1 font-serif text-2xl text-[#fff4d5]">Bead Plate</h2>
-        </div>
-        <div className="text-right text-xs font-bold text-white/50">{road.length} rounds</div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-7 gap-1.5">
-        {columns.map((column, columnIndex) => (
-          <div key={columnIndex} className="grid grid-rows-6 gap-1.5">
-            {Array.from({ length: 6 }, (_, rowIndex) => {
-              const item = column[rowIndex]
-              if (!item) return <span key={rowIndex} className="h-7 rounded-full border border-white/7 bg-white/[0.03]" />
-
-              const beadClass = item.winner === 'punto'
-                ? 'border-[#9bd3ff]/45 bg-[#287bc5] text-[#eaf6ff]'
-                : item.winner === 'banco'
-                  ? 'border-[#ffaaa0]/45 bg-[#b7352a] text-[#fff0ed]'
-                  : 'border-[#b4ffd2]/45 bg-[#27a765] text-[#edfff4]'
-
-              return (
-                <span key={rowIndex} className={`relative flex h-7 items-center justify-center rounded-full border text-[10px] font-black shadow-[0_8px_16px_rgba(0,0,0,0.28)] ${beadClass}`}>
-                  {item.winner === 'punto' ? 'P' : item.winner === 'banco' ? 'B' : 'T'}
-                  {item.pair && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border border-black/40 bg-[#ffd56d]" />}
-                </span>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-    </section>
   )
 }
 
@@ -369,17 +307,13 @@ function ChipButton({
       disabled={disabled}
       onClick={onClick}
       className={classNames(
-        'relative flex h-14 w-14 items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd56d]/80 disabled:opacity-45',
+        'relative flex h-11 w-11 items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd56d]/80 disabled:opacity-45 2xl:h-12 2xl:w-12',
         selected && 'scale-110'
       )}
       title={`${value} chip`}
     >
-      <img
-        src={`/blackjack/Images/Chips/${value}.png`}
-        alt={`${value} chip`}
-        className="h-full w-full object-contain drop-shadow-[0_10px_14px_rgba(0,0,0,0.55)]"
-      />
-      {selected && <span className="absolute inset-0 rounded-full ring-2 ring-[#fff2bf] ring-offset-2 ring-offset-[#100706]" />}
+      <img src={`/blackjack/Images/Chips/${value}.png`} alt={`${value} chip`} className="h-full w-full object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.52)]" />
+      {selected && <span className="absolute inset-0 rounded-full ring-2 ring-[#fff2bf] ring-offset-2 ring-offset-[#120807]" />}
     </button>
   )
 }
@@ -390,7 +324,7 @@ function ActionButton({
   onClick,
   primary = false,
 }: {
-  children: React.ReactNode
+  children: ReactNode
   disabled?: boolean
   onClick: () => void
   primary?: boolean
@@ -401,14 +335,118 @@ function ActionButton({
       disabled={disabled}
       onClick={onClick}
       className={classNames(
-        'rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-45',
+        'h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-[0.14em] transition disabled:cursor-not-allowed disabled:opacity-38 2xl:h-11',
         primary
-          ? 'border-[#ffd56d]/55 bg-[#f0bb3c] text-[#1b0e05] hover:bg-[#ffdc72]'
-          : 'border-white/12 bg-black/36 text-white/72 hover:border-[#ffd56d]/34 hover:text-white'
+          ? 'border-[#ffd56d]/55 bg-[#d2a135] text-[#160b04] hover:bg-[#ffd56d]'
+          : 'border-white/14 bg-black/38 text-white/72 hover:border-[#ffd56d]/38 hover:text-white'
       )}
     >
       {children}
     </button>
+  )
+}
+
+function RoadPanel({ road }: { road: RoadItem[] }) {
+  const recent = road.slice(-36)
+  const cells = Array.from({ length: 36 }, (_, index) => recent[index] ?? null)
+
+  return (
+    <section className="min-h-0 rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
+      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Road</div>
+          <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Bead Plate</h2>
+        </div>
+        <div className="text-right text-xs font-bold text-white/50">{road.length} rounds</div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-6 gap-1.5">
+        {cells.map((item, index) => {
+          if (!item) return <span key={index} className="h-8 rounded-full border border-white/12 bg-white/[0.025]" />
+
+          const beadClass = item.winner === 'punto'
+            ? 'border-[#9bd3ff]/45 bg-[#287bc5] text-[#eaf6ff]'
+            : item.winner === 'banco'
+              ? 'border-[#ffaaa0]/45 bg-[#b7352a] text-[#fff0ed]'
+              : 'border-[#b4ffd2]/45 bg-[#27a765] text-[#edfff4]'
+
+          return (
+            <span key={index} className={`flex h-8 items-center justify-center rounded-full border text-[10px] font-black shadow-[0_8px_16px_rgba(0,0,0,0.28)] ${beadClass}`}>
+              {item.winner === 'punto' ? 'P' : item.winner === 'banco' ? 'B' : 'T'}
+            </span>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function TableChat({
+  username,
+  messages,
+  input,
+  onInputChange,
+  onSend,
+}: {
+  username: string
+  messages: PreviewChatMessage[]
+  input: string
+  onInputChange: (value: string) => void
+  onSend: () => void
+}) {
+  return (
+    <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
+      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Table</div>
+          <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Chat</h2>
+        </div>
+        <div className="text-right text-xs font-bold text-white/50">Preview</div>
+      </div>
+
+      <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={classNames(
+              'rounded-xl border px-3 py-2 text-sm leading-snug',
+              message.system
+                ? 'border-[#efc979]/16 bg-[#efc979]/8 text-[#fff4d5]/72'
+                : 'border-white/10 bg-white/[0.045] text-white/76'
+            )}
+          >
+            {!message.system && (
+              <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#efc979]/62">
+                {message.username}
+              </div>
+            )}
+            <ChatMessageText text={message.text} size="sm" />
+          </div>
+        ))}
+      </div>
+
+      <form
+        className="mt-3 flex shrink-0 gap-2"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSend()
+        }}
+      >
+        <input
+          value={input}
+          maxLength={140}
+          onChange={(event) => onInputChange(event.target.value)}
+          placeholder={`Message as ${username}`}
+          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/44 px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/34 focus:border-[#efc979]/40"
+        />
+        <button
+          type="submit"
+          className="rounded-xl border border-[#efc979]/30 bg-[#efc979]/12 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fff2c8] transition hover:border-[#efc979]/55 hover:bg-[#efc979]/18"
+        >
+          Send
+        </button>
+      </form>
+    </section>
   )
 }
 
@@ -418,32 +456,28 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const [stack, setStack] = useState(() => Math.max(1000, Math.floor(chipBalance)))
   const [bets, setBets] = useState<Bets>(EMPTY_BETS)
   const [lastBets, setLastBets] = useState<Bets>(EMPTY_BETS)
-  const [road, setRoad] = useState<RoadItem[]>(STARTING_ROAD)
-  const [result, setResult] = useState<RoundResult>({
-    id: 0,
-    winner: 'punto',
-    puntoCards: INITIAL_PUNTO,
-    bancoCards: INITIAL_BANCO,
-    puntoTotal: 9,
-    bancoTotal: 8,
-    pair: false,
-    natural: true,
-    net: 0,
-    label: 'Punto natural nine',
-  })
+  const [road, setRoad] = useState<RoadItem[]>([])
+  const [result, setResult] = useState<RoundResult | null>(null)
   const [dealing, setDealing] = useState(false)
+  const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState<PreviewChatMessage[]>([
+    { id: 1, username: 'Dealer', text: 'Baccarat preview room is open.', system: true },
+  ])
 
   const currentStake = totalBets(bets)
   const lastStake = totalBets(lastBets)
   const canDeal = currentStake > 0 && !dealing
-  const lastThree = road.slice(-3).reverse()
   const commissionPreview = bets.banco > 0 ? Math.ceil(bets.banco * 0.05) : 0
 
   const message = useMemo(() => {
     if (dealing) return 'Cards are in motion.'
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
-    return 'Place your preview bets.'
+    return 'Place preview bets.'
   }, [currentStake, dealing])
+
+  const resultLine = result
+    ? `${result.label} / ${result.puntoTotal}-${result.bancoTotal} / ${signedMoney(result.net)}`
+    : 'No result yet'
 
   const placeBet = (key: BetKey) => {
     if (dealing || stack < selectedChip) return
@@ -471,10 +505,8 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
     setStack((current) => current - currentStake)
     setBets((current) => ({
       punto: current.punto * 2,
-      banco: current.banco * 2,
       tie: current.tie * 2,
-      puntoPair: current.puntoPair * 2,
-      bancoPair: current.bancoPair * 2,
+      banco: current.banco * 2,
     }))
   }
 
@@ -491,130 +523,114 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
       setLastBets(bets)
       setBets(EMPTY_BETS)
       setResult(resolved.result)
-      setRoad((current) => [...current.slice(-41), {
+      setRoad((current) => [...current.slice(-35), {
         id: resolved.result.id,
         winner: resolved.result.winner,
         puntoTotal: resolved.result.puntoTotal,
         bancoTotal: resolved.result.bancoTotal,
-        pair: resolved.result.pair,
         natural: resolved.result.natural,
       }])
       setDealing(false)
-    }, 520)
+    }, 420)
+  }
+
+  const sendChat = () => {
+    const text = chatInput.trim()
+    if (!text) return
+
+    setChatMessages((current) => [
+      ...current.slice(-5),
+      {
+        id: Date.now(),
+        username,
+        text,
+      },
+    ])
+    setChatInput('')
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050403] text-white">
+    <main className="relative h-[100svh] overflow-hidden bg-[#050403] text-white">
       <div className="pointer-events-none fixed inset-0">
-        <img
-          src="/casino-lobby/lobby-background.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover opacity-55"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,2,2,0.94)_0%,rgba(16,5,5,0.72)_24%,rgba(8,12,9,0.48)_60%,rgba(0,0,0,0.92)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,211,109,0.16),transparent_34%),linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.72))]" />
+        <img src="/baccarat/Images/baccarat-lobby.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,1,1,0.92)_0%,rgba(9,5,3,0.52)_36%,rgba(5,7,5,0.46)_64%,rgba(0,0,0,0.9)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.78))]" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-4 pb-8 pt-24 sm:px-6 lg:px-8 xl:pt-6">
-        <header className="mb-5 flex flex-col gap-4 pl-0 xl:pl-56">
-          <div className="flex flex-col gap-4 rounded-2xl border border-[#efc979]/18 bg-black/28 px-4 py-4 shadow-[0_22px_70px_rgba(0,0,0,0.32)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
-              <img src="/casino-lobby/logo.png" alt="" aria-hidden="true" className="h-16 w-20 shrink-0 object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.55)]" />
-              <div className="min-w-0">
-                <div className="text-[10px] font-black uppercase tracking-[0.34em] text-[#efc979]/72">GM Design Sandbox</div>
-                <h1 className="mt-1 truncate font-serif text-3xl font-black uppercase tracking-[0.08em] text-[#fff2c8] sm:text-4xl">
-                  Punto Banco Salon
-                </h1>
-              </div>
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1480px] flex-col px-5 pb-5 pt-5">
+        <header className="mb-3 ml-[220px] flex h-[86px] shrink-0 items-center justify-between gap-4 rounded-2xl border border-[#efc979]/22 bg-black/42 px-5 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-md">
+          <div className="flex min-w-0 items-center gap-4">
+            <img src="/baccarat/Images/baccarat-logo.png" alt="" aria-hidden="true" className="h-[70px] w-[88px] shrink-0 object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.58)]" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-[0.34em] text-[#efc979]/72">GM Design Sandbox</div>
+              <h1 className="truncate font-serif text-[2rem] font-black uppercase leading-tight tracking-[0.08em] text-[#fff2c8] 2xl:text-[2.35rem]">
+                Punto Banco Salon
+              </h1>
             </div>
-
-            <nav className="flex flex-wrap items-center gap-2">
-              <div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white/68">
-                {username} / {money(stack)} preview chips
-              </div>
-              <Link href="/" className="rounded-xl border border-white/12 bg-black/30 px-4 py-3 text-sm font-bold text-white/76 transition hover:border-[#efc979]/40 hover:text-white">
-                Main Lobby
-              </Link>
-              <Link href="/gm" className="rounded-xl border border-[#efc979]/35 bg-[#efc979]/12 px-4 py-3 text-sm font-bold text-[#fff2c8] transition hover:border-[#efc979]/60 hover:bg-[#efc979]/18">
-                GM
-              </Link>
-            </nav>
           </div>
+
+          <nav className="flex shrink-0 items-center gap-2">
+            <div className="rounded-xl border border-white/10 bg-black/34 px-4 py-3 text-sm font-semibold text-white/72">
+              {username} / {money(stack)}
+            </div>
+            <AudioControls buttonClassName="flex h-11 w-11 items-center justify-center rounded-xl border border-white/16 bg-black/38 text-white/78 transition hover:border-[#efc979]/45 hover:text-white" />
+            <Link href="/" className="rounded-xl border border-white/16 bg-black/38 px-4 py-3 text-sm font-bold text-white/78 transition hover:border-[#efc979]/45 hover:text-white">
+              Main Lobby
+            </Link>
+            <Link href="/gm" className="rounded-xl border border-[#efc979]/35 bg-[#efc979]/12 px-4 py-3 text-sm font-bold text-[#fff2c8] transition hover:border-[#efc979]/60 hover:bg-[#efc979]/18">
+              GM
+            </Link>
+          </nav>
         </header>
 
-        <section className="grid flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="relative min-h-[44rem] overflow-hidden rounded-[30px] border border-[#efc979]/20 bg-black/32 shadow-[0_38px_130px_rgba(0,0,0,0.55)] backdrop-blur-sm">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(239,201,121,0.16),transparent_36%),linear-gradient(180deg,rgba(13,8,5,0.16),rgba(10,3,3,0.7))]" />
-            <div className="relative mx-auto flex h-full max-w-[1080px] flex-col px-3 py-4 sm:px-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="rounded-2xl border border-[#efc979]/20 bg-black/40 px-4 py-3 backdrop-blur-md">
-                  <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Dealer</div>
-                  <div className="mt-1 text-lg font-black text-[#fff4d5]">Eunice</div>
-                </div>
-                <div className="rounded-2xl border border-[#efc979]/20 bg-black/44 px-5 py-3 text-center backdrop-blur-md">
-                  <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Table Call</div>
-                  <div className="mt-1 text-lg font-black text-[#fff4d5]">{message}</div>
-                </div>
-                <div className="rounded-2xl border border-[#efc979]/20 bg-black/40 px-4 py-3 text-right backdrop-blur-md">
-                  <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Shoe</div>
-                  <div className="mt-1 text-lg font-black text-[#fff4d5]">{shoe.length}</div>
-                </div>
+        <section className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] gap-4">
+          <div className="relative min-h-0 overflow-hidden rounded-[28px] border border-[#efc979]/18 bg-black/34 shadow-[0_34px_120px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+            <div className="absolute inset-x-5 top-4 z-20 flex items-start justify-between gap-3">
+              <div className="rounded-2xl border border-[#efc979]/20 bg-black/46 px-4 py-3 backdrop-blur-md">
+                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Table Call</div>
+                <div className="mt-1 text-base font-black text-[#fff4d5]">{message}</div>
               </div>
-
-              <div className="relative mt-3 flex-1">
-                <img
-                  src="/blackjack/Images/Table/Table.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute left-1/2 top-[47%] w-[1120px] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-95 drop-shadow-[0_38px_60px_rgba(0,0,0,0.58)]"
-                />
-                <img
-                  src="/blackjack/Images/Dealers/Eunice4.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-1/2 top-[-2rem] h-56 -translate-x-1/2 object-contain opacity-95 drop-shadow-[0_26px_28px_rgba(0,0,0,0.55)]"
-                />
-
-                <div className="absolute left-1/2 top-[10.5rem] w-[min(48rem,82%)] -translate-x-1/2 rounded-full border border-[#efc979]/24 bg-black/44 px-5 py-3 text-center shadow-[0_20px_46px_rgba(0,0,0,0.42)] backdrop-blur-md">
-                  <div className="text-[10px] font-black uppercase tracking-[0.32em] text-[#efc979]/62">
-                    {result.natural ? 'Natural Checked' : result.pair ? 'Pair Marked' : 'Punto Banco Rules'}
-                  </div>
-                  <div className="mt-1 text-2xl font-black text-[#fff4d5]">
-                    {dealing ? 'No more bets' : `${result.label} / ${result.puntoTotal}-${result.bancoTotal} / ${signedMoney(result.net)}`}
-                  </div>
+              <div className="max-w-[34rem] rounded-full border border-[#efc979]/22 bg-black/50 px-5 py-3 text-center shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-md">
+                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#efc979]/62">
+                  {result?.natural ? 'Natural Checked' : 'Punto Banco'}
                 </div>
-
-                <div className="absolute left-[7%] right-[7%] top-[17.5rem] grid gap-4 lg:grid-cols-2">
-                  <HandZone title="Punto" cards={result.puntoCards} total={result.puntoTotal} tone="punto" />
-                  <HandZone title="Banco" cards={result.bancoCards} total={result.bancoTotal} tone="banco" />
-                </div>
-
-                <div className="absolute inset-x-[6%] bottom-[8.6rem] grid grid-cols-3 gap-3">
-                  <BetSpot label="Punto" payout="1:1" amount={bets.punto} tone="punto" onClick={() => placeBet('punto')} />
-                  <BetSpot label="Tie" payout="8:1" amount={bets.tie} tone="tie" onClick={() => placeBet('tie')} />
-                  <BetSpot label="Banco" payout="0.95:1" amount={bets.banco} tone="banco" onClick={() => placeBet('banco')} />
-                </div>
-
-                <div className="absolute bottom-[1.6rem] left-[16%] right-[16%] grid grid-cols-2 gap-3">
-                  <BetSpot label="Punto Pair" payout="11:1" amount={bets.puntoPair} tone="pair" onClick={() => placeBet('puntoPair')} />
-                  <BetSpot label="Banco Pair" payout="11:1" amount={bets.bancoPair} tone="pair" onClick={() => placeBet('bancoPair')} />
-                </div>
+                <div className="mt-1 truncate text-xl font-black text-[#fff4d5]">{dealing ? 'No more bets' : resultLine}</div>
               </div>
+              <div className="rounded-2xl border border-[#efc979]/20 bg-black/46 px-4 py-3 text-right backdrop-blur-md">
+                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Shoe</div>
+                <div className="mt-1 text-base font-black text-[#fff4d5]">{shoe.length}</div>
+              </div>
+            </div>
+
+            <div className="absolute left-1/2 top-[39%] z-20 grid w-[68%] -translate-x-1/2 grid-cols-2 gap-4">
+              <HandDisplay label="Punto" cards={result?.puntoCards ?? []} total={result?.puntoTotal ?? null} side="punto" />
+              <HandDisplay label="Banco" cards={result?.bancoCards ?? []} total={result?.bancoTotal ?? null} side="banco" />
+            </div>
+
+            <div className="absolute inset-0 z-10">
+              <img
+                src="/baccarat/Images/baccarat-table.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute bottom-[-4.5%] left-1/2 w-[98%] max-w-[1080px] -translate-x-1/2 object-contain drop-shadow-[0_40px_62px_rgba(0,0,0,0.62)]"
+              />
+              <TableBetZone label="Punto" amount={bets.punto} className="bottom-[24%] left-[18%] h-[24%] w-[25%]" onClick={() => placeBet('punto')} />
+              <TableBetZone label="Tie" amount={bets.tie} className="bottom-[24%] left-[43%] h-[24%] w-[14%]" onClick={() => placeBet('tie')} />
+              <TableBetZone label="Banco" amount={bets.banco} className="bottom-[24%] right-[18%] h-[24%] w-[25%]" onClick={() => placeBet('banco')} />
             </div>
           </div>
 
-          <aside className="flex flex-col gap-4">
-            <section className="rounded-2xl border border-[#efc979]/18 bg-black/42 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <aside className="flex min-h-0 flex-col gap-3">
+            <section className="rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
+              <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
                 <div>
                   <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Wager Rail</div>
-                  <h2 className="mt-1 font-serif text-2xl text-[#fff4d5]">Preview Chips</h2>
+                  <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Preview Chips</h2>
                 </div>
                 <strong className="text-lg text-[#fff4d5]">{money(currentStake)}</strong>
               </div>
 
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
+              <div className="mt-4 grid grid-cols-3 justify-items-center gap-3">
                 {CHIP_VALUES.map((value) => (
                   <ChipButton
                     key={value}
@@ -633,28 +649,20 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                 <ActionButton onClick={dealPreviewRound} disabled={!canDeal} primary>{dealing ? 'Dealing' : 'Deal'}</ActionButton>
               </div>
 
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-xs text-white/58">
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/58">
                 Banco commission preview: {money(commissionPreview)}
               </div>
             </section>
 
             <RoadPanel road={road} />
 
-            <section className="rounded-2xl border border-[#efc979]/18 bg-black/42 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-              <div className="border-b border-white/10 pb-3">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Last Hands</div>
-                <h2 className="mt-1 font-serif text-2xl text-[#fff4d5]">Salon Tape</h2>
-              </div>
-              <div className="mt-3 space-y-2">
-                {lastThree.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <span className="text-sm font-bold text-white/72">#{item.id}</span>
-                    <span className="text-sm font-black uppercase tracking-[0.12em] text-[#fff4d5]">{item.winner}</span>
-                    <span className="text-sm text-white/58">{item.puntoTotal}-{item.bancoTotal}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <TableChat
+              username={username}
+              messages={chatMessages}
+              input={chatInput}
+              onInputChange={setChatInput}
+              onSend={sendChat}
+            />
           </aside>
         </section>
       </div>
