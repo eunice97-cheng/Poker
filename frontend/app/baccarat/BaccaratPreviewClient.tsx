@@ -58,6 +58,7 @@ const CHIP_STACK_OFFSETS = [
 ] as const
 const EMPTY_BETS: Bets = { dealer: 0, tie: 0, banker: 0 }
 const MAX_CHAT_LENGTH = 200
+const DEALER_TIP_AMOUNT = 10
 const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
 const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
@@ -325,6 +326,45 @@ function RoadPanel({ road }: { road: RoadItem[] }) {
   )
 }
 
+function DealerTipBoard({ total }: { total: number }) {
+  return (
+    <aside className="dealer-tip-board baccarat-tip-board" aria-label="Dealer tip ranking">
+      <header className="dealer-tip-board__header">
+        <span>Dealer Support</span>
+        <strong>{money(total)}</strong>
+      </header>
+      <ol className="dealer-tip-board__list">
+        <li className="dealer-tip-row is-leading is-active">
+          <span className="dealer-tip-row__rank">01</span>
+          <span className="dealer-tip-row__name">Dealer Eunice</span>
+          <span className="dealer-tip-row__label">Total Tip Received</span>
+          <strong>{money(total)}</strong>
+        </li>
+      </ol>
+    </aside>
+  )
+}
+
+function BaccaratSeatRail({ username, stake }: { username: string; stake: number }) {
+  const seats = Array.from({ length: 6 }, (_, index) => ({
+    id: index + 1,
+    label: index === 0 ? username : `Seat ${index + 1}`,
+    stake: index === 0 ? stake : 0,
+    active: index === 0,
+  }))
+
+  return (
+    <div className="baccarat-seat-rail" aria-label="Baccarat seats">
+      {seats.map((seat) => (
+        <div key={seat.id} className={classNames('baccarat-seat', seat.active && 'is-active')}>
+          <span>{seat.label}</span>
+          <strong>{seat.stake > 0 ? money(seat.stake) : seat.active ? '0' : 'OPEN'}</strong>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function BaccaratTableChat({
   messages,
   onSend,
@@ -528,12 +568,15 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const [dealing, setDealing] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
+  const [dealerTipTotal, setDealerTipTotal] = useState(0)
+  const [tipVisible, setTipVisible] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const tipTimeoutRef = useRef<number | null>(null)
 
   const currentStake = totalBets(bets)
   const lastStake = totalBets(lastBets)
   const canDeal = currentStake > 0 && !dealing
-  const commissionPreview = bets.banker > 0 ? Math.ceil(bets.banker * 0.05) : 0
+  const canTipDealer = stack >= DEALER_TIP_AMOUNT
   const myPlayerId = 'baccarat-preview-gm'
   const bgmEffectivelyMuted = musicMute || musicVol === 0
   const sfxEffectivelyMuted = sfxMute || sfxVol === 0
@@ -574,6 +617,12 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
     }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (tipTimeoutRef.current) window.clearTimeout(tipTimeoutRef.current)
+    }
+  }, [])
+
   const dealerLine = useMemo(() => {
     if (dealing) return 'No more bets.'
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
@@ -604,6 +653,15 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
     }
 
     toggleSfx()
+  }
+
+  const handleTip = () => {
+    if (!canTipDealer) return
+    setStack((current) => current - DEALER_TIP_AMOUNT)
+    setDealerTipTotal((current) => current + DEALER_TIP_AMOUNT)
+    setTipVisible(true)
+    if (tipTimeoutRef.current) window.clearTimeout(tipTimeoutRef.current)
+    tipTimeoutRef.current = window.setTimeout(() => setTipVisible(false), 1600)
   }
 
   const placeBet = (key: BetKey) => {
@@ -749,6 +807,12 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
             <button type="button" className="utility-button" id="helpBtn" aria-label="Help" onClick={() => setRulesOpen(true)}>
               <span className="utility-label" aria-hidden="true">Help</span>
             </button>
+            <button type="button" className="table-status-button" disabled>
+              Stand
+            </button>
+            <button type="button" className="table-status-button" disabled>
+              Sit
+            </button>
             <TopbarLink href="/">Main Lobby</TopbarLink>
             <TopbarLink href="/gm">GM</TopbarLink>
             <Link
@@ -774,6 +838,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
               aria-hidden="true"
             />
             <div className="dealer-speech" id="dealerSpeech" aria-live="polite">{dealerLine}</div>
+            <DealerTipBoard total={dealerTipTotal} />
             <div className="round-countdown" id="roundCountdown" aria-live="polite">
               <span>SHOE</span>
               <strong>{shoe.length}</strong>
@@ -781,9 +846,29 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
 
             <div className="felt-table baccarat-felt-table">
               <img className="baccarat-table-image" src="/baccarat/Images/baccarat-table.png" alt="" aria-hidden="true" />
+              <div className="tip-control table-tip-control baccarat-table-tip-control">
+                <button
+                  type="button"
+                  id="tipBtn"
+                  className="tip-button action-button"
+                  disabled={!canTipDealer}
+                  onClick={handleTip}
+                >
+                  <b>TIP</b>
+                  <span>TIP DEALER</span>
+                </button>
+                <div className={classNames('tip-popup', tipVisible && 'is-visible')} id="tipPopup" aria-hidden={!tipVisible}>
+                  <img src="/blackjack/Images/Dealers/thank%20you.png" alt="" aria-hidden="true" />
+                  <span>Thank you for the tip!</span>
+                </div>
+              </div>
               <div className="baccarat-result-ribbon" aria-live="polite">
                 <span>{result?.natural ? 'NATURAL CHECKED' : 'TABLE CALL'}</span>
                 <strong>{dealing ? 'No more bets' : resultLine}</strong>
+              </div>
+              <div className="baccarat-table-label baccarat-table-label-dealer" aria-hidden="true">
+                <strong>DEALER</strong>
+                <span>1 TO 1</span>
               </div>
 
               <HandArea
@@ -802,6 +887,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
               <TableBetZone label="Dealer" amount={bets.dealer} className="baccarat-zone-dealer" onClick={() => placeBet('dealer')} />
               <TableBetZone label="Tie" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
               <TableBetZone label="Banker" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
+              <BaccaratSeatRail username={username} stake={currentStake} />
             </div>
           </div>
         </section>
@@ -813,17 +899,6 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
             myPlayerId={myPlayerId}
             hasVipEmojis={false}
           />
-          <div className="chat-seat-controls" aria-label="Table seating controls">
-            <button type="button" className="table-status-button" disabled>
-              Stand
-            </button>
-            <button type="button" className="table-status-button" disabled>
-              Sit
-            </button>
-            <Link href="/" className="table-status-button is-cashout" aria-label="Cash out and leave Baccarat table" title="Cash out">
-              <ExitIcon className="cashout-icon" />
-            </Link>
-          </div>
         </div>
 
         <section className="bottom-console baccarat-bottom-console">
@@ -872,13 +947,6 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
             </button>
           </div>
 
-          <aside className="round-info baccarat-commission" aria-label="Banker commission">
-            <span>BANKER FEE</span>
-            <strong>{money(commissionPreview)}</strong>
-            <div />
-            <span>GM ROOM</span>
-            <strong>PRIVATE</strong>
-          </aside>
         </section>
       </main>
 
@@ -899,7 +967,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
 
         .baccarat-game-shell .topbar {
           left: 238px;
-          right: 206px;
+          right: 24px;
           top: 14px;
           align-items: flex-start;
         }
@@ -908,10 +976,10 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           pointer-events: auto;
           display: flex;
           align-items: center;
-          gap: 12px;
-          min-width: min(520px, 44vw);
-          min-height: 62px;
-          padding: 8px 18px;
+          gap: 14px;
+          width: min(610px, 41vw);
+          min-height: 74px;
+          padding: 9px 18px 10px;
           border: 1px solid rgba(214,173,72,.46);
           border-radius: 10px;
           background: linear-gradient(180deg, rgba(5,8,6,.88), rgba(1,3,2,.82));
@@ -929,27 +997,28 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           display: block;
           color: var(--gold);
           font-family: var(--font-display);
-          font-size: .62rem;
+          font-size: .64rem;
           font-weight: 900;
-          letter-spacing: .18em;
+          letter-spacing: .16em;
+          line-height: 1;
           text-transform: uppercase;
         }
 
         .baccarat-title-panel strong {
           display: block;
-          margin-top: 2px;
+          margin-top: 6px;
           color: var(--gold-light);
           font-family: var(--font-display);
-          font-size: clamp(1.7rem, 2.65vw, 2.7rem);
+          font-size: clamp(1.85rem, 2.55vw, 2.95rem);
           font-weight: 900;
-          letter-spacing: .1em;
+          letter-spacing: .08em;
           line-height: .95;
           text-transform: uppercase;
           white-space: nowrap;
         }
 
         .baccarat-game-shell .table-frame {
-          padding: 86px 334px 0 210px;
+          padding: 86px 210px 0;
           place-items: end center;
         }
 
@@ -959,7 +1028,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
 
         .baccarat-game-shell .utility-buttons {
           align-items: flex-start;
-          gap: 8px;
+          gap: 7px;
         }
 
         .baccarat-game-shell .utility-buttons .table-status-button {
@@ -1029,21 +1098,27 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-wood-rail {
-          width: min(100%, 1020px);
-          max-height: calc(100svh - 154px);
+          width: min(100%, 1090px);
+          max-height: calc(100svh - 144px);
           align-self: end;
-          transform: translateY(10px);
+          transform: translateY(6px);
         }
 
         .baccarat-wood-rail .dealer-portrait {
-          top: -33%;
-          width: clamp(174px, 12.3vw, 232px);
+          top: -20%;
+          width: clamp(192px, 12.2vw, 226px);
           z-index: 5;
         }
 
         .baccarat-wood-rail .dealer-speech {
           left: calc(50% + 142px);
           top: -8%;
+        }
+
+        .baccarat-tip-board {
+          left: calc(50% - 448px);
+          top: -20%;
+          width: 230px;
         }
 
         .baccarat-wood-rail .round-countdown {
@@ -1058,7 +1133,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         .baccarat-table-image {
           position: absolute;
           inset: 0;
-          z-index: 1;
+          z-index: 8;
           width: 100%;
           height: 100%;
           object-fit: contain;
@@ -1070,7 +1145,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           position: absolute;
           left: 50%;
           top: 18%;
-          z-index: 8;
+          z-index: 18;
           min-width: min(420px, 48%);
           max-width: 560px;
           padding: 10px 18px 12px;
@@ -1106,14 +1181,63 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           white-space: nowrap;
         }
 
+        .baccarat-table-tip-control {
+          left: 25.8%;
+          top: 36.5%;
+          z-index: 25;
+        }
+
+        .baccarat-table-label {
+          position: absolute;
+          z-index: 12;
+          display: grid;
+          place-items: center;
+          min-width: 156px;
+          min-height: 72px;
+          padding: 8px 18px;
+          border-radius: 999px;
+          background:
+            radial-gradient(ellipse at 50% 55%, rgba(8,73,40,.96), rgba(8,73,40,.72) 48%, rgba(8,73,40,.18) 72%, transparent 100%);
+          color: var(--gold-light);
+          font-family: var(--font-display);
+          text-align: center;
+          pointer-events: none;
+          text-shadow: 0 2px 0 rgba(0,0,0,.85);
+        }
+
+        .baccarat-table-label strong {
+          display: block;
+          font-size: 1.35rem;
+          font-weight: 900;
+          letter-spacing: .09em;
+          line-height: 1;
+        }
+
+        .baccarat-table-label span {
+          display: block;
+          margin-top: 6px;
+          color: #fff0af;
+          font-size: .78rem;
+          font-weight: 800;
+          letter-spacing: .1em;
+          line-height: 1;
+        }
+
+        .baccarat-table-label-dealer {
+          left: 33%;
+          top: 62%;
+          transform: translate(-50%, -50%);
+        }
+
         .baccarat-game-shell .baccarat-hand-area {
-          z-index: 9;
-          width: 33%;
-          min-width: 250px;
+          z-index: 22;
+          width: 28%;
+          min-width: 220px;
           padding: 8px 10px 10px;
           border: 1px solid rgba(214,173,72,.22);
           border-radius: 10px;
-          background: rgba(2, 17, 10, .5);
+          background: rgba(2, 17, 10, .64);
+          pointer-events: none;
           box-shadow: inset 0 1px rgba(255,255,255,.04), 0 10px 20px rgba(0,0,0,.28);
         }
 
@@ -1149,18 +1273,18 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-dealer-hand {
-          left: 32%;
-          top: 32%;
+          left: 30.5%;
+          top: 33%;
         }
 
         .baccarat-banker-hand {
-          left: 68%;
-          top: 32%;
+          left: 69.5%;
+          top: 33%;
         }
 
         .baccarat-bet-zone {
           position: absolute;
-          z-index: 10;
+          z-index: 26;
           display: grid;
           place-items: center;
           border: 1px solid transparent;
@@ -1188,54 +1312,111 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-zone-dealer {
-          left: 21%;
-          top: 55%;
-          width: 25%;
-          height: 20%;
+          left: 19.5%;
+          top: 52%;
+          width: 27%;
+          height: 25%;
         }
 
         .baccarat-zone-tie {
           left: 43%;
-          top: 54%;
+          top: 52%;
           width: 14%;
-          height: 22%;
+          height: 25%;
         }
 
         .baccarat-zone-banker {
-          right: 21%;
-          top: 55%;
-          width: 25%;
-          height: 20%;
+          right: 19.5%;
+          top: 52%;
+          width: 27%;
+          height: 25%;
         }
 
         .baccarat-spot-chip-stack {
-          width: 84px;
-          height: 84px;
-          z-index: 5;
+          width: 94px;
+          height: 94px;
+          z-index: 28;
+          pointer-events: none;
         }
 
         .baccarat-spot-chip-stack .spot-chip {
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
         }
 
         .baccarat-spot-chip-stack strong {
           position: absolute;
           left: 50%;
           top: calc(100% - 12px);
-          min-width: 54px;
-          padding: 3px 8px;
+          min-width: 68px;
+          padding: 4px 10px;
           border: 1px solid rgba(214,173,72,.42);
           border-radius: 999px;
           background: rgba(3,6,5,.92);
           color: var(--gold-light);
           font-family: var(--font-number);
-          font-size: .72rem;
+          font-size: .82rem;
           font-weight: 900;
           line-height: 1;
           text-align: center;
           transform: translateX(-50%);
           box-shadow: 0 8px 14px rgba(0,0,0,.32);
+        }
+
+        .baccarat-seat-rail {
+          position: absolute;
+          left: 50%;
+          bottom: 11.5%;
+          z-index: 14;
+          display: grid;
+          width: min(680px, 66%);
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 7px;
+          transform: translateX(-50%);
+          pointer-events: none;
+        }
+
+        .baccarat-seat {
+          min-width: 0;
+          padding: 6px 7px 7px;
+          border: 1px solid rgba(214,173,72,.18);
+          border-radius: 999px;
+          background: rgba(3,12,8,.62);
+          color: rgba(247,240,215,.56);
+          font-family: var(--font-display);
+          text-align: center;
+          box-shadow: inset 0 1px rgba(255,255,255,.04), 0 8px 14px rgba(0,0,0,.22);
+        }
+
+        .baccarat-seat.is-active {
+          border-color: rgba(243,212,125,.56);
+          background: linear-gradient(180deg, rgba(29,58,34,.84), rgba(3,20,12,.76));
+          color: var(--gold-light);
+        }
+
+        .baccarat-seat span,
+        .baccarat-seat strong {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .baccarat-seat span {
+          font-size: .54rem;
+          font-weight: 900;
+          letter-spacing: .08em;
+          line-height: 1;
+          text-transform: uppercase;
+        }
+
+        .baccarat-seat strong {
+          margin-top: 4px;
+          color: #fff;
+          font-family: var(--font-number);
+          font-size: .72rem;
+          font-weight: 900;
+          line-height: 1;
         }
 
         .baccarat-chat-panel {
@@ -1249,7 +1430,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-bottom-console {
-          grid-template-columns: 1fr auto auto 1fr;
+          grid-template-columns: minmax(420px, 1fr) auto minmax(260px, 1fr);
           grid-template-rows: 26px 76px;
           min-height: 132px;
           padding: 8px 18px 12px;
@@ -1266,22 +1447,17 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         }
 
         .baccarat-bottom-console .action-row {
-          grid-column: 2 / span 2;
+          grid-column: 2;
           grid-row: 1 / span 2;
+          justify-self: center;
         }
 
         .baccarat-bottom-console .round-info {
-          grid-column: 4;
+          grid-column: 3;
           grid-row: 1 / span 2;
           align-self: center;
           justify-self: end;
           width: min(100%, 270px);
-        }
-
-        .baccarat-bottom-console .baccarat-commission {
-          grid-column: 3;
-          width: 168px;
-          margin-left: 10px;
         }
 
         .baccarat-bottom-console .action-row[data-mode="idle"] {
@@ -1295,20 +1471,20 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
         @media (max-width: 1420px) {
           .baccarat-game-shell .topbar {
             left: 210px;
-            right: 72px;
+            right: 60px;
           }
 
           .baccarat-title-panel {
-            min-width: 390px;
+            width: 430px;
           }
 
           .baccarat-game-shell .table-frame {
             padding-left: 196px;
-            padding-right: 330px;
+            padding-right: 196px;
           }
 
           .baccarat-wood-rail {
-            width: min(100%, 940px);
+            width: min(100%, 960px);
           }
 
           .baccarat-chat-panel {
@@ -1316,7 +1492,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           }
 
           .baccarat-bottom-console {
-            grid-template-columns: minmax(330px, 1fr) auto auto minmax(210px, .7fr);
+            grid-template-columns: minmax(330px, 1fr) auto minmax(210px, .7fr);
             gap: 8px 12px;
           }
         }
@@ -1346,6 +1522,20 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
 
           .baccarat-game-shell .table-frame {
             padding-top: 66px;
+          }
+
+          .baccarat-wood-rail {
+            max-height: calc(100svh - 126px);
+            transform: translateY(4px);
+          }
+
+          .baccarat-wood-rail .dealer-portrait {
+            top: -18%;
+            width: clamp(176px, 11.5vw, 205px);
+          }
+
+          .baccarat-tip-board {
+            top: -18%;
           }
 
           .baccarat-road {
