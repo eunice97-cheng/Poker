@@ -1154,10 +1154,10 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 14px;
-          width: min(650px, 43vw);
+          gap: 16px;
+          width: min(720px, 48vw);
           min-height: 74px;
-          padding: 9px 18px 10px;
+          padding: 9px 28px 10px;
           border: 1px solid rgba(214,173,72,.46);
           border-radius: 10px;
           background: linear-gradient(180deg, rgba(5,8,6,.88), rgba(1,3,2,.82));
@@ -1944,7 +1944,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-title-panel {
             min-height: 54px;
-            padding: 6px 14px;
+            padding: 6px 20px;
           }
 
           .baccarat-title-panel img {
