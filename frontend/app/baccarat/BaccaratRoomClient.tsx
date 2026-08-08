@@ -520,7 +520,19 @@ function BaccaratTableChat({
       )}
 
       <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
-        <div className="blackjack-chat-header">
+        <div
+          className="blackjack-chat-header"
+          role="button"
+          tabIndex={0}
+          onClick={toggleCollapsed}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              toggleCollapsed()
+            }
+          }}
+          aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
+        >
           <span>TABLE CHAT</span>
           <button
             type="button"
@@ -1168,6 +1180,10 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
             linear-gradient(90deg, rgba(0,0,0,.86), rgba(0,0,0,.26) 42%, rgba(0,0,0,.78)),
             url("/baccarat/Images/baccarat-lobby.png") center / cover no-repeat,
             #030504;
+        }
+
+        .casino-floating-buttons[data-table-page="true"] {
+          z-index: 7 !important;
         }
 
         .baccarat-game-shell .topbar {
@@ -1859,6 +1875,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
         .baccarat-chat-panel {
           right: 20px;
           top: 244px;
+          z-index: 80;
           width: 318px;
         }
 
@@ -1877,7 +1894,7 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
         .baccarat-chat-panel .blackjack-chat-header {
           width: 100%;
-          cursor: default;
+          cursor: pointer;
           padding-right: 8px;
         }
 
