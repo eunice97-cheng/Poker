@@ -132,6 +132,25 @@ function signedMoney(value: number) {
   return '0'
 }
 
+function totalWord(value: number) {
+  return ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][value] ?? String(value)
+}
+
+function formatDealerCall(result: RoundResult) {
+  const winnerCall = result.winner === 'player' ? 'Player wins.' : result.winner === 'banker' ? 'Banker wins.' : 'Tie.'
+
+  if (result.natural) {
+    const naturalCalls = [
+      result.playerTotal >= 8 ? `Player natural ${totalWord(result.playerTotal)}.` : '',
+      result.bankerTotal >= 8 ? `Banker natural ${totalWord(result.bankerTotal)}.` : '',
+    ].filter(Boolean)
+
+    return [...naturalCalls, winnerCall].join(' ')
+  }
+
+  return `Player, ${totalWord(result.playerTotal)}. Banker, ${totalWord(result.bankerTotal)}. ${winnerCall}`
+}
+
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
@@ -718,11 +737,9 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
     return isSeated ? 'Place your bets, please.' : 'Take a seat to play.'
   }, [currentStake, dealing, isSeated])
 
-  const resultLine = result
-    ? `${result.label} / ${result.playerTotal}-${result.bankerTotal} / ${signedMoney(result.net)}`
-    : 'No result yet'
+  const tableCallLine = result ? formatDealerCall(result) : 'No result yet'
 
-  const displayMessage = dealing ? 'Cards are in motion.' : resultLine
+  const displayMessage = dealing ? 'Cards are in motion.' : tableCallLine
 
   const handleBgmToggle = () => {
     if (musicMute || musicVol === 0) {
@@ -973,8 +990,8 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
                 </div>
               </div>
               <div className="baccarat-result-ribbon" aria-live="polite">
-                <span>{result?.natural ? 'NATURAL CHECKED' : 'TABLE CALL'}</span>
-                <strong>{dealing ? 'No more bets' : resultLine}</strong>
+                <span>TABLE CALL</span>
+                <strong>{dealing ? 'No more bets' : tableCallLine}</strong>
               </div>
               <HandArea
                 label="Player"
