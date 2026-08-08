@@ -75,7 +75,7 @@ const DEALER_ROTATION_MS = 2 * 60 * 60 * 1000
 const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
 const BLINK_DURATION_RANGE_MS = [100, 400] as const
 const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
-const BACCARAT_BETTING_SECONDS = 20
+const BACCARAT_BETTING_SECONDS = 10
 const BACCARAT_SETTLED_SECONDS = 7
 const BACCARAT_DEALING_DELAY_MS = 700
 const DEALERS: DealerAssets[] = [
@@ -500,69 +500,78 @@ function BaccaratTableChat({
   }
 
   return (
-    <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
-      <button type="button" className="blackjack-chat-header" onClick={() => setCollapsed((current) => !current)}>
-        <span>TABLE CHAT</span>
-        <strong>{collapsed ? 'SHOW' : 'HIDE'}</strong>
-      </button>
-
-      {!collapsed && (
-        <>
-          <div className="blackjack-chat-messages" aria-live="polite">
-            {messages.length === 0 ? (
-              <p className="blackjack-chat-empty">No messages yet</p>
-            ) : (
-              messages.map((message, index) => (
-                message.isSystem ? (
-                  <p key={`${message.playerId}-${index}`} className="blackjack-chat-line is-system">
-                    <ChatMessageText text={message.text} size="sm" />
-                  </p>
-                ) : (
-                  <p
-                    key={`${message.playerId}-${index}`}
-                    className={classNames('blackjack-chat-line', message.playerId === myPlayerId && 'is-own')}
-                  >
-                    <span className="blackjack-chat-name">{message.username}</span>
-                    <ChatMessageText text={message.text} size="sm" />
-                  </p>
-                )
-              ))
-            )}
-            <div ref={bottomRef} />
-          </div>
-
-          {showEmojiTray && (
-            <div className="blackjack-chat-emoji">
-              <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} variant="table" />
-            </div>
-          )}
-
-          <form
-            className="blackjack-chat-compose"
-            onSubmit={(event) => {
-              event.preventDefault()
-              handleSend()
-            }}
-          >
-            <button
-              type="button"
-              className={classNames('blackjack-chat-emoji-button', showEmojiTray && 'is-active')}
-              onClick={() => setShowEmojiTray((current) => !current)}
-            >
-              Emoji
-            </button>
-            <input
-              type="text"
-              value={input}
-              maxLength={MAX_CHAT_LENGTH}
-              placeholder="Type a message..."
-              onChange={(event) => setInput(event.target.value)}
-            />
-            <button type="submit" className="blackjack-chat-send">Send</button>
-          </form>
-        </>
+    <div className="baccarat-chat-shell">
+      {!collapsed && showEmojiTray && (
+        <div className="casino-table-chat__emoji-popover baccarat-chat-emoji-popover" data-kind="standard">
+          <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} variant="table" />
+        </div>
       )}
-    </section>
+
+      <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
+        <button
+          type="button"
+          className="blackjack-chat-header"
+          onClick={() => setCollapsed((current) => !current)}
+          aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
+        >
+          <span>TABLE CHAT</span>
+          <strong>{collapsed ? 'SHOW' : 'HIDE'}</strong>
+        </button>
+
+        {!collapsed && (
+          <>
+            <div className="blackjack-chat-messages" aria-live="polite">
+              {messages.length === 0 ? (
+                <p className="blackjack-chat-empty">No messages yet</p>
+              ) : (
+                messages.map((message, index) => (
+                  message.isSystem ? (
+                    <p key={`${message.playerId}-${index}`} className="blackjack-chat-line is-system">
+                      <ChatMessageText text={message.text} size="sm" />
+                    </p>
+                  ) : (
+                    <p
+                      key={`${message.playerId}-${index}`}
+                      className={classNames('blackjack-chat-line', message.playerId === myPlayerId && 'is-own')}
+                    >
+                      <span className="blackjack-chat-name">{message.username}</span>
+                      <ChatMessageText text={message.text} size="sm" />
+                    </p>
+                  )
+                ))
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            <form
+              className="blackjack-chat-compose"
+              onSubmit={(event) => {
+                event.preventDefault()
+                handleSend()
+              }}
+            >
+              <button
+                type="button"
+                className={classNames('blackjack-chat-emoji-button', showEmojiTray && 'is-active')}
+                onClick={() => setShowEmojiTray((current) => !current)}
+                aria-pressed={showEmojiTray}
+                aria-label={showEmojiTray ? 'Hide emoji picker' : 'Show emoji picker'}
+              >
+                Emoji
+              </button>
+              <input
+                type="text"
+                value={input}
+                maxLength={MAX_CHAT_LENGTH}
+                placeholder="Type a message..."
+                onChange={(event) => setInput(event.target.value)}
+              />
+              <button type="submit" className="blackjack-chat-send">Send</button>
+            </form>
+          </>
+        )}
+      </section>
+    </div>
   )
 }
 
@@ -1826,8 +1835,33 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           width: 318px;
         }
 
+        .baccarat-chat-shell {
+          position: relative;
+          width: 100%;
+        }
+
         .baccarat-chat-panel .blackjack-chat {
           height: clamp(330px, 43vh, 438px);
+        }
+
+        .baccarat-chat-panel .blackjack-chat.is-collapsed {
+          height: auto;
+        }
+
+        .baccarat-chat-panel .blackjack-chat-header {
+          width: 100%;
+        }
+
+        .baccarat-chat-emoji-popover {
+          right: calc(100% + 10px);
+          bottom: 0;
+          z-index: 90;
+          width: min(288px, calc(100vw - 366px));
+        }
+
+        .baccarat-chat-emoji-popover > div {
+          max-height: min(320px, calc(100svh - 132px));
+          overflow-y: auto;
         }
 
         .baccarat-bottom-console {
@@ -1996,6 +2030,14 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-chat-panel .blackjack-chat {
             height: clamp(270px, 39vh, 330px);
+          }
+
+          .baccarat-chat-panel .blackjack-chat.is-collapsed {
+            height: auto;
+          }
+
+          .baccarat-chat-emoji-popover {
+            width: min(260px, calc(100vw - 334px));
           }
 
           .baccarat-bottom-console {
