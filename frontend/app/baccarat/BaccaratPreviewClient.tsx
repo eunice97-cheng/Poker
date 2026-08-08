@@ -553,17 +553,17 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
     <main className="relative h-[100svh] overflow-hidden bg-[#050403] text-white">
       <div className="pointer-events-none fixed inset-0">
         <img src="/baccarat/Images/baccarat-lobby.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,1,1,0.92)_0%,rgba(9,5,3,0.52)_36%,rgba(5,7,5,0.46)_64%,rgba(0,0,0,0.9)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.78))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,1,1,0.92)_0%,rgba(9,5,3,0.54)_35%,rgba(5,7,5,0.5)_65%,rgba(0,0,0,0.92)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.76))]" />
       </div>
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1480px] flex-col px-5 pb-5 pt-5">
-        <header className="mb-3 ml-[220px] flex h-[86px] shrink-0 items-center justify-between gap-4 rounded-2xl border border-[#efc979]/22 bg-black/42 px-5 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-md">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1500px] flex-col px-5 pb-4 pt-5">
+        <header className="mb-3 ml-[220px] flex h-[78px] shrink-0 items-center justify-between gap-4 rounded-2xl border border-[#efc979]/22 bg-black/46 px-5 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-md">
           <div className="flex min-w-0 items-center gap-4">
-            <img src="/baccarat/Images/baccarat-logo.png" alt="" aria-hidden="true" className="h-[70px] w-[88px] shrink-0 object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.58)]" />
+            <img src="/baccarat/Images/baccarat-logo.png" alt="" aria-hidden="true" className="h-[62px] w-[82px] shrink-0 object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.58)]" />
             <div className="min-w-0">
               <div className="text-[10px] font-black uppercase tracking-[0.34em] text-[#efc979]/72">GM Design Sandbox</div>
-              <h1 className="truncate font-serif text-[2rem] font-black uppercase leading-tight tracking-[0.08em] text-[#fff2c8] 2xl:text-[2.35rem]">
+              <h1 className="truncate font-serif text-[1.8rem] font-black uppercase leading-tight tracking-[0.08em] text-[#fff2c8] 2xl:text-[2.2rem]">
                 Punto Banco Salon
               </h1>
             </div>
@@ -583,14 +583,29 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
           </nav>
         </header>
 
-        <section className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] gap-4">
-          <div className="relative min-h-0 overflow-hidden rounded-[28px] border border-[#efc979]/18 bg-black/34 shadow-[0_34px_120px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+        <section className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_320px] grid-rows-[minmax(0,1fr)_118px] gap-3">
+          <aside className="min-h-0">
+            <RoadPanel road={road} />
+          </aside>
+
+          <section className="relative min-h-0 overflow-hidden rounded-[28px] border border-[#efc979]/18 bg-black/34 shadow-[0_34px_120px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+            <img
+              src="/blackjack/Images/Dealers/Eunice4.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute left-1/2 top-[2.2rem] z-[9] h-[19rem] -translate-x-1/2 object-contain drop-shadow-[0_24px_30px_rgba(0,0,0,0.7)] 2xl:top-[1.6rem] 2xl:h-[21rem]"
+            />
+
+            <div className="pointer-events-none absolute left-[calc(50%+9.5rem)] top-[6.9rem] z-30 max-w-[16rem] rounded-xl border border-[#d9ad5a]/48 bg-[linear-gradient(180deg,rgba(8,11,9,0.94),rgba(2,5,4,0.9))] px-4 py-3 text-center text-sm font-bold leading-snug text-[#fff4d5] shadow-[inset_0_1px_rgba(255,255,255,0.06),0_14px_24px_rgba(0,0,0,0.45)]">
+              {message}
+            </div>
+
             <div className="absolute inset-x-5 top-4 z-20 flex items-start justify-between gap-3">
               <div className="rounded-2xl border border-[#efc979]/20 bg-black/46 px-4 py-3 backdrop-blur-md">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Table Call</div>
-                <div className="mt-1 text-base font-black text-[#fff4d5]">{message}</div>
+                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Dealer</div>
+                <div className="mt-1 text-base font-black text-[#fff4d5]">Eunice</div>
               </div>
-              <div className="max-w-[34rem] rounded-full border border-[#efc979]/22 bg-black/50 px-5 py-3 text-center shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-md">
+              <div className="max-w-[32rem] rounded-full border border-[#efc979]/22 bg-black/50 px-5 py-3 text-center shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-md">
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#efc979]/62">
                   {result?.natural ? 'Natural Checked' : 'Punto Banco'}
                 </div>
@@ -602,7 +617,7 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
               </div>
             </div>
 
-            <div className="absolute left-1/2 top-[39%] z-20 grid w-[68%] -translate-x-1/2 grid-cols-2 gap-4">
+            <div className="absolute left-1/2 top-[35%] z-20 grid w-[68%] -translate-x-1/2 grid-cols-2 gap-4">
               <HandDisplay label="Punto" cards={result?.puntoCards ?? []} total={result?.puntoTotal ?? null} side="punto" />
               <HandDisplay label="Banco" cards={result?.bancoCards ?? []} total={result?.bancoTotal ?? null} side="banco" />
             </div>
@@ -612,50 +627,15 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
                 src="/baccarat/Images/baccarat-table.png"
                 alt=""
                 aria-hidden="true"
-                className="absolute bottom-[-4.5%] left-1/2 w-[98%] max-w-[1080px] -translate-x-1/2 object-contain drop-shadow-[0_40px_62px_rgba(0,0,0,0.62)]"
+                className="absolute bottom-[-7%] left-1/2 w-[99%] max-w-[1050px] -translate-x-1/2 object-contain drop-shadow-[0_40px_62px_rgba(0,0,0,0.62)]"
               />
-              <TableBetZone label="Punto" amount={bets.punto} className="bottom-[24%] left-[18%] h-[24%] w-[25%]" onClick={() => placeBet('punto')} />
-              <TableBetZone label="Tie" amount={bets.tie} className="bottom-[24%] left-[43%] h-[24%] w-[14%]" onClick={() => placeBet('tie')} />
-              <TableBetZone label="Banco" amount={bets.banco} className="bottom-[24%] right-[18%] h-[24%] w-[25%]" onClick={() => placeBet('banco')} />
+              <TableBetZone label="Punto" amount={bets.punto} className="bottom-[20%] left-[16%] h-[25%] w-[27%]" onClick={() => placeBet('punto')} />
+              <TableBetZone label="Tie" amount={bets.tie} className="bottom-[20%] left-[43%] h-[25%] w-[14%]" onClick={() => placeBet('tie')} />
+              <TableBetZone label="Banco" amount={bets.banco} className="bottom-[20%] right-[16%] h-[25%] w-[27%]" onClick={() => placeBet('banco')} />
             </div>
-          </div>
+          </section>
 
-          <aside className="flex min-h-0 flex-col gap-3">
-            <section className="rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-              <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Wager Rail</div>
-                  <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Preview Chips</h2>
-                </div>
-                <strong className="text-lg text-[#fff4d5]">{money(currentStake)}</strong>
-              </div>
-
-              <div className="mt-4 grid grid-cols-3 justify-items-center gap-3">
-                {CHIP_VALUES.map((value) => (
-                  <ChipButton
-                    key={value}
-                    value={value}
-                    selected={selectedChip === value}
-                    disabled={dealing || stack < value}
-                    onClick={() => setSelectedChip(value)}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <ActionButton onClick={clearBets} disabled={currentStake <= 0 || dealing}>Clear</ActionButton>
-                <ActionButton onClick={rebet} disabled={lastStake <= 0 || dealing || stack + currentStake < lastStake}>Rebet</ActionButton>
-                <ActionButton onClick={doubleBets} disabled={currentStake <= 0 || dealing || stack < currentStake}>Double</ActionButton>
-                <ActionButton onClick={dealPreviewRound} disabled={!canDeal} primary>{dealing ? 'Dealing' : 'Deal'}</ActionButton>
-              </div>
-
-              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/58">
-                Banco commission preview: {money(commissionPreview)}
-              </div>
-            </section>
-
-            <RoadPanel road={road} />
-
+          <aside className="min-h-0">
             <TableChat
               username={username}
               messages={chatMessages}
@@ -664,6 +644,39 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
               onSend={sendChat}
             />
           </aside>
+
+          <section className="col-span-3 grid min-h-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-[#efc979]/18 bg-black/52 px-4 py-3 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-[0.26em] text-[#efc979]/62">Table Message</div>
+              <div className="mt-1 truncate text-lg font-black text-[#fff4d5]">{dealing ? 'Cards are in motion.' : resultLine}</div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3">
+              {CHIP_VALUES.map((value) => (
+                <ChipButton
+                  key={value}
+                  value={value}
+                  selected={selectedChip === value}
+                  disabled={dealing || stack < value}
+                  onClick={() => setSelectedChip(value)}
+                />
+              ))}
+            </div>
+
+            <div className="grid min-w-[26rem] grid-cols-[1fr_1fr_1fr_1fr] gap-2">
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/42">Bet</div>
+                <div className="text-base font-black text-[#fff4d5]">{money(currentStake)}</div>
+              </div>
+              <ActionButton onClick={clearBets} disabled={currentStake <= 0 || dealing}>Clear</ActionButton>
+              <ActionButton onClick={rebet} disabled={lastStake <= 0 || dealing || stack + currentStake < lastStake}>Rebet</ActionButton>
+              <ActionButton onClick={doubleBets} disabled={currentStake <= 0 || dealing || stack < currentStake}>Double</ActionButton>
+              <div className="col-span-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/58">
+                Banco commission preview: {money(commissionPreview)}
+              </div>
+              <ActionButton onClick={dealPreviewRound} disabled={!canDeal} primary>{dealing ? 'Dealing' : 'Deal'}</ActionButton>
+            </div>
+          </section>
         </section>
       </div>
     </main>
