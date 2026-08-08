@@ -1872,11 +1872,13 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           text-align: center;
         }
 
-        .baccarat-chat-panel {
-          right: 20px;
-          top: 420px;
-          z-index: 80;
-          width: 318px;
+        .blackjack-chat-panel.baccarat-chat-panel {
+          position: absolute !important;
+          right: 20px !important;
+          top: 420px !important;
+          z-index: 80 !important;
+          display: block !important;
+          width: 318px !important;
         }
 
         .baccarat-chat-shell {
@@ -2037,8 +2039,8 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
             width: min(100%, 920px);
           }
 
-          .baccarat-chat-panel {
-            width: 300px;
+          .blackjack-chat-panel.baccarat-chat-panel {
+            width: 300px !important;
           }
 
           .baccarat-bottom-console {
@@ -2104,8 +2106,8 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
             top: 86px;
           }
 
-          .baccarat-chat-panel {
-            top: 330px;
+          .blackjack-chat-panel.baccarat-chat-panel {
+            top: 330px !important;
           }
 
           .baccarat-chat-panel .blackjack-chat {
