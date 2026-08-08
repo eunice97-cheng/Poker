@@ -502,6 +502,10 @@ function BaccaratTableChat({
     setActiveEmojiTray(null)
   }
 
+  const toggleCollapsed = () => {
+    setCollapsed((current) => !current)
+  }
+
   return (
     <div className="baccarat-chat-shell">
       {!collapsed && activeEmojiTray && (
@@ -516,15 +520,21 @@ function BaccaratTableChat({
       )}
 
       <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
-        <button
-          type="button"
-          className="blackjack-chat-header"
-          onClick={() => setCollapsed((current) => !current)}
-          aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
-        >
+        <div className="blackjack-chat-header">
           <span>TABLE CHAT</span>
-          <strong>{collapsed ? 'SHOW' : 'HIDE'}</strong>
-        </button>
+          <button
+            type="button"
+            className="baccarat-chat-toggle"
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleCollapsed()
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            aria-label={collapsed ? 'Show table chat' : 'Hide table chat'}
+          >
+            {collapsed ? 'SHOW' : 'HIDE'}
+          </button>
+        </div>
 
         {!collapsed && (
           <>
@@ -1867,11 +1877,13 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
 
         .baccarat-chat-panel .blackjack-chat-header {
           width: 100%;
-          cursor: pointer;
+          cursor: default;
           padding-right: 8px;
         }
 
-        .baccarat-chat-panel .blackjack-chat-header strong {
+        .baccarat-chat-toggle {
+          position: relative;
+          z-index: 3;
           display: inline-grid;
           place-items: center;
           height: 26px;
@@ -1888,13 +1900,10 @@ export function BaccaratRoomClient({ username, chipBalance, hasVipEmojis }: Bacc
           text-transform: uppercase;
         }
 
-        .baccarat-chat-panel .blackjack-chat-header:hover strong,
-        .baccarat-chat-panel .blackjack-chat-header:focus-visible strong {
+        .baccarat-chat-toggle:hover,
+        .baccarat-chat-toggle:focus-visible {
           border-color: rgba(255,222,122,.82);
           color: #fff;
-        }
-
-        .baccarat-chat-panel .blackjack-chat-header:focus-visible {
           outline: none;
         }
 
