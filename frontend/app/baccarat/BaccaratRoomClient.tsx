@@ -1250,7 +1250,17 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
           left: 6% !important;
           top: -20% !important;
           z-index: 24 !important;
-          width: 186px !important;
+          width: 240px !important;
+        }
+
+        .baccarat-tip-board .dealer-tip-row {
+          grid-template-columns: 28px minmax(126px, 1fr) auto;
+          gap: 1px 7px;
+          padding-inline: 8px;
+        }
+
+        .baccarat-tip-board .dealer-tip-row__label {
+          letter-spacing: .08em;
         }
 
         .baccarat-felt-table {
@@ -1862,7 +1872,7 @@ export function BaccaratRoomClient({ username, chipBalance }: BaccaratRoomClient
 
           .baccarat-tip-board {
             top: -18% !important;
-            width: 176px !important;
+            width: 218px !important;
           }
 
           .baccarat-road {
