@@ -1,15 +1,20 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import Link from 'next/link'
-import { AudioControls } from '@/components/ui/AudioControls'
+import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
 import { ChatMessageText } from '@/components/ui/ChatMessageText'
+import { ExitIcon } from '@/components/ui/ExitIcon'
+import { appendChatEmojiCode } from '@/lib/chat-emojis'
+import { useAudio } from '@/hooks/useAudio'
+import type { ChatMessage } from '@/types/poker'
 
 type Suit = 'S' | 'H' | 'D' | 'C'
 type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K'
-type BetKey = 'punto' | 'tie' | 'banco'
-type Winner = 'punto' | 'tie' | 'banco'
+type BetKey = 'dealer' | 'tie' | 'banker'
+type Winner = BetKey
+type DealerPortraitKey = 'normal' | 'smiling' | 'blinking'
 
 type BaccaratCard = {
   rank: Rank
@@ -21,14 +26,14 @@ type Bets = Record<BetKey, number>
 type RoadItem = {
   id: number
   winner: Winner
-  puntoTotal: number
-  bancoTotal: number
+  dealerTotal: number
+  bankerTotal: number
   natural: boolean
 }
 
 type RoundResult = RoadItem & {
-  puntoCards: BaccaratCard[]
-  bancoCards: BaccaratCard[]
+  dealerCards: BaccaratCard[]
+  bankerCards: BaccaratCard[]
   net: number
   label: string
 }
@@ -38,18 +43,29 @@ type BaccaratPreviewClientProps = {
   chipBalance: number
 }
 
-type PreviewChatMessage = {
-  id: number
-  username: string
-  text: string
-  system?: boolean
-}
-
+const BLACKJACK_STYLESHEET = '/blackjack/styles.css?v=20260724-42'
 const SUITS: Suit[] = ['S', 'H', 'D', 'C']
 const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 const CHIP_VALUES = [10, 20, 50, 100, 500, 1000]
 const CHIP_STACK_VALUES = [1000, 500, 100, 50, 20, 10]
-const EMPTY_BETS: Bets = { punto: 0, tie: 0, banco: 0 }
+const CHIP_STACK_OFFSETS = [
+  [0, 1, -5],
+  [-4, -2, 8],
+  [4, -2, -9],
+  [-2, 3, 5],
+  [2, 3, -4],
+  [0, -5, 7],
+] as const
+const EMPTY_BETS: Bets = { dealer: 0, tie: 0, banker: 0 }
+const MAX_CHAT_LENGTH = 200
+const BLINK_DELAY_RANGE_MS = [2000, 10000] as const
+const BLINK_DURATION_RANGE_MS = [100, 400] as const
+const SMILE_SWITCH_RANGE_MS = [5000, 25000] as const
+const DEALER_PORTRAITS: Record<DealerPortraitKey, string> = {
+  normal: '/blackjack/Images/Dealers/Eunice4.png',
+  smiling: '/blackjack/Images/Dealers/Eunice4%20-%20smiling.png',
+  blinking: '/blackjack/Images/Dealers/Eunice4%20-%20blinking.png',
+}
 const SUIT_SYMBOLS: Record<Suit, string> = {
   S: '\u2660',
   H: '\u2665',
@@ -69,6 +85,10 @@ function signedMoney(value: number) {
 
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
+}
+
+function randomMs([min, max]: readonly [number, number]) {
+  return Math.round(min + Math.random() * (max - min))
 }
 
 function createShoe() {
@@ -100,20 +120,20 @@ function handTotal(cards: BaccaratCard[]) {
   return cards.reduce((sum, card) => sum + baccaratValue(card), 0) % 10
 }
 
-function shouldBancoDraw(bancoTotal: number, puntoThirdCard: BaccaratCard | null) {
-  if (!puntoThirdCard) return bancoTotal <= 5
+function shouldBankerDraw(bankerTotal: number, dealerThirdCard: BaccaratCard | null) {
+  if (!dealerThirdCard) return bankerTotal <= 5
 
-  const puntoThirdValue = baccaratValue(puntoThirdCard)
-  if (bancoTotal <= 2) return true
-  if (bancoTotal === 3) return puntoThirdValue !== 8
-  if (bancoTotal === 4) return puntoThirdValue >= 2 && puntoThirdValue <= 7
-  if (bancoTotal === 5) return puntoThirdValue >= 4 && puntoThirdValue <= 7
-  if (bancoTotal === 6) return puntoThirdValue === 6 || puntoThirdValue === 7
+  const dealerThirdValue = baccaratValue(dealerThirdCard)
+  if (bankerTotal <= 2) return true
+  if (bankerTotal === 3) return dealerThirdValue !== 8
+  if (bankerTotal === 4) return dealerThirdValue >= 2 && dealerThirdValue <= 7
+  if (bankerTotal === 5) return dealerThirdValue >= 4 && dealerThirdValue <= 7
+  if (bankerTotal === 6) return dealerThirdValue === 6 || dealerThirdValue === 7
   return false
 }
 
 function totalBets(bets: Bets) {
-  return bets.punto + bets.tie + bets.banco
+  return bets.dealer + bets.tie + bets.banker
 }
 
 function chipFacesForBet(value: number) {
@@ -121,7 +141,7 @@ function chipFacesForBet(value: number) {
   let remaining = value
 
   for (const chipValue of CHIP_STACK_VALUES) {
-    while (remaining >= chipValue && faces.length < 5) {
+    while (remaining >= chipValue && faces.length < CHIP_STACK_OFFSETS.length) {
       faces.push(chipValue)
       remaining -= chipValue
     }
@@ -138,38 +158,38 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
     return card
   }
 
-  const puntoCards = [draw(), draw()]
-  const bancoCards = [draw(), draw()]
-  let puntoTotal = handTotal(puntoCards)
-  let bancoTotal = handTotal(bancoCards)
-  const natural = puntoTotal >= 8 || bancoTotal >= 8
-  let puntoThirdCard: BaccaratCard | null = null
+  const dealerCards = [draw(), draw()]
+  const bankerCards = [draw(), draw()]
+  let dealerTotal = handTotal(dealerCards)
+  let bankerTotal = handTotal(bankerCards)
+  const natural = dealerTotal >= 8 || bankerTotal >= 8
+  let dealerThirdCard: BaccaratCard | null = null
 
   if (!natural) {
-    if (puntoTotal <= 5) {
-      puntoThirdCard = draw()
-      puntoCards.push(puntoThirdCard)
-      puntoTotal = handTotal(puntoCards)
+    if (dealerTotal <= 5) {
+      dealerThirdCard = draw()
+      dealerCards.push(dealerThirdCard)
+      dealerTotal = handTotal(dealerCards)
     }
 
-    if (shouldBancoDraw(bancoTotal, puntoThirdCard)) {
-      bancoCards.push(draw())
-      bancoTotal = handTotal(bancoCards)
+    if (shouldBankerDraw(bankerTotal, dealerThirdCard)) {
+      bankerCards.push(draw())
+      bankerTotal = handTotal(bankerCards)
     }
   }
 
-  const winner: Winner = puntoTotal > bancoTotal ? 'punto' : bancoTotal > puntoTotal ? 'banco' : 'tie'
+  const winner: Winner = dealerTotal > bankerTotal ? 'dealer' : bankerTotal > dealerTotal ? 'banker' : 'tie'
   const stake = totalBets(bets)
   let returns = 0
 
-  if (winner === 'punto') returns += bets.punto * 2
-  if (winner === 'banco') returns += bets.banco + Math.floor(bets.banco * 0.95)
+  if (winner === 'dealer') returns += bets.dealer * 2
+  if (winner === 'banker') returns += bets.banker + Math.floor(bets.banker * 0.95)
   if (winner === 'tie') {
     returns += bets.tie * 9
-    returns += bets.punto + bets.banco
+    returns += bets.dealer + bets.banker
   }
 
-  const label = winner === 'punto' ? 'Punto wins' : winner === 'banco' ? 'Banco wins' : 'Tie hand'
+  const label = winner === 'dealer' ? 'Dealer wins' : winner === 'banker' ? 'Banker wins' : 'Tie hand'
 
   return {
     nextShoe: workingShoe,
@@ -177,10 +197,10 @@ function resolveRound(shoe: BaccaratCard[], bets: Bets, roundId: number) {
     result: {
       id: roundId,
       winner,
-      puntoCards,
-      bancoCards,
-      puntoTotal,
-      bancoTotal,
+      dealerCards,
+      bankerCards,
+      dealerTotal,
+      bankerTotal,
       natural,
       net: returns - stake,
       label,
@@ -192,44 +212,33 @@ function Card({ card }: { card: BaccaratCard }) {
   const isRed = card.suit === 'H' || card.suit === 'D'
 
   return (
-    <div
-      className={classNames(
-        'flex aspect-[5/7] w-[3.4rem] shrink-0 flex-col justify-between rounded-md border border-[#2b1b13]/20 bg-[#fff7e8] p-1.5 shadow-[0_12px_20px_rgba(0,0,0,0.42)] 2xl:w-16',
-        isRed ? 'text-[#b82032]' : 'text-[#151618]'
-      )}
-    >
-      <span className="text-xs font-black leading-none 2xl:text-sm">{card.rank}</span>
-      <span className="self-center text-xl font-black leading-none 2xl:text-2xl">{SUIT_SYMBOLS[card.suit]}</span>
-      <span className="self-end text-xs font-black leading-none 2xl:text-sm">{card.rank}</span>
+    <div className={classNames('card', isRed && 'red')}>
+      <span className="rank">{card.rank}</span>
+      <span className="suit">{SUIT_SYMBOLS[card.suit]}</span>
+      <span className="bottom">{card.rank}</span>
     </div>
   )
 }
 
 function CardBack() {
-  return (
-    <div className="flex aspect-[5/7] w-[3.4rem] shrink-0 items-center justify-center rounded-md border border-[#d9ad5a]/25 bg-[linear-gradient(135deg,#15100a,#3b210d)] p-1.5 shadow-[0_12px_20px_rgba(0,0,0,0.42)] 2xl:w-16">
-      <span className="h-full w-full rounded border border-[#d9ad5a]/28 bg-[radial-gradient(circle,#6d4215,transparent_58%)]" />
-    </div>
-  )
+  return <div className="card card-back" aria-hidden="true" />
 }
 
-function HandDisplay({
+function HandArea({
   label,
   cards,
   total,
-  side,
+  className,
 }: {
   label: string
   cards: BaccaratCard[]
   total: number | null
-  side: 'punto' | 'banco'
+  className: string
 }) {
-  const tone = side === 'punto' ? 'text-[#dbefff] border-[#85c8ff]/26' : 'text-[#ffe2dd] border-[#ffad9f]/26'
-
   return (
-    <section className={`min-w-[12rem] rounded-2xl border bg-black/38 px-4 py-3 text-center shadow-[0_18px_36px_rgba(0,0,0,0.35)] backdrop-blur-md ${tone}`}>
-      <div className="text-[10px] font-black uppercase tracking-[0.28em] opacity-75">{label}</div>
-      <div className="mt-2 flex min-h-[4.8rem] items-center justify-center gap-2">
+    <section className={classNames('hand-area baccarat-hand-area', className)} aria-label={`${label} hand`}>
+      <h2>{label}</h2>
+      <div className="cards">
         {cards.length > 0 ? cards.map((card, index) => <Card key={`${card.rank}-${card.suit}-${index}`} card={card} />) : (
           <>
             <CardBack />
@@ -237,31 +246,28 @@ function HandDisplay({
           </>
         )}
       </div>
-      <div className="mt-2 inline-flex h-9 min-w-9 items-center justify-center rounded-full border border-white/35 bg-black/42 px-2 text-xl font-black text-white">
-        {total ?? '-'}
-      </div>
+      <div className="score-pill" hidden={cards.length === 0}>{total ?? '?'}</div>
     </section>
   )
 }
 
-function ChipStack({ amount }: { amount: number }) {
+function BetChipStack({ amount }: { amount: number }) {
   if (amount <= 0) return null
 
   return (
-    <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      {chipFacesForBet(amount).map((chip, index) => (
-        <img
-          key={`${chip}-${index}`}
-          src={`/blackjack/Images/Chips/${chip}.png`}
-          alt=""
-          aria-hidden="true"
-          className="-mx-2 h-12 w-12 object-contain drop-shadow-[0_9px_9px_rgba(0,0,0,0.46)] 2xl:h-14 2xl:w-14"
-          style={{ transform: `translateY(${-index * 4}px) rotate(${index % 2 === 0 ? -7 : 8}deg)` }}
+    <span className="spot-chip-stack baccarat-spot-chip-stack" aria-hidden="true">
+      {chipFacesForBet(amount).map((chip, chipIndex) => (
+        <span
+          key={`${chip}-${chipIndex}`}
+          className={`spot-chip chip-face-${chip}`}
+          style={{
+            '--chip-x': `${CHIP_STACK_OFFSETS[chipIndex]?.[0] ?? 0}px`,
+            '--chip-y': `${CHIP_STACK_OFFSETS[chipIndex]?.[1] ?? 0}px`,
+            '--chip-rotation': `${CHIP_STACK_OFFSETS[chipIndex]?.[2] ?? 0}deg`,
+          } as CSSProperties}
         />
       ))}
-      <span className="absolute mt-16 rounded-full border border-black/40 bg-[#fff3c4] px-3 py-1 text-xs font-black text-[#221205] shadow-[0_8px_18px_rgba(0,0,0,0.34)]">
-        {money(amount)}
-      </span>
+      <strong>{money(amount)}</strong>
     </span>
   )
 }
@@ -280,177 +286,238 @@ function TableBetZone({
   return (
     <button
       type="button"
+      className={classNames('baccarat-bet-zone', className)}
       aria-label={`Bet on ${label}`}
       title={`Bet on ${label}`}
       onClick={onClick}
-      className={`absolute rounded-[30px] border border-transparent transition hover:border-[#ffe2a2]/55 hover:bg-white/[0.035] focus:outline-none focus-visible:border-[#ffe2a2] ${className}`}
     >
-      <ChipStack amount={amount} />
-    </button>
-  )
-}
-
-function ChipButton({
-  value,
-  selected,
-  disabled,
-  onClick,
-}: {
-  value: number
-  selected: boolean
-  disabled: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={classNames(
-        'relative flex h-11 w-11 items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd56d]/80 disabled:opacity-45 2xl:h-12 2xl:w-12',
-        selected && 'scale-110'
-      )}
-      title={`${value} chip`}
-    >
-      <img src={`/blackjack/Images/Chips/${value}.png`} alt={`${value} chip`} className="h-full w-full object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.52)]" />
-      {selected && <span className="absolute inset-0 rounded-full ring-2 ring-[#fff2bf] ring-offset-2 ring-offset-[#120807]" />}
-    </button>
-  )
-}
-
-function ActionButton({
-  children,
-  disabled,
-  onClick,
-  primary = false,
-}: {
-  children: ReactNode
-  disabled?: boolean
-  onClick: () => void
-  primary?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={classNames(
-        'h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-[0.14em] transition disabled:cursor-not-allowed disabled:opacity-38 2xl:h-11',
-        primary
-          ? 'border-[#ffd56d]/55 bg-[#d2a135] text-[#160b04] hover:bg-[#ffd56d]'
-          : 'border-white/14 bg-black/38 text-white/72 hover:border-[#ffd56d]/38 hover:text-white'
-      )}
-    >
-      {children}
+      <span>{label}</span>
+      <BetChipStack amount={amount} />
     </button>
   )
 }
 
 function RoadPanel({ road }: { road: RoadItem[] }) {
-  const recent = road.slice(-36)
-  const cells = Array.from({ length: 36 }, (_, index) => recent[index] ?? null)
+  const recent = road.slice(-42)
+  const cells = Array.from({ length: 42 }, (_, index) => recent[index] ?? null)
 
   return (
-    <section className="min-h-0 rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Road</div>
-          <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Bead Plate</h2>
+    <aside className="session-history baccarat-road" aria-label="Baccarat road">
+      <header>
+        <div className="history-heading">
+          <span>ROAD</span>
+          <strong>BEAD PLATE</strong>
         </div>
-        <div className="text-right text-xs font-bold text-white/50">{road.length} rounds</div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-6 gap-1.5">
+        <span className="baccarat-road__rounds">{road.length}</span>
+      </header>
+      <div className="baccarat-road__grid">
         {cells.map((item, index) => {
-          if (!item) return <span key={index} className="h-8 rounded-full border border-white/12 bg-white/[0.025]" />
-
-          const beadClass = item.winner === 'punto'
-            ? 'border-[#9bd3ff]/45 bg-[#287bc5] text-[#eaf6ff]'
-            : item.winner === 'banco'
-              ? 'border-[#ffaaa0]/45 bg-[#b7352a] text-[#fff0ed]'
-              : 'border-[#b4ffd2]/45 bg-[#27a765] text-[#edfff4]'
+          if (!item) return <span key={index} className="baccarat-road__cell" />
 
           return (
-            <span key={index} className={`flex h-8 items-center justify-center rounded-full border text-[10px] font-black shadow-[0_8px_16px_rgba(0,0,0,0.28)] ${beadClass}`}>
-              {item.winner === 'punto' ? 'P' : item.winner === 'banco' ? 'B' : 'T'}
+            <span key={index} className={classNames('baccarat-road__cell', `is-${item.winner}`)}>
+              {item.winner === 'dealer' ? 'D' : item.winner === 'banker' ? 'B' : 'T'}
             </span>
           )
         })}
       </div>
+    </aside>
+  )
+}
+
+function BaccaratTableChat({
+  messages,
+  onSend,
+  myPlayerId,
+  hasVipEmojis,
+}: {
+  messages: ChatMessage[]
+  onSend: (text: string) => void
+  myPlayerId: string
+  hasVipEmojis: boolean
+}) {
+  const [input, setInput] = useState('')
+  const [collapsed, setCollapsed] = useState(false)
+  const [showEmojiTray, setShowEmojiTray] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  useEffect(() => {
+    if (collapsed) setShowEmojiTray(false)
+  }, [collapsed])
+
+  const handleSend = () => {
+    const text = input.trim()
+    if (!text) return
+    onSend(text)
+    setInput('')
+    setShowEmojiTray(false)
+  }
+
+  const appendEmoji = (emojiCode: string) => {
+    setInput((current) => appendChatEmojiCode(current, emojiCode, MAX_CHAT_LENGTH))
+    setShowEmojiTray(false)
+  }
+
+  return (
+    <section className={classNames('blackjack-chat', collapsed && 'is-collapsed')} aria-label="Table chat">
+      <button type="button" className="blackjack-chat-header" onClick={() => setCollapsed((current) => !current)}>
+        <span>TABLE CHAT</span>
+        <strong>{collapsed ? 'SHOW' : 'HIDE'}</strong>
+      </button>
+
+      {!collapsed && (
+        <>
+          <div className="blackjack-chat-messages" aria-live="polite">
+            {messages.length === 0 ? (
+              <p className="blackjack-chat-empty">No messages yet</p>
+            ) : (
+              messages.map((message, index) => (
+                message.isSystem ? (
+                  <p key={`${message.playerId}-${index}`} className="blackjack-chat-line is-system">
+                    <ChatMessageText text={message.text} size="sm" />
+                  </p>
+                ) : (
+                  <p
+                    key={`${message.playerId}-${index}`}
+                    className={classNames('blackjack-chat-line', message.playerId === myPlayerId && 'is-own')}
+                  >
+                    <span className="blackjack-chat-name">{message.username}</span>
+                    <ChatMessageText text={message.text} size="sm" />
+                  </p>
+                )
+              ))
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {showEmojiTray && (
+            <div className="blackjack-chat-emoji">
+              <ChatEmojiTray hasVipAccess={hasVipEmojis} onSelect={appendEmoji} variant="table" />
+            </div>
+          )}
+
+          <form
+            className="blackjack-chat-compose"
+            onSubmit={(event) => {
+              event.preventDefault()
+              handleSend()
+            }}
+          >
+            <button
+              type="button"
+              className={classNames('blackjack-chat-emoji-button', showEmojiTray && 'is-active')}
+              onClick={() => setShowEmojiTray((current) => !current)}
+            >
+              Emoji
+            </button>
+            <input
+              type="text"
+              value={input}
+              maxLength={MAX_CHAT_LENGTH}
+              placeholder="Type a message..."
+              onChange={(event) => setInput(event.target.value)}
+            />
+            <button type="submit" className="blackjack-chat-send">Send</button>
+          </form>
+        </>
+      )}
     </section>
   )
 }
 
-function TableChat({
-  username,
-  messages,
-  input,
-  onInputChange,
-  onSend,
-}: {
-  username: string
-  messages: PreviewChatMessage[]
-  input: string
-  onInputChange: (value: string) => void
-  onSend: () => void
-}) {
+function TopbarLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#efc979]/18 bg-black/50 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Table</div>
-          <h2 className="mt-1 font-serif text-xl text-[#fff4d5]">Chat</h2>
-        </div>
-        <div className="text-right text-xs font-bold text-white/50">Preview</div>
-      </div>
+    <Link href={href} className="table-status-button">
+      {children}
+    </Link>
+  )
+}
 
-      <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={classNames(
-              'rounded-xl border px-3 py-2 text-sm leading-snug',
-              message.system
-                ? 'border-[#efc979]/16 bg-[#efc979]/8 text-[#fff4d5]/72'
-                : 'border-white/10 bg-white/[0.045] text-white/76'
-            )}
-          >
-            {!message.system && (
-              <div className="mb-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#efc979]/62">
-                {message.username}
-              </div>
-            )}
-            <ChatMessageText text={message.text} size="sm" />
+function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <section className="rules-modal" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle" hidden={!open}>
+      <div className="rules-backdrop" data-rules-close onClick={onClose} />
+      <article className="rules-panel" tabIndex={-1}>
+        <header className="rules-header">
+          <div>
+            <span>8-DECK SHOE</span>
+            <h2 id="rulesTitle">Baccarat Table Rules</h2>
           </div>
-        ))}
-      </div>
+          <button type="button" className="rules-close" id="rulesCloseBtn" aria-label="Close rules" onClick={onClose}>
+            X
+          </button>
+        </header>
 
-      <form
-        className="mt-3 flex shrink-0 gap-2"
-        onSubmit={(event) => {
-          event.preventDefault()
-          onSend()
-        }}
-      >
-        <input
-          value={input}
-          maxLength={140}
-          onChange={(event) => onInputChange(event.target.value)}
-          placeholder={`Message as ${username}`}
-          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/44 px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/34 focus:border-[#efc979]/40"
-        />
-        <button
-          type="submit"
-          className="rounded-xl border border-[#efc979]/30 bg-[#efc979]/12 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fff2c8] transition hover:border-[#efc979]/55 hover:bg-[#efc979]/18"
-        >
-          Send
-        </button>
-      </form>
+        <div className="rules-content">
+          <section className="rules-block">
+            <h3>Objective</h3>
+            <ul>
+              <li>Bet on Dealer, Banker, or Tie.</li>
+              <li>The hand closest to 9 wins.</li>
+              <li>Only the last digit of the hand total counts.</li>
+            </ul>
+          </section>
+          <section className="rules-block">
+            <h3>Card Values</h3>
+            <ul>
+              <li>Aces count as 1.</li>
+              <li>Cards 2-9 use face value.</li>
+              <li>10, Jack, Queen, and King count as 0.</li>
+            </ul>
+          </section>
+          <section className="rules-block">
+            <h3>Natural</h3>
+            <ul>
+              <li>An opening total of 8 or 9 is natural.</li>
+              <li>No third card is drawn after a natural.</li>
+              <li>Highest natural total wins the round.</li>
+            </ul>
+          </section>
+          <section className="rules-block">
+            <h3>Dealer</h3>
+            <ul>
+              <li>Dealer draws a third card on totals 0-5.</li>
+              <li>Dealer stands on totals 6 or 7.</li>
+              <li>Dealer wins pay 1:1.</li>
+            </ul>
+          </section>
+          <section className="rules-block">
+            <h3>Banker</h3>
+            <ul>
+              <li>Banker drawing follows the standard third-card table.</li>
+              <li>Banker wins pay 0.95:1 after commission.</li>
+              <li>Preview commission is shown in the bottom console.</li>
+            </ul>
+          </section>
+          <section className="rules-block">
+            <h3>Tie</h3>
+            <ul>
+              <li>Tie wins pay 8:1.</li>
+              <li>Dealer and Banker bets push on a tie.</li>
+              <li>The bead plate records D, B, or T results.</li>
+            </ul>
+          </section>
+        </div>
+      </article>
     </section>
   )
 }
 
 export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreviewClientProps) {
+  const {
+    musicVol,
+    sfxVol,
+    musicMute,
+    sfxMute,
+    setMusicVol,
+    setSfxVol,
+    toggleMusic,
+    toggleSfx,
+  } = useAudio()
   const [shoe, setShoe] = useState(() => createShoe())
   const [selectedChip, setSelectedChip] = useState(100)
   const [stack, setStack] = useState(() => Math.max(1000, Math.floor(chipBalance)))
@@ -459,25 +526,85 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
   const [road, setRoad] = useState<RoadItem[]>([])
   const [result, setResult] = useState<RoundResult | null>(null)
   const [dealing, setDealing] = useState(false)
-  const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<PreviewChatMessage[]>([
-    { id: 1, username: 'Dealer', text: 'Baccarat preview room is open.', system: true },
-  ])
+  const [rulesOpen, setRulesOpen] = useState(false)
+  const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
 
   const currentStake = totalBets(bets)
   const lastStake = totalBets(lastBets)
   const canDeal = currentStake > 0 && !dealing
-  const commissionPreview = bets.banco > 0 ? Math.ceil(bets.banco * 0.05) : 0
+  const commissionPreview = bets.banker > 0 ? Math.ceil(bets.banker * 0.05) : 0
+  const myPlayerId = 'baccarat-preview-gm'
+  const bgmEffectivelyMuted = musicMute || musicVol === 0
+  const sfxEffectivelyMuted = sfxMute || sfxVol === 0
 
-  const message = useMemo(() => {
-    if (dealing) return 'Cards are in motion.'
+  useEffect(() => {
+    let blinkTimer: number | undefined
+    let blinkRestoreTimer: number | undefined
+    let smileTimer: number | undefined
+    let smiling = false
+
+    const syncPortrait = () => setDealerPortrait(smiling ? 'smiling' : 'normal')
+
+    const scheduleBlink = () => {
+      blinkTimer = window.setTimeout(() => {
+        setDealerPortrait('blinking')
+        blinkRestoreTimer = window.setTimeout(() => {
+          syncPortrait()
+          scheduleBlink()
+        }, randomMs(BLINK_DURATION_RANGE_MS))
+      }, randomMs(BLINK_DELAY_RANGE_MS))
+    }
+
+    const scheduleSmile = () => {
+      smileTimer = window.setTimeout(() => {
+        smiling = !smiling
+        syncPortrait()
+        scheduleSmile()
+      }, randomMs(SMILE_SWITCH_RANGE_MS))
+    }
+
+    scheduleBlink()
+    scheduleSmile()
+
+    return () => {
+      if (blinkTimer) window.clearTimeout(blinkTimer)
+      if (blinkRestoreTimer) window.clearTimeout(blinkRestoreTimer)
+      if (smileTimer) window.clearTimeout(smileTimer)
+    }
+  }, [])
+
+  const dealerLine = useMemo(() => {
+    if (dealing) return 'No more bets.'
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
-    return 'Place preview bets.'
+    return 'Place your bets, please.'
   }, [currentStake, dealing])
 
   const resultLine = result
-    ? `${result.label} / ${result.puntoTotal}-${result.bancoTotal} / ${signedMoney(result.net)}`
+    ? `${result.label} / ${result.dealerTotal}-${result.bankerTotal} / ${signedMoney(result.net)}`
     : 'No result yet'
+
+  const displayMessage = dealing ? 'Cards are in motion.' : resultLine
+
+  const handleBgmToggle = () => {
+    if (musicMute || musicVol === 0) {
+      setMusicVol(0.7)
+      if (musicMute) toggleMusic()
+      return
+    }
+
+    toggleMusic()
+  }
+
+  const handleSfxToggle = () => {
+    if (sfxMute || sfxVol === 0) {
+      setSfxVol(0.6)
+      if (sfxMute) toggleSfx()
+      return
+    }
+
+    toggleSfx()
+  }
 
   const placeBet = (key: BetKey) => {
     if (dealing || stack < selectedChip) return
@@ -504,9 +631,9 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
     if (dealing || currentStake <= 0 || stack < currentStake) return
     setStack((current) => current - currentStake)
     setBets((current) => ({
-      punto: current.punto * 2,
+      dealer: current.dealer * 2,
       tie: current.tie * 2,
-      banco: current.banco * 2,
+      banker: current.banker * 2,
     }))
   }
 
@@ -523,162 +650,739 @@ export function BaccaratPreviewClient({ username, chipBalance }: BaccaratPreview
       setLastBets(bets)
       setBets(EMPTY_BETS)
       setResult(resolved.result)
-      setRoad((current) => [...current.slice(-35), {
+      setRoad((current) => [...current.slice(-41), {
         id: resolved.result.id,
         winner: resolved.result.winner,
-        puntoTotal: resolved.result.puntoTotal,
-        bancoTotal: resolved.result.bancoTotal,
+        dealerTotal: resolved.result.dealerTotal,
+        bankerTotal: resolved.result.bankerTotal,
         natural: resolved.result.natural,
       }])
       setDealing(false)
     }, 420)
   }
 
-  const sendChat = () => {
-    const text = chatInput.trim()
-    if (!text) return
+  const sendChat = (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
 
     setChatMessages((current) => [
-      ...current.slice(-5),
+      ...current.slice(-30),
       {
-        id: Date.now(),
+        playerId: myPlayerId,
         username,
-        text,
+        avatar: 'avatar_gm',
+        text: trimmed,
+        timestamp: new Date().toISOString(),
       },
     ])
-    setChatInput('')
   }
 
   return (
-    <main className="relative h-[100svh] overflow-hidden bg-[#050403] text-white">
-      <div className="pointer-events-none fixed inset-0">
-        <img src="/baccarat/Images/baccarat-lobby.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,1,1,0.92)_0%,rgba(9,5,3,0.54)_35%,rgba(5,7,5,0.5)_65%,rgba(0,0,0,0.92)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.76))]" />
-      </div>
+    <>
+      <link rel="stylesheet" href={BLACKJACK_STYLESHEET} />
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[1500px] flex-col px-5 pb-4 pt-5">
-        <header className="mb-3 ml-[220px] flex h-[78px] shrink-0 items-center justify-between gap-4 rounded-2xl border border-[#efc979]/22 bg-black/46 px-5 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-md">
-          <div className="flex min-w-0 items-center gap-4">
-            <img src="/baccarat/Images/baccarat-logo.png" alt="" aria-hidden="true" className="h-[62px] w-[82px] shrink-0 object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.58)]" />
-            <div className="min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-[0.34em] text-[#efc979]/72">GM Design Sandbox</div>
-              <h1 className="truncate font-serif text-[1.8rem] font-black uppercase leading-tight tracking-[0.08em] text-[#fff2c8] 2xl:text-[2.2rem]">
-                Punto Banco Salon
-              </h1>
-            </div>
-          </div>
+      <main className="game-shell baccarat-game-shell">
+        <header className="topbar baccarat-topbar">
+          <section className="balance-panel">
+            <span>BALANCE</span>
+            <strong>{money(stack)}</strong>
+          </section>
 
-          <nav className="flex shrink-0 items-center gap-2">
-            <div className="rounded-xl border border-white/10 bg-black/34 px-4 py-3 text-sm font-semibold text-white/72">
-              {username} / {money(stack)}
+          <section className="baccarat-title-panel" aria-label="Baccarat room">
+            <img src="/baccarat/Images/baccarat-logo.png" alt="" aria-hidden="true" />
+            <div>
+              <span>GM PREVIEW ROOM</span>
+              <strong>BACCARAT SALON</strong>
             </div>
-            <AudioControls buttonClassName="flex h-11 w-11 items-center justify-center rounded-xl border border-white/16 bg-black/38 text-white/78 transition hover:border-[#efc979]/45 hover:text-white" />
-            <Link href="/" className="rounded-xl border border-white/16 bg-black/38 px-4 py-3 text-sm font-bold text-white/78 transition hover:border-[#efc979]/45 hover:text-white">
-              Main Lobby
-            </Link>
-            <Link href="/gm" className="rounded-xl border border-[#efc979]/35 bg-[#efc979]/12 px-4 py-3 text-sm font-bold text-[#fff2c8] transition hover:border-[#efc979]/60 hover:bg-[#efc979]/18">
-              GM
+          </section>
+
+          <nav className="utility-buttons" aria-label="Game options">
+            <div className="audio-control">
+              <button
+                type="button"
+                className={classNames('utility-button audio-toggle', bgmEffectivelyMuted && 'is-muted')}
+                aria-label={bgmEffectivelyMuted ? 'Unmute BGM' : `Mute BGM. Volume ${Math.round(musicVol * 100)}%`}
+                aria-pressed={bgmEffectivelyMuted}
+                aria-expanded="false"
+                aria-controls="audioPanel"
+                onClick={handleBgmToggle}
+              >
+                <span id="audioIcon" className="utility-label" aria-hidden="true">Audio</span>
+              </button>
+              <div className="audio-panel" id="audioPanel" role="group" aria-label="Volume controls">
+                <div className="audio-panel-row">
+                  <label className="volume-label" htmlFor="baccaratBgmQuickVolumeSlider">
+                    <span>BGM</span>
+                    <strong>{bgmEffectivelyMuted ? 'OFF' : `${Math.round(musicVol * 100)}%`}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    id="baccaratBgmQuickVolumeSlider"
+                    min="0"
+                    max="100"
+                    value={Math.round(musicVol * 100)}
+                    onChange={(event) => setMusicVol(Number(event.target.value) / 100)}
+                  />
+                  <button type="button" className={classNames('quick-sound-mute', bgmEffectivelyMuted && 'is-muted')} onClick={handleBgmToggle}>
+                    {bgmEffectivelyMuted ? 'BGM Off' : 'BGM On'}
+                  </button>
+                </div>
+                <div className="audio-panel-row">
+                  <label className="volume-label" htmlFor="baccaratSfxQuickVolumeSlider">
+                    <span>SFX</span>
+                    <strong>{sfxEffectivelyMuted ? 'OFF' : `${Math.round(sfxVol * 100)}%`}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    id="baccaratSfxQuickVolumeSlider"
+                    min="0"
+                    max="100"
+                    value={Math.round(sfxVol * 100)}
+                    onChange={(event) => setSfxVol(Number(event.target.value) / 100)}
+                  />
+                  <button type="button" className={classNames('quick-sound-mute', sfxEffectivelyMuted && 'is-muted')} onClick={handleSfxToggle}>
+                    {sfxEffectivelyMuted ? 'SFX Off' : 'SFX On'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button type="button" className="utility-button" id="helpBtn" aria-label="Help" onClick={() => setRulesOpen(true)}>
+              <span className="utility-label" aria-hidden="true">Help</span>
+            </button>
+            <TopbarLink href="/">Main Lobby</TopbarLink>
+            <TopbarLink href="/gm">GM</TopbarLink>
+            <Link
+              href="/"
+              className="table-status-button is-cashout"
+              aria-label="Cash out and leave Baccarat table"
+              title="Cash out"
+            >
+              <ExitIcon className="cashout-icon" />
             </Link>
           </nav>
         </header>
 
-        <section className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)_320px] grid-rows-[minmax(0,1fr)_118px] gap-3">
-          <aside className="min-h-0">
-            <RoadPanel road={road} />
-          </aside>
+        <section className="table-frame baccarat-table-frame">
+          <RoadPanel road={road} />
 
-          <section className="relative min-h-0 overflow-hidden rounded-[28px] border border-[#efc979]/18 bg-black/34 shadow-[0_34px_120px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+          <div className="wood-rail baccarat-wood-rail">
             <img
-              src="/blackjack/Images/Dealers/Eunice4.png"
+              id="dealerPortrait"
+              className="dealer-portrait"
+              src={DEALER_PORTRAITS[dealerPortrait]}
               alt=""
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 top-[2.2rem] z-[9] h-[19rem] -translate-x-1/2 object-contain drop-shadow-[0_24px_30px_rgba(0,0,0,0.7)] 2xl:top-[1.6rem] 2xl:h-[21rem]"
             />
-
-            <div className="pointer-events-none absolute left-[calc(50%+9.5rem)] top-[6.9rem] z-30 max-w-[16rem] rounded-xl border border-[#d9ad5a]/48 bg-[linear-gradient(180deg,rgba(8,11,9,0.94),rgba(2,5,4,0.9))] px-4 py-3 text-center text-sm font-bold leading-snug text-[#fff4d5] shadow-[inset_0_1px_rgba(255,255,255,0.06),0_14px_24px_rgba(0,0,0,0.45)]">
-              {message}
+            <div className="dealer-speech" id="dealerSpeech" aria-live="polite">{dealerLine}</div>
+            <div className="round-countdown" id="roundCountdown" aria-live="polite">
+              <span>SHOE</span>
+              <strong>{shoe.length}</strong>
             </div>
 
-            <div className="absolute inset-x-5 top-4 z-20 flex items-start justify-between gap-3">
-              <div className="rounded-2xl border border-[#efc979]/20 bg-black/46 px-4 py-3 backdrop-blur-md">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Dealer</div>
-                <div className="mt-1 text-base font-black text-[#fff4d5]">Eunice</div>
+            <div className="felt-table baccarat-felt-table">
+              <img className="baccarat-table-image" src="/baccarat/Images/baccarat-table.png" alt="" aria-hidden="true" />
+              <div className="baccarat-result-ribbon" aria-live="polite">
+                <span>{result?.natural ? 'NATURAL CHECKED' : 'TABLE CALL'}</span>
+                <strong>{dealing ? 'No more bets' : resultLine}</strong>
               </div>
-              <div className="max-w-[32rem] rounded-full border border-[#efc979]/22 bg-black/50 px-5 py-3 text-center shadow-[0_18px_48px_rgba(0,0,0,0.42)] backdrop-blur-md">
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#efc979]/62">
-                  {result?.natural ? 'Natural Checked' : 'Punto Banco'}
-                </div>
-                <div className="mt-1 truncate text-xl font-black text-[#fff4d5]">{dealing ? 'No more bets' : resultLine}</div>
-              </div>
-              <div className="rounded-2xl border border-[#efc979]/20 bg-black/46 px-4 py-3 text-right backdrop-blur-md">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[#efc979]/62">Shoe</div>
-                <div className="mt-1 text-base font-black text-[#fff4d5]">{shoe.length}</div>
-              </div>
-            </div>
 
-            <div className="absolute left-1/2 top-[35%] z-20 grid w-[68%] -translate-x-1/2 grid-cols-2 gap-4">
-              <HandDisplay label="Punto" cards={result?.puntoCards ?? []} total={result?.puntoTotal ?? null} side="punto" />
-              <HandDisplay label="Banco" cards={result?.bancoCards ?? []} total={result?.bancoTotal ?? null} side="banco" />
-            </div>
-
-            <div className="absolute inset-0 z-10">
-              <img
-                src="/baccarat/Images/baccarat-table.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute bottom-[-7%] left-1/2 w-[99%] max-w-[1050px] -translate-x-1/2 object-contain drop-shadow-[0_40px_62px_rgba(0,0,0,0.62)]"
+              <HandArea
+                label="Dealer"
+                cards={result?.dealerCards ?? []}
+                total={result?.dealerTotal ?? null}
+                className="baccarat-dealer-hand"
               />
-              <TableBetZone label="Punto" amount={bets.punto} className="bottom-[20%] left-[16%] h-[25%] w-[27%]" onClick={() => placeBet('punto')} />
-              <TableBetZone label="Tie" amount={bets.tie} className="bottom-[20%] left-[43%] h-[25%] w-[14%]" onClick={() => placeBet('tie')} />
-              <TableBetZone label="Banco" amount={bets.banco} className="bottom-[20%] right-[16%] h-[25%] w-[27%]" onClick={() => placeBet('banco')} />
-            </div>
-          </section>
+              <HandArea
+                label="Banker"
+                cards={result?.bankerCards ?? []}
+                total={result?.bankerTotal ?? null}
+                className="baccarat-banker-hand"
+              />
 
-          <aside className="min-h-0">
-            <TableChat
-              username={username}
-              messages={chatMessages}
-              input={chatInput}
-              onInputChange={setChatInput}
-              onSend={sendChat}
-            />
+              <TableBetZone label="Dealer" amount={bets.dealer} className="baccarat-zone-dealer" onClick={() => placeBet('dealer')} />
+              <TableBetZone label="Tie" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
+              <TableBetZone label="Banker" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
+            </div>
+          </div>
+        </section>
+
+        <div className="blackjack-chat-panel baccarat-chat-panel">
+          <BaccaratTableChat
+            messages={chatMessages}
+            onSend={sendChat}
+            myPlayerId={myPlayerId}
+            hasVipEmojis={false}
+          />
+          <div className="chat-seat-controls" aria-label="Table seating controls">
+            <button type="button" className="table-status-button" disabled>
+              Stand
+            </button>
+            <button type="button" className="table-status-button" disabled>
+              Sit
+            </button>
+            <Link href="/" className="table-status-button is-cashout" aria-label="Cash out and leave Baccarat table" title="Cash out">
+              <ExitIcon className="cashout-icon" />
+            </Link>
+          </div>
+        </div>
+
+        <section className="bottom-console baccarat-bottom-console">
+          <div className="message" id="message">{displayMessage}</div>
+
+          <aside className="round-info" aria-label="Round totals">
+            <span>CURRENT BET</span>
+            <strong id="currentBet">{money(currentStake)}</strong>
+            <div />
+            <span>WIN</span>
+            <strong id="winAmount">{result ? signedMoney(result.net) : '0'}</strong>
           </aside>
 
-          <section className="col-span-3 grid min-h-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-[#efc979]/18 bg-black/52 px-4 py-3 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur-md">
-            <div className="min-w-0">
-              <div className="text-[10px] font-black uppercase tracking-[0.26em] text-[#efc979]/62">Table Message</div>
-              <div className="mt-1 truncate text-lg font-black text-[#fff4d5]">{dealing ? 'Cards are in motion.' : resultLine}</div>
-            </div>
+          <div className="chip-selector" id="chipRow">
+            {CHIP_VALUES.map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
+                data-value={value}
+                aria-label={`${money(value)} chip`}
+                disabled={dealing || stack < value}
+                onClick={() => setSelectedChip(value)}
+              >
+                <span>{value}</span>
+              </button>
+            ))}
+          </div>
 
-            <div className="flex items-center justify-center gap-3">
-              {CHIP_VALUES.map((value) => (
-                <ChipButton
-                  key={value}
-                  value={value}
-                  selected={selectedChip === value}
-                  disabled={dealing || stack < value}
-                  onClick={() => setSelectedChip(value)}
-                />
-              ))}
-            </div>
+          <div className="action-row baccarat-action-row" data-mode={currentStake > 0 ? 'betting' : 'idle'}>
+            <button type="button" id="undoBtn" className="secondary action-button" disabled={lastStake <= 0 || dealing || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
+              <b>Rebet</b>
+              <span>REBET</span>
+            </button>
+            <button type="button" id="clearBtn" className="secondary action-button" disabled={currentStake <= 0 || dealing} onClick={clearBets} aria-label="Clear bet">
+              <b>Clear</b>
+              <span>CLEAR BET</span>
+            </button>
+            <button type="button" id="doubleBtn" className="action-button" disabled={currentStake <= 0 || dealing || stack < currentStake} onClick={doubleBets}>
+              <b>Double</b>
+              <span>DOUBLE</span>
+            </button>
+            <button type="button" id="dealBtn" className="action-button" disabled={!canDeal} onClick={dealPreviewRound}>
+              <b>{dealing ? 'Dealing' : 'Deal'}</b>
+              <span>DEAL</span>
+            </button>
+          </div>
 
-            <div className="grid min-w-[26rem] grid-cols-[1fr_1fr_1fr_1fr] gap-2">
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/42">Bet</div>
-                <div className="text-base font-black text-[#fff4d5]">{money(currentStake)}</div>
-              </div>
-              <ActionButton onClick={clearBets} disabled={currentStake <= 0 || dealing}>Clear</ActionButton>
-              <ActionButton onClick={rebet} disabled={lastStake <= 0 || dealing || stack + currentStake < lastStake}>Rebet</ActionButton>
-              <ActionButton onClick={doubleBets} disabled={currentStake <= 0 || dealing || stack < currentStake}>Double</ActionButton>
-              <div className="col-span-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/58">
-                Banco commission preview: {money(commissionPreview)}
-              </div>
-              <ActionButton onClick={dealPreviewRound} disabled={!canDeal} primary>{dealing ? 'Dealing' : 'Deal'}</ActionButton>
-            </div>
-          </section>
+          <aside className="round-info baccarat-commission" aria-label="Banker commission">
+            <span>BANKER FEE</span>
+            <strong>{money(commissionPreview)}</strong>
+            <div />
+            <span>GM ROOM</span>
+            <strong>PRIVATE</strong>
+          </aside>
         </section>
-      </div>
-    </main>
+      </main>
+
+      <RulesModal open={rulesOpen} onClose={() => setRulesOpen(false)} />
+
+      <style jsx global>{`
+        .baccarat-game-shell {
+          height: 100svh;
+          min-height: 0;
+          grid-template-rows: minmax(0, 1fr) 132px;
+          overflow: hidden;
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.66)),
+            linear-gradient(90deg, rgba(0,0,0,.86), rgba(0,0,0,.26) 42%, rgba(0,0,0,.78)),
+            url("/baccarat/Images/baccarat-lobby.png") center / cover no-repeat,
+            #030504;
+        }
+
+        .baccarat-game-shell .topbar {
+          left: 238px;
+          right: 206px;
+          top: 14px;
+          align-items: flex-start;
+        }
+
+        .baccarat-title-panel {
+          pointer-events: auto;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: min(520px, 44vw);
+          min-height: 62px;
+          padding: 8px 18px;
+          border: 1px solid rgba(214,173,72,.46);
+          border-radius: 10px;
+          background: linear-gradient(180deg, rgba(5,8,6,.88), rgba(1,3,2,.82));
+          box-shadow: inset 0 1px rgba(255,255,255,.05), 0 16px 24px rgba(0,0,0,.32);
+        }
+
+        .baccarat-title-panel img {
+          width: 62px;
+          height: 46px;
+          object-fit: contain;
+          filter: drop-shadow(0 8px 12px rgba(0,0,0,.46));
+        }
+
+        .baccarat-title-panel span {
+          display: block;
+          color: var(--gold);
+          font-family: var(--font-display);
+          font-size: .62rem;
+          font-weight: 900;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+
+        .baccarat-title-panel strong {
+          display: block;
+          margin-top: 2px;
+          color: var(--gold-light);
+          font-family: var(--font-display);
+          font-size: clamp(1.7rem, 2.65vw, 2.7rem);
+          font-weight: 900;
+          letter-spacing: .1em;
+          line-height: .95;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .baccarat-game-shell .table-frame {
+          padding: 86px 334px 0 210px;
+          place-items: end center;
+        }
+
+        .baccarat-game-shell .balance-panel {
+          min-width: 148px;
+        }
+
+        .baccarat-game-shell .utility-buttons {
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .baccarat-game-shell .utility-buttons .table-status-button {
+          min-height: 42px;
+          display: inline-grid;
+          place-items: center;
+          text-decoration: none;
+          white-space: nowrap;
+        }
+
+        .baccarat-game-shell .utility-button,
+        .baccarat-game-shell .table-status-button.is-cashout {
+          width: 42px;
+          min-width: 42px;
+          height: 42px;
+          min-height: 42px;
+        }
+
+        .baccarat-road {
+          left: 20px;
+          top: 112px;
+          width: 176px;
+          max-height: min(430px, calc(100% - 130px));
+        }
+
+        .baccarat-road__rounds {
+          color: #fff;
+          font-family: var(--font-number);
+          font-size: .9rem;
+          font-weight: 800;
+        }
+
+        .baccarat-road__grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 6px;
+          margin-top: 10px;
+        }
+
+        .baccarat-road__cell {
+          display: grid;
+          place-items: center;
+          aspect-ratio: 1;
+          border: 1px solid rgba(247,240,215,.52);
+          border-radius: 999px;
+          background: rgba(3,12,8,.36);
+          color: #fff;
+          font-family: var(--font-display);
+          font-size: .6rem;
+          font-weight: 900;
+          line-height: 1;
+        }
+
+        .baccarat-road__cell.is-dealer {
+          border-color: rgba(130,195,255,.62);
+          background: #2474bc;
+        }
+
+        .baccarat-road__cell.is-banker {
+          border-color: rgba(255,171,158,.62);
+          background: #b7352a;
+        }
+
+        .baccarat-road__cell.is-tie {
+          border-color: rgba(154,255,198,.62);
+          background: #269e5e;
+        }
+
+        .baccarat-wood-rail {
+          width: min(100%, 1020px);
+          max-height: calc(100svh - 154px);
+          align-self: end;
+          transform: translateY(10px);
+        }
+
+        .baccarat-wood-rail .dealer-portrait {
+          top: -33%;
+          width: clamp(174px, 12.3vw, 232px);
+          z-index: 5;
+        }
+
+        .baccarat-wood-rail .dealer-speech {
+          left: calc(50% + 142px);
+          top: -8%;
+        }
+
+        .baccarat-wood-rail .round-countdown {
+          left: calc(50% - 328px);
+          top: -7%;
+        }
+
+        .baccarat-felt-table {
+          background: none;
+        }
+
+        .baccarat-table-image {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          pointer-events: none;
+          filter: drop-shadow(0 24px 30px rgba(0,0,0,.45));
+        }
+
+        .baccarat-result-ribbon {
+          position: absolute;
+          left: 50%;
+          top: 18%;
+          z-index: 8;
+          min-width: min(420px, 48%);
+          max-width: 560px;
+          padding: 10px 18px 12px;
+          border: 1px solid rgba(214,173,72,.48);
+          border-radius: 999px;
+          background: linear-gradient(180deg, rgba(8,11,9,.92), rgba(2,5,4,.86));
+          color: var(--gold-light);
+          text-align: center;
+          transform: translateX(-50%);
+          box-shadow: inset 0 1px rgba(255,255,255,.06), 0 16px 24px rgba(0,0,0,.4);
+        }
+
+        .baccarat-result-ribbon span {
+          display: block;
+          font-family: var(--font-display);
+          font-size: .58rem;
+          font-weight: 900;
+          letter-spacing: .18em;
+          line-height: 1;
+        }
+
+        .baccarat-result-ribbon strong {
+          display: block;
+          margin-top: 5px;
+          overflow: hidden;
+          color: #fff;
+          font-family: var(--font-display);
+          font-size: clamp(.92rem, 1.25vw, 1.18rem);
+          font-weight: 900;
+          line-height: 1.08;
+          text-overflow: ellipsis;
+          text-shadow: 0 1px 0 rgba(0,0,0,.75);
+          white-space: nowrap;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area {
+          z-index: 9;
+          width: 33%;
+          min-width: 250px;
+          padding: 8px 10px 10px;
+          border: 1px solid rgba(214,173,72,.22);
+          border-radius: 10px;
+          background: rgba(2, 17, 10, .5);
+          box-shadow: inset 0 1px rgba(255,255,255,.04), 0 10px 20px rgba(0,0,0,.28);
+        }
+
+        .baccarat-game-shell .baccarat-hand-area h2 {
+          display: block;
+          margin: 0 0 6px;
+          color: var(--gold-light);
+          font-family: var(--font-display);
+          font-size: .7rem;
+          font-weight: 900;
+          letter-spacing: .16em;
+          line-height: 1;
+          text-transform: uppercase;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .cards {
+          min-height: 86px;
+          gap: 9px;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .card {
+          width: 52px;
+          height: 78px;
+          border-radius: 7px;
+        }
+
+        .baccarat-game-shell .baccarat-hand-area .score-pill {
+          min-width: 44px;
+          width: 44px;
+          min-height: 28px;
+          margin-top: 4px;
+          padding: 4px 8px;
+        }
+
+        .baccarat-dealer-hand {
+          left: 32%;
+          top: 32%;
+        }
+
+        .baccarat-banker-hand {
+          left: 68%;
+          top: 32%;
+        }
+
+        .baccarat-bet-zone {
+          position: absolute;
+          z-index: 10;
+          display: grid;
+          place-items: center;
+          border: 1px solid transparent;
+          border-radius: 22px;
+          background: rgba(255,255,255,0);
+          color: transparent;
+          cursor: pointer;
+          transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+        }
+
+        .baccarat-bet-zone span {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+        }
+
+        .baccarat-bet-zone:hover,
+        .baccarat-bet-zone:focus-visible {
+          border-color: rgba(243,212,125,.68);
+          background: rgba(255,255,255,.035);
+          outline: 0;
+          box-shadow: inset 0 0 24px rgba(243,212,125,.08);
+        }
+
+        .baccarat-zone-dealer {
+          left: 21%;
+          top: 55%;
+          width: 25%;
+          height: 20%;
+        }
+
+        .baccarat-zone-tie {
+          left: 43%;
+          top: 54%;
+          width: 14%;
+          height: 22%;
+        }
+
+        .baccarat-zone-banker {
+          right: 21%;
+          top: 55%;
+          width: 25%;
+          height: 20%;
+        }
+
+        .baccarat-spot-chip-stack {
+          width: 84px;
+          height: 84px;
+          z-index: 5;
+        }
+
+        .baccarat-spot-chip-stack .spot-chip {
+          width: 44px;
+          height: 44px;
+        }
+
+        .baccarat-spot-chip-stack strong {
+          position: absolute;
+          left: 50%;
+          top: calc(100% - 12px);
+          min-width: 54px;
+          padding: 3px 8px;
+          border: 1px solid rgba(214,173,72,.42);
+          border-radius: 999px;
+          background: rgba(3,6,5,.92);
+          color: var(--gold-light);
+          font-family: var(--font-number);
+          font-size: .72rem;
+          font-weight: 900;
+          line-height: 1;
+          text-align: center;
+          transform: translateX(-50%);
+          box-shadow: 0 8px 14px rgba(0,0,0,.32);
+        }
+
+        .baccarat-chat-panel {
+          right: 20px;
+          top: 244px;
+          width: 318px;
+        }
+
+        .baccarat-chat-panel .blackjack-chat {
+          height: clamp(330px, 43vh, 438px);
+        }
+
+        .baccarat-bottom-console {
+          grid-template-columns: 1fr auto auto 1fr;
+          grid-template-rows: 26px 76px;
+          min-height: 132px;
+          padding: 8px 18px 12px;
+        }
+
+        .baccarat-bottom-console .message {
+          grid-column: 1;
+          grid-row: 1;
+        }
+
+        .baccarat-bottom-console .chip-selector {
+          grid-column: 1;
+          grid-row: 2;
+        }
+
+        .baccarat-bottom-console .action-row {
+          grid-column: 2 / span 2;
+          grid-row: 1 / span 2;
+        }
+
+        .baccarat-bottom-console .round-info {
+          grid-column: 4;
+          grid-row: 1 / span 2;
+          align-self: center;
+          justify-self: end;
+          width: min(100%, 270px);
+        }
+
+        .baccarat-bottom-console .baccarat-commission {
+          grid-column: 3;
+          width: 168px;
+          margin-left: 10px;
+        }
+
+        .baccarat-bottom-console .action-row[data-mode="idle"] {
+          display: flex !important;
+        }
+
+        .baccarat-bottom-console .action-button:disabled {
+          opacity: .46;
+        }
+
+        @media (max-width: 1420px) {
+          .baccarat-game-shell .topbar {
+            left: 210px;
+            right: 72px;
+          }
+
+          .baccarat-title-panel {
+            min-width: 390px;
+          }
+
+          .baccarat-game-shell .table-frame {
+            padding-left: 196px;
+            padding-right: 330px;
+          }
+
+          .baccarat-wood-rail {
+            width: min(100%, 940px);
+          }
+
+          .baccarat-chat-panel {
+            width: 300px;
+          }
+
+          .baccarat-bottom-console {
+            grid-template-columns: minmax(330px, 1fr) auto auto minmax(210px, .7fr);
+            gap: 8px 12px;
+          }
+        }
+
+        @media (max-height: 780px) {
+          .baccarat-game-shell {
+            grid-template-rows: minmax(0, 1fr) 116px;
+          }
+
+          .baccarat-game-shell .topbar {
+            top: 8px;
+          }
+
+          .baccarat-title-panel {
+            min-height: 54px;
+            padding: 6px 14px;
+          }
+
+          .baccarat-title-panel img {
+            width: 52px;
+            height: 38px;
+          }
+
+          .baccarat-title-panel strong {
+            font-size: clamp(1.3rem, 2.2vw, 2rem);
+          }
+
+          .baccarat-game-shell .table-frame {
+            padding-top: 66px;
+          }
+
+          .baccarat-road {
+            top: 86px;
+          }
+
+          .baccarat-chat-panel {
+            top: 172px;
+          }
+
+          .baccarat-chat-panel .blackjack-chat {
+            height: clamp(270px, 39vh, 330px);
+          }
+
+          .baccarat-bottom-console {
+            grid-template-rows: 22px 66px;
+            min-height: 116px;
+            padding-top: 7px;
+          }
+
+          .baccarat-bottom-console .chip-selector {
+            padding: 8px 12px;
+          }
+
+          .baccarat-bottom-console .chip {
+            width: 46px;
+            height: 46px;
+          }
+
+          .baccarat-bottom-console .action-button {
+            width: 78px;
+            height: 64px;
+            min-width: 78px;
+            min-height: 64px;
+          }
+        }
+      `}</style>
+    </>
   )
 }

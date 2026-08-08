@@ -202,7 +202,7 @@ export function GMClient() {
       <div className="mx-auto mb-6 flex w-full max-w-6xl flex-col gap-4 rounded-2xl border border-yellow-500/20 bg-gray-900 p-5 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.24em] text-yellow-500/70">Temporary GM Preview</div>
-          <h1 className="mt-1 text-2xl font-bold text-white">ASL Punto Banco Salon</h1>
+          <h1 className="mt-1 text-2xl font-bold text-white">ASL Baccarat Salon</h1>
           <p className="mt-1 text-sm text-gray-400">Hidden from the public casino lobby until Baccarat is ready to launch.</p>
         </div>
         <Link
