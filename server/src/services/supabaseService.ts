@@ -94,7 +94,7 @@ export const supabaseService = {
 
   // ─── Chip Management ───────────────────────────────────────────────────
 
-  async deductChips(playerId: string, tableId: string, amount: number): Promise<number> {
+  async deductChips(playerId: string, tableId: string | null, amount: number): Promise<number> {
     assertPositiveChipAmount(amount, 'Chip deduction')
 
     // Atomic: subtract chips and return new balance

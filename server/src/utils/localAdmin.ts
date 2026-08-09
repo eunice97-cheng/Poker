@@ -7,5 +7,13 @@ export function isLocalAdminToken(token: string | undefined) {
 }
 
 export function isLocalOnlyTable(tableId: string) {
-  return tableId.startsWith('local_bj_') || tableId.startsWith('local_poker_')
+  return tableId.startsWith('local_bj_') || tableId.startsWith('local_bac_') || tableId.startsWith('local_poker_')
+}
+
+export function isHouseTable(tableId: string) {
+  return tableId.startsWith('house_bj_') || tableId.startsWith('house_bac_')
+}
+
+export function isMemoryOnlyTable(tableId: string) {
+  return isLocalOnlyTable(tableId) || isHouseTable(tableId)
 }

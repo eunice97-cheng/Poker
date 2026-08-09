@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ChatEmojiTray } from '@/components/ui/ChatEmojiTray'
 import { ChatMessageText } from '@/components/ui/ChatMessageText'
 import { ExitIcon } from '@/components/ui/ExitIcon'
 import { AvatarDisplay } from '@/components/ui/AvatarDisplay'
 import { appendChatEmojiCode } from '@/lib/chat-emojis'
 import { useAudio } from '@/hooks/useAudio'
+import { useSocket } from '@/hooks/useSocket'
+import { useBaccaratState } from '@/hooks/useBaccaratState'
 import type { ChatMessage } from '@/types/poker'
 
 type Suit = 'S' | 'H' | 'D' | 'C'
@@ -51,6 +54,8 @@ type RoundResult = RoadItem & {
 }
 
 type BaccaratRoomClientProps = {
+  tableId: string
+  token: string
   playerId: string
   username: string
   avatar: string
@@ -167,6 +172,11 @@ function classNames(...classes: Array<string | false | null | undefined>) {
 
 function randomMs([min, max]: readonly [number, number]) {
   return Math.round(min + Math.random() * (max - min))
+}
+
+function secondsLeft(target: number | null | undefined, now: number) {
+  if (!target) return 0
+  return Math.max(0, Math.ceil((target - now) / 1000))
 }
 
 function dealerForTime(time: number) {
@@ -430,40 +440,46 @@ function DealerTipBoard({ dealerName, total }: { dealerName: string; total: numb
 }
 
 function BaccaratSeatRail({
-  username,
-  avatar,
-  stake,
-  stack,
-  isSeated,
+  players,
+  maxPlayers,
+  myPlayerId,
 }: {
-  username: string
-  avatar: string
-  stake: number
-  stack: number
-  isSeated: boolean
+  players: Array<{
+    playerId: string
+    username: string
+    avatar: string
+    seat: number
+    stack: number
+    betTotal: number
+  }>
+  maxPlayers: number
+  myPlayerId: string
 }) {
-  const seats = Array.from({ length: 6 }, (_, index) => ({
-    id: index + 1,
-    label: index === 0 && isSeated ? username : `Seat ${index + 1}`,
-    stake: index === 0 && isSeated ? stake : 0,
-    stack: index === 0 && isSeated ? stack : 0,
-    active: index === 0 && isSeated,
-  }))
+  const bySeat = new Map(players.map((player) => [player.seat, player]))
+  const seats = Array.from({ length: maxPlayers }, (_, index) => {
+    const player = bySeat.get(index)
+    return {
+      id: index + 1,
+      player,
+      active: Boolean(player),
+      isMe: player?.playerId === myPlayerId,
+    }
+  })
 
   return (
     <div className="baccarat-seat-rail" aria-label="Baccarat seats">
       {seats.map((seat) => (
-        <div key={seat.id} className={classNames('baccarat-seat', `baccarat-seat-${seat.id}`, seat.active && 'is-active')}>
+        <div key={seat.id} className={classNames('baccarat-seat', `baccarat-seat-${seat.id}`, seat.active && 'is-active', seat.isMe && 'is-me')}>
           <span className="baccarat-seat__avatar">
-            {seat.active ? (
-              <AvatarDisplay avatarId={avatar} size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
+            {seat.player ? (
+              <AvatarDisplay avatarId={seat.player.avatar} size="sm" className="!h-8 !w-8 !rounded-full !border-[#d6ad48]/70" />
             ) : (
               <span aria-hidden="true" />
             )}
           </span>
-          <span className="baccarat-seat__name">{seat.label}</span>
-          <strong>{seat.stake > 0 ? `Bet ${money(seat.stake)}` : seat.active ? 'No bet' : 'Open'}</strong>
-          <em>{seat.active ? `${money(seat.stack)} chips` : 'Available'}</em>
+          <span className="baccarat-seat__name">{seat.player ? seat.player.username : `Seat ${seat.id}`}</span>
+          <strong>{seat.player?.betTotal ? `Bet ${money(seat.player.betTotal)}` : seat.active ? 'No bet' : 'Open'}</strong>
+          <em>{seat.player ? `${money(seat.player.stack)} chips` : 'Available'}</em>
         </div>
       ))}
     </div>
@@ -700,7 +716,9 @@ function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   )
 }
 
-export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, hasVipEmojis, isAdmin = false }: BaccaratRoomClientProps) {
+export function BaccaratRoomClient({ tableId, token, playerId, username, avatar, chipBalance, hasVipEmojis, isAdmin = false }: BaccaratRoomClientProps) {
+  const router = useRouter()
+  const { socket, connected, error: socketError } = useSocket(token)
   const {
     musicVol,
     sfxVol,
@@ -711,33 +729,63 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
     toggleMusic,
     toggleSfx,
   } = useAudio()
-  const [shoe, setShoe] = useState(() => createShoe())
+  const {
+    baccaratState,
+    messages,
+    tableError,
+    lastError,
+    placeBet: placeBaccaratBet,
+    clearBets: clearBaccaratBets,
+    rebet: rebetBaccarat,
+    doubleBets: doubleBaccaratBets,
+    sitOut,
+    sitIn,
+    tipDealer,
+    leaveTable,
+    sendChat: sendBaccaratChat,
+  } = useBaccaratState(socket, tableId)
   const [selectedChip, setSelectedChip] = useState(100)
-  const [stack, setStack] = useState(() => Math.max(0, Math.floor(chipBalance)))
-  const [bets, setBets] = useState<Bets>(EMPTY_BETS)
-  const [lastBets, setLastBets] = useState<Bets>(EMPTY_BETS)
-  const [road, setRoad] = useState<RoadItem[]>([])
-  const [result, setResult] = useState<RoundResult | null>(null)
-  const [roundPhase, setRoundPhase] = useState<RoundPhase>('betting')
-  const [roundTimeLeft, setRoundTimeLeft] = useState(BACCARAT_BETTING_SECONDS)
   const [rulesOpen, setRulesOpen] = useState(false)
   const [activeDealer, setActiveDealer] = useState(() => dealerForTime(Date.now()))
   const [dealerPortrait, setDealerPortrait] = useState<DealerPortraitKey>('normal')
-  const [dealerTips, setDealerTips] = useState<Record<string, number>>({})
   const [tipImage, setTipImage] = useState(() => dealerForTime(Date.now()).thankYou.normal)
   const [tipVisible, setTipVisible] = useState(false)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [isSeated, setIsSeated] = useState(true)
+  const [now, setNow] = useState(() => Date.now())
+  const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState('')
   const tipTimeoutRef = useRef<number | null>(null)
 
+  const me = useMemo(
+    () => baccaratState?.players.find((player) => player.playerId === baccaratState.myPlayerId) ?? null,
+    [baccaratState]
+  )
+  const waitingMe = useMemo(
+    () => baccaratState?.observers.find((observer) => observer.playerId === baccaratState.myPlayerId) ?? null,
+    [baccaratState]
+  )
+  const stack = me?.stack ?? waitingMe?.stack ?? 0
+  const bets = baccaratState?.bets ?? EMPTY_BETS
+  const lastBets = baccaratState?.lastBets ?? EMPTY_BETS
+  const road = baccaratState?.road ?? []
+  const result = baccaratState?.result ?? null
+  const roundPhase = baccaratState?.phase ?? 'betting'
+  const maxBet = baccaratState?.maxBet ?? BACCARAT_MAX_BET
+  const minBet = baccaratState?.minBet ?? BACCARAT_MIN_BET
   const currentStake = totalBets(bets)
   const lastStake = totalBets(lastBets)
   const dealing = roundPhase === 'dealing'
-  const roundClosed = roundPhase !== 'betting'
-  const waitingForBets = roundPhase === 'betting' && currentStake < BACCARAT_MIN_BET
-  const canTipDealer = isSeated && stack >= DEALER_TIP_AMOUNT
-  const activeDealerTipTotal = dealerTips[activeDealer.id] ?? 0
-  const myPlayerId = playerId
+  const roundClosed = !baccaratState || roundPhase !== 'betting'
+  const waitingForBets = roundPhase === 'betting' && !baccaratState?.bettingEndsAt
+  const canTipDealer = Boolean(me && stack >= DEALER_TIP_AMOUNT)
+  const activeDealerTipTotal = baccaratState?.dealerTips?.[activeDealer.id] ?? 0
+  const myPlayerId = baccaratState?.myPlayerId ?? playerId
+  const isSeated = Boolean(me)
+  const chatMessages = useMemo<ChatMessage[]>(
+    () => messages.map((message) => ({ ...message, isSystem: false })),
+    [messages]
+  )
+  const bettingSecondsLeft = secondsLeft(baccaratState?.bettingEndsAt, now)
+  const nextRoundSecondsLeft = secondsLeft(baccaratState?.nextRoundStartsAt, now)
   const bgmEffectivelyMuted = musicMute || musicVol === 0
   const sfxEffectivelyMuted = sfxMute || sfxVol === 0
 
@@ -795,79 +843,28 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
   }, [])
 
   useEffect(() => {
-    if (roundPhase === 'dealing') return
-    if (waitingForBets) return
-
     const interval = window.setInterval(() => {
-      setRoundTimeLeft((current) => Math.max(0, current - 1))
+      setNow(Date.now())
     }, 1000)
 
     return () => window.clearInterval(interval)
-  }, [roundPhase, waitingForBets])
-
-  useEffect(() => {
-    if (!waitingForBets) return
-    setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
-  }, [waitingForBets])
-
-  useEffect(() => {
-    if (roundTimeLeft > 0) return
-
-    if (roundPhase === 'betting') {
-      if (currentStake < BACCARAT_MIN_BET) {
-        setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
-        return
-      }
-      setRoundPhase('dealing')
-      return
-    }
-
-    if (roundPhase === 'settled') {
-      setResult(null)
-      setRoundTimeLeft(BACCARAT_BETTING_SECONDS)
-      setRoundPhase('betting')
-    }
-  }, [currentStake, roundPhase, roundTimeLeft])
-
-  useEffect(() => {
-    if (roundPhase !== 'dealing') return
-
-    const timeout = window.setTimeout(() => {
-      const nextId = road.length + 1
-      const resolved = resolveRound(shoe, bets, nextId)
-
-      setShoe(resolved.nextShoe)
-      setStack((current) => current + resolved.returns)
-      setLastBets(bets)
-      setBets(EMPTY_BETS)
-      setResult(resolved.result)
-      setRoad((current) => [...current.slice(-41), {
-        id: resolved.result.id,
-        winner: resolved.result.winner,
-        playerTotal: resolved.result.playerTotal,
-        bankerTotal: resolved.result.bankerTotal,
-        natural: resolved.result.natural,
-      }])
-      setRoundTimeLeft(BACCARAT_SETTLED_SECONDS)
-      setRoundPhase('settled')
-    }, BACCARAT_DEALING_DELAY_MS)
-
-    return () => window.clearTimeout(timeout)
-  }, [bets, road.length, roundPhase, shoe])
+  }, [])
 
   const tableCallLine = result ? formatDealerCall(result) : 'No result yet'
 
   const dealerLine = useMemo(() => {
+    if (tableError) return tableError
+    if (!baccaratState) return connected ? 'Finding your Baccarat seat.' : socketError ? 'Connecting to the Baccarat room.' : 'Opening Baccarat table.'
     if (dealing) return 'No more bets.'
     if (roundPhase === 'settled') return tableCallLine
     if (currentStake > 0) return `${money(currentStake)} on the layout.`
-    return isSeated ? `Place your bets. ${money(BACCARAT_MIN_BET)} minimum.` : 'Take a seat to play.'
-  }, [currentStake, dealing, isSeated, roundPhase, tableCallLine])
+    return isSeated ? baccaratState.message : `Take a seat to play. ${money(minBet)} minimum.`
+  }, [baccaratState, connected, currentStake, dealing, isSeated, minBet, roundPhase, socketError, tableCallLine, tableError])
 
   const timerLabel = waitingForBets ? 'Waiting For Bets' : roundPhase === 'betting' ? 'Betting Closes' : roundPhase === 'dealing' ? 'No More Bets' : 'Next Round'
-  const timerValue = waitingForBets || roundPhase === 'dealing' ? '--' : `${roundTimeLeft}s`
+  const timerValue = waitingForBets || roundPhase === 'dealing' ? '--' : `${roundPhase === 'settled' ? nextRoundSecondsLeft : bettingSecondsLeft}s`
 
-  const displayMessage = dealing ? 'Cards are in motion.' : tableCallLine
+  const displayMessage = leaveError || lastError || tableError || (dealing ? 'Cards are in motion.' : result ? tableCallLine : baccaratState?.message ?? 'Connecting to table.')
 
   const handleBgmToggle = () => {
     if (musicMute || musicVol === 0) {
@@ -889,13 +886,10 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
     toggleSfx()
   }
 
-  const handleTip = () => {
+  const handleTip = async () => {
     if (!canTipDealer) return
-    setStack((current) => current - DEALER_TIP_AMOUNT)
-    setDealerTips((current) => ({
-      ...current,
-      [activeDealer.id]: (current[activeDealer.id] ?? 0) + DEALER_TIP_AMOUNT,
-    }))
+    const res = await tipDealer(DEALER_TIP_AMOUNT, activeDealer.id)
+    if (res.error) return
     setTipImage(activeDealer.thankYou.normal)
     setTipVisible(true)
     if (tipTimeoutRef.current) window.clearTimeout(tipTimeoutRef.current)
@@ -909,64 +903,58 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
   }
 
   const placeBet = (key: BetKey) => {
-    if (!isSeated || roundClosed || stack < selectedChip || currentStake + selectedChip > BACCARAT_MAX_BET) return
-    setStack((current) => current - selectedChip)
-    setBets((current) => ({ ...current, [key]: current[key] + selectedChip }))
+    if (!isSeated || roundClosed || stack < selectedChip || currentStake + selectedChip > maxBet) return
+    void placeBaccaratBet(key, selectedChip)
   }
 
   const clearBets = () => {
     if (!isSeated || roundClosed || currentStake <= 0) return
-    setStack((current) => current + currentStake)
-    setBets(EMPTY_BETS)
+    void clearBaccaratBets()
   }
 
   const rebet = () => {
     if (!isSeated || roundClosed || lastStake <= 0) return
     const available = stack + currentStake
-    if (available < lastStake || lastStake > BACCARAT_MAX_BET) return
-
-    setStack(available - lastStake)
-    setBets(lastBets)
+    if (available < lastStake || lastStake > maxBet) return
+    void rebetBaccarat()
   }
 
   const doubleBets = () => {
-    if (!isSeated || roundClosed || currentStake <= 0 || stack < currentStake || currentStake * 2 > BACCARAT_MAX_BET) return
-    setStack((current) => current - currentStake)
-    setBets((current) => ({
-      player: current.player * 2,
-      tie: current.tie * 2,
-      banker: current.banker * 2,
-    }))
+    if (!isSeated || roundClosed || currentStake <= 0 || stack < currentStake || currentStake * 2 > maxBet) return
+    void doubleBaccaratBets()
   }
 
   const handleStand = () => {
     if (roundClosed) return
-    if (currentStake > 0) {
-      setStack((current) => current + currentStake)
-      setBets(EMPTY_BETS)
-    }
-    setIsSeated(false)
+    void sitOut()
   }
 
   const handleSit = () => {
     if (roundClosed) return
-    setIsSeated(true)
+    void sitIn()
   }
 
   const sendChat = (text: string) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    void sendBaccaratChat(trimmed)
+  }
 
-    setChatMessages((current) => [
-      ...current.slice(-30),
-      {
-        playerId: myPlayerId,
-        username,
-        avatar,
-        text: trimmed,
-        timestamp: new Date().toISOString(),
-      },
-    ])
+  const handleLeave = async () => {
+    setLeaveError('')
+    if (roundClosed && baccaratState) {
+      setLeaveError('Please wait for this Baccarat round to finish before cashing out.')
+      return
+    }
+
+    setLeaving(true)
+    const res = await leaveTable()
+    setLeaving(false)
+    if (res.error) {
+      setLeaveError(res.error)
+      return
+    }
+    router.push('/baccarat')
   }
 
   return (
@@ -1051,14 +1039,16 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
             )}
             <TopbarLink href="/">Main Lobby</TopbarLink>
             {isAdmin && <TopbarLink href="/gm">GM</TopbarLink>}
-            <Link
-              href="/baccarat"
+            <button
+              type="button"
               className="table-status-button is-cashout"
               aria-label="Cash out and leave Baccarat table"
               title="Cash out"
+              disabled={leaving || (roundClosed && Boolean(baccaratState))}
+              onClick={handleLeave}
             >
               <ExitIcon className="cashout-icon" />
-            </Link>
+            </button>
           </nav>
         </header>
 
@@ -1117,7 +1107,7 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
               <TableBetZone label="Player" payout="1 to 1" amount={bets.player} className="baccarat-zone-player" onClick={() => placeBet('player')} />
               <TableBetZone label="Tie" payout="8 to 1" amount={bets.tie} className="baccarat-zone-tie" onClick={() => placeBet('tie')} />
               <TableBetZone label="Banker" payout="0.95 to 1" amount={bets.banker} className="baccarat-zone-banker" onClick={() => placeBet('banker')} />
-              <BaccaratSeatRail username={username} avatar={avatar} stake={currentStake} stack={stack} isSeated={isSeated} />
+              <BaccaratSeatRail players={baccaratState?.players ?? []} maxPlayers={baccaratState?.maxPlayers ?? 6} myPlayerId={myPlayerId} />
             </div>
           </div>
         </section>
@@ -1150,7 +1140,7 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
                 className={classNames('chip', `chip-${value}`, selectedChip === value && 'active')}
                 data-value={value}
                 aria-label={`${money(value)} chip`}
-                disabled={!isSeated || roundClosed || stack < value || currentStake + value > BACCARAT_MAX_BET}
+                disabled={!isSeated || roundClosed || stack < value || currentStake + value > maxBet}
                 onClick={() => setSelectedChip(value)}
               >
                 <span>{value}</span>
@@ -1159,7 +1149,7 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
           </div>
 
           <div className="action-row baccarat-action-row" data-mode={currentStake > 0 ? 'betting' : 'idle'}>
-            <button type="button" id="undoBtn" className="secondary action-button" disabled={!isSeated || lastStake <= 0 || lastStake > BACCARAT_MAX_BET || roundClosed || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
+            <button type="button" id="undoBtn" className="secondary action-button" disabled={!isSeated || lastStake <= 0 || lastStake > maxBet || roundClosed || stack + currentStake < lastStake} onClick={rebet} aria-label="Rebet">
               <b>Rebet</b>
               <span>REBET</span>
             </button>
@@ -1167,7 +1157,7 @@ export function BaccaratRoomClient({ playerId, username, avatar, chipBalance, ha
               <b>Clear</b>
               <span>CLEAR BET</span>
             </button>
-            <button type="button" id="doubleBtn" className="action-button" disabled={currentStake <= 0 || roundClosed || stack < currentStake || currentStake * 2 > BACCARAT_MAX_BET} onClick={doubleBets}>
+            <button type="button" id="doubleBtn" className="action-button" disabled={currentStake <= 0 || roundClosed || stack < currentStake || currentStake * 2 > maxBet} onClick={doubleBets}>
               <b>Double</b>
               <span>DOUBLE</span>
             </button>

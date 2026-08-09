@@ -52,6 +52,8 @@ export interface BlackjackServerObserver {
 export interface BlackjackServerState {
   tableId: string
   tableName: string
+  tableKind: 'house' | 'custom'
+  houseSeat?: number
   minBet: number
   maxBet: number
   minBuyin: number
@@ -114,6 +116,8 @@ export interface ClientBlackjackObserver {
 export interface ClientBlackjackState {
   tableId: string
   tableName: string
+  tableKind: 'house' | 'custom'
+  houseSeat?: number
   phase: BlackjackPhase
   status: BlackjackTableStatus
   minBet: number
@@ -143,6 +147,8 @@ export interface BlackjackTableInfo {
   id: string
   name: string
   hostId: string | null
+  tableKind: 'house' | 'custom'
+  houseSeat?: number
   maxPlayers: number
   minBet: number
   maxBet: number

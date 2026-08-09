@@ -31,6 +31,8 @@ type LiveBlackjackTable = {
   id: string
   name: string
   hostId: string | null
+  tableKind?: 'house' | 'custom'
+  houseSeat?: number
   maxPlayers: number
   minBet: number
   maxBet: number
@@ -77,6 +79,8 @@ function normalizeTable(table: BlackjackTableInfo | LiveBlackjackTable): Blackja
       name: table.name,
       host_id: table.hostId,
       game_type: 'blackjack',
+      table_kind: table.tableKind ?? 'custom',
+      house_seat: table.houseSeat,
       max_players: table.maxPlayers,
       small_blind: table.minBet,
       big_blind: table.maxBet,
@@ -109,7 +113,10 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
   const activeTables = tables.filter((table) => table.status !== 'finished')
   const playersSeated = activeTables.reduce((sum, table) => sum + table.player_count, 0)
   const openSeats = activeTables.reduce((sum, table) => sum + Math.max(table.max_players - table.player_count, 0), 0)
-  const featuredTable = [...activeTables].sort((a, b) => b.player_count - a.player_count || b.big_blind - a.big_blind)[0]
+  const featuredTable = [...activeTables].sort((a, b) => {
+    const kindScore = (b.table_kind === 'house' ? 1 : 0) - (a.table_kind === 'house' ? 1 : 0)
+    return kindScore || b.player_count - a.player_count || b.big_blind - a.big_blind
+  })[0]
   const featuredLimits = featuredTable ? tableLimitLabel(featuredTable) : '10-5,000'
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
 
@@ -217,13 +224,13 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
     setError('')
 
     try {
-      await emitWithAck(
+      const res = await emitWithAck<{ tableId?: string }>(
         socket,
         'blackjack_join_table',
         { tableId: joinModal.id, buyIn },
         'The blackjack table is not responding yet.'
       )
-      router.push(`/blackjack/table/${joinModal.id}`)
+      router.push(`/blackjack/table/${res.tableId ?? joinModal.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join blackjack table')
     } finally {
@@ -355,7 +362,7 @@ export function BlackjackLobbyClient({ initialTables, profile, token, hasVipEmoj
                   className="casino-blackjack-lobby__primary-action rounded-full bg-[#f0b92f] px-7 text-[#160b04] hover:bg-[#ffd76b]"
                   onClick={() => setShowCreate(true)}
                 >
-                  Open Blackjack Table
+                  Open Custom Table
                 </Button>
               </div>
             </div>
@@ -463,7 +470,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function BlackjackTableCard({ table, onJoin }: { table: BlackjackTableInfo; onJoin: () => void }) {
-  const canJoin = table.status !== 'finished' && table.player_count < table.max_players
+  const isHouseTable = table.table_kind === 'house'
+  const canJoin = table.status !== 'finished' && (table.player_count < table.max_players || isHouseTable)
   const seatsLeft = Math.max(table.max_players - table.player_count, 0)
 
   return (
@@ -472,7 +480,9 @@ function BlackjackTableCard({ table, onJoin }: { table: BlackjackTableInfo; onJo
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-[#fff7df]">{table.name}</h3>
-          <p className="mt-1 text-sm text-[#f5c76d]/[0.62]">{table.status === 'playing' ? 'Round in progress' : 'Bets open'}</p>
+          <p className="mt-1 text-sm text-[#f5c76d]/[0.62]">
+            {isHouseTable ? 'ASL always-open table' : table.status === 'playing' ? 'Round in progress' : 'Player table'}
+          </p>
         </div>
         <div className="rounded-full border border-[#f5c76d]/[0.18] bg-black/[0.24] px-3 py-1 text-sm font-semibold text-[#ffe6a7]">
           {table.player_count}/{table.max_players}
@@ -491,7 +501,7 @@ function BlackjackTableCard({ table, onJoin }: { table: BlackjackTableInfo; onJo
       </div>
 
       <div className="mb-4 rounded-xl border border-white/[0.1] bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.18em] text-white/[0.52]">
-        {seatsLeft} seats open
+        {seatsLeft > 0 ? `${seatsLeft} seats open` : isHouseTable ? 'Next house table opens automatically' : 'No seats open'}
       </div>
 
       <Button
@@ -501,7 +511,7 @@ function BlackjackTableCard({ table, onJoin }: { table: BlackjackTableInfo; onJo
         disabled={!canJoin}
         onClick={onJoin}
       >
-        {canJoin ? 'Join Table' : 'Table Full'}
+        {canJoin ? (isHouseTable && seatsLeft === 0 ? 'Join Next House Table' : 'Join Table') : 'Table Full'}
       </Button>
     </article>
   )

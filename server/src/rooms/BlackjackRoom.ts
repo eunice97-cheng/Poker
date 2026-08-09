@@ -14,7 +14,7 @@ import {
   ClientBlackjackState,
 } from '../types/blackjack'
 import { supabaseService } from '../services/supabaseService'
-import { isLocalOnlyTable } from '../utils/localAdmin'
+import { isLocalOnlyTable, isMemoryOnlyTable } from '../utils/localAdmin'
 
 const SUITS: BlackjackSuit[] = ['S', 'H', 'D', 'C']
 const RANKS: { rank: BlackjackRank; value: number }[] = [
@@ -105,6 +105,10 @@ function delay(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
 export class BlackjackRoom {
   public readonly tableId: string
   public state: BlackjackServerState
@@ -122,6 +126,8 @@ export class BlackjackRoom {
     this.state = {
       tableId: tableInfo.id,
       tableName: tableInfo.name,
+      tableKind: tableInfo.tableKind ?? 'custom',
+      houseSeat: tableInfo.houseSeat,
       minBet: tableInfo.smallBlind,
       maxBet: tableInfo.bigBlind,
       minBuyin: tableInfo.minBuyin,
@@ -157,6 +163,7 @@ export class BlackjackRoom {
   }
 
   shouldKeepAlive() {
+    if (this.state.tableKind === 'house') return true
     return this.getPlayerCount() > 0 || this.getObserverCount() > 0
   }
 
@@ -627,7 +634,7 @@ export class BlackjackRoom {
       if (!observer) return { error: 'Not at this blackjack table' }
 
       observer.stack += amount
-      if (!isLocalOnlyTable(this.tableId) && observer.hasTableEntry) {
+      if (!isMemoryOnlyTable(this.tableId) && observer.hasTableEntry) {
         await supabaseService.updateTablePlayerStack(this.tableId, observer.playerId, observer.stack)
       }
       this.broadcastState()
@@ -635,7 +642,7 @@ export class BlackjackRoom {
     }
 
     player.stack += amount
-    if (!isLocalOnlyTable(this.tableId)) {
+    if (!isMemoryOnlyTable(this.tableId)) {
       await supabaseService.updateTablePlayerStack(this.tableId, player.playerId, player.stack)
     }
     this.broadcastState()
@@ -658,6 +665,8 @@ export class BlackjackRoom {
       id: this.tableId,
       name: this.state.tableName,
       hostId: null,
+      tableKind: this.state.tableKind,
+      houseSeat: this.state.houseSeat,
       maxPlayers: this.state.maxPlayers,
       minBet: this.state.minBet,
       maxBet: this.state.maxBet,
@@ -938,13 +947,15 @@ export class BlackjackRoom {
     if (isLocalOnlyTable(this.tableId)) return
 
     try {
-      await Promise.all(
-        Array.from(this.state.players.values()).map((player) =>
-          supabaseService.updateTablePlayerStack(this.tableId, player.playerId, player.stack)
+      if (!isMemoryOnlyTable(this.tableId)) {
+        await Promise.all(
+          Array.from(this.state.players.values()).map((player) =>
+            supabaseService.updateTablePlayerStack(this.tableId, player.playerId, player.stack)
+          )
         )
-      )
-      await supabaseService.incrementGamesPlayed(playedPlayerIds)
-      await supabaseService.incrementGamesWon(winnerIds)
+      }
+      await supabaseService.incrementGamesPlayed(playedPlayerIds.filter(isUuid))
+      await supabaseService.incrementGamesWon(winnerIds.filter(isUuid))
 
       for (const player of this.state.players.values()) {
         if (player.stack <= 0) {
@@ -1224,6 +1235,8 @@ export class BlackjackRoom {
     return {
       tableId: this.tableId,
       tableName: this.state.tableName,
+      tableKind: this.state.tableKind,
+      houseSeat: this.state.houseSeat,
       phase: this.state.phase,
       status: this.state.status,
       minBet: this.state.minBet,
@@ -1293,7 +1306,7 @@ export class BlackjackRoom {
   private syncTableStatus() {
     const status = this.isRoundLocked() ? 'playing' : 'waiting'
     this.state.status = status
-    if (isLocalOnlyTable(this.tableId)) return
+    if (isMemoryOnlyTable(this.tableId)) return
     supabaseService.updateTableStatus(this.tableId, status, this.getPlayerCount()).catch(console.error)
   }
 

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { hasVipEmojiAccess } from '@/lib/supporter-access'
-import { LOCAL_ADMIN_COOKIE, isLocalAdminEnabled } from '@/lib/local-admin'
+import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
 import { isAdminEmail } from '@/lib/admin'
 import { BaccaratRoomClient } from '../../BaccaratRoomClient'
 
@@ -25,6 +25,8 @@ export default async function BaccaratTablePage({ params }: { params: { tableId:
   if (isLocalAdmin && !session) {
     return (
       <BaccaratRoomClient
+        tableId={params.tableId}
+        token={LOCAL_ADMIN_TOKEN}
         playerId={`local-admin-${params.tableId}`}
         username="LocalAdmin"
         avatar="avatar_m1"
@@ -48,6 +50,8 @@ export default async function BaccaratTablePage({ params }: { params: { tableId:
 
   return (
     <BaccaratRoomClient
+      tableId={params.tableId}
+      token={session!.access_token}
       playerId={tableProfile?.id ?? session!.user.id}
       username={tableProfile?.username ?? 'Player'}
       avatar={tableProfile?.avatar ?? 'avatar_m1'}

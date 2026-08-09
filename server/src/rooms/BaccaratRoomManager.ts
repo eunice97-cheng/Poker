@@ -1,16 +1,16 @@
 import { Server } from 'socket.io'
-import { BlackjackRoom } from './BlackjackRoom'
+import { BaccaratRoom } from './BaccaratRoom'
 import { TableInfo } from '../types/game'
 
-const HOUSE_BLACKJACK_PREFIX = 'house_bj_'
-const HOUSE_BLACKJACK_MIN_BET = 10
-const HOUSE_BLACKJACK_MAX_BET = 5000
-const HOUSE_BLACKJACK_MIN_BUYIN = 1000
-const HOUSE_BLACKJACK_MAX_BUYIN = 20000
-const HOUSE_BLACKJACK_MAX_PLAYERS = 7
+const HOUSE_BACCARAT_PREFIX = 'house_bac_'
+const HOUSE_BACCARAT_MIN_BET = 100
+const HOUSE_BACCARAT_MAX_BET = 10000
+const HOUSE_BACCARAT_MIN_BUYIN = 100
+const HOUSE_BACCARAT_MAX_BUYIN = 100000
+const HOUSE_BACCARAT_MAX_PLAYERS = 6
 
-class BlackjackRoomManager {
-  private rooms: Map<string, BlackjackRoom> = new Map()
+class BaccaratRoomManager {
+  private rooms: Map<string, BaccaratRoom> = new Map()
   private io: Server | null = null
 
   init(io: Server) {
@@ -18,8 +18,8 @@ class BlackjackRoomManager {
   }
 
   createRoom(tableInfo: TableInfo) {
-    if (!this.io) throw new Error('BlackjackRoomManager not initialized')
-    const room = new BlackjackRoom(this.io, tableInfo)
+    if (!this.io) throw new Error('BaccaratRoomManager not initialized')
+    const room = new BaccaratRoom(this.io, tableInfo)
     this.rooms.set(tableInfo.id, room)
     return room
   }
@@ -30,17 +30,17 @@ class BlackjackRoomManager {
 
     const houseSeat = this.getHouseRooms().length + 1
     const tableInfo: TableInfo = {
-      id: `${HOUSE_BLACKJACK_PREFIX}${houseSeat}`,
-      name: houseSeat === 1 ? 'ASL Blackjack House Table' : `ASL Blackjack House Table ${houseSeat}`,
+      id: `${HOUSE_BACCARAT_PREFIX}${houseSeat}`,
+      name: houseSeat === 1 ? 'ASL Baccarat House Table' : `ASL Baccarat House Table ${houseSeat}`,
       hostId: null,
-      gameType: 'blackjack',
+      gameType: 'baccarat',
       tableKind: 'house',
       houseSeat,
-      maxPlayers: HOUSE_BLACKJACK_MAX_PLAYERS,
-      smallBlind: HOUSE_BLACKJACK_MIN_BET,
-      bigBlind: HOUSE_BLACKJACK_MAX_BET,
-      minBuyin: HOUSE_BLACKJACK_MIN_BUYIN,
-      maxBuyin: HOUSE_BLACKJACK_MAX_BUYIN,
+      maxPlayers: HOUSE_BACCARAT_MAX_PLAYERS,
+      smallBlind: HOUSE_BACCARAT_MIN_BET,
+      bigBlind: HOUSE_BACCARAT_MAX_BET,
+      minBuyin: HOUSE_BACCARAT_MIN_BUYIN,
+      maxBuyin: HOUSE_BACCARAT_MAX_BUYIN,
       status: 'waiting',
       playerCount: 0,
     }
@@ -86,4 +86,4 @@ class BlackjackRoomManager {
   }
 }
 
-export const blackjackRoomManager = new BlackjackRoomManager()
+export const baccaratRoomManager = new BaccaratRoomManager()

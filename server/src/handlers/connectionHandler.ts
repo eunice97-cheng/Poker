@@ -5,9 +5,11 @@ import { supabaseService } from '../services/supabaseService'
 import { registerTableHandlers } from './tableHandler'
 import { registerGameHandlers } from './gameHandler'
 import { registerBlackjackHandlers } from './blackjackHandler'
+import { registerBaccaratHandlers } from './baccaratHandler'
 import { blackjackRoomManager } from '../rooms/BlackjackRoomManager'
+import { baccaratRoomManager } from '../rooms/BaccaratRoomManager'
 import { sanitizeChatText } from '../utils/chatEmojis'
-import { isLocalOnlyTable } from '../utils/localAdmin'
+import { isHouseTable, isLocalOnlyTable, isMemoryOnlyTable } from '../utils/localAdmin'
 
 const LOBBY_ROOM = 'lobby'
 const MAX_LOBBY_MESSAGES = 60
@@ -46,6 +48,7 @@ export function registerConnectionHandler(io: Server) {
     registerTableHandlers(io, authed)
     registerGameHandlers(io, authed)
     registerBlackjackHandlers(io, authed)
+    registerBaccaratHandlers(io, authed)
 
     socket.on('lobby_chat_message', (data: { text: string }, callback) => {
       const text = sanitizeChatText(data.text?.trim().slice(0, 240) ?? '', authed.hasVipEmojis)
@@ -109,15 +112,20 @@ export function registerConnectionHandler(io: Server) {
 
           if (!isLocalOnlyTable(blackjackRoom.tableId)) {
             if (blackjackObserver.stack > 0) {
-              await supabaseService.addChips(blackjackObserver.playerId, blackjackRoom.tableId, blackjackObserver.stack, 'cashout').catch(console.error)
+              await supabaseService.addChips(
+                blackjackObserver.playerId,
+                isHouseTable(blackjackRoom.tableId) ? null : blackjackRoom.tableId,
+                blackjackObserver.stack,
+                'cashout'
+              ).catch(console.error)
             }
-            if (blackjackObserver.hasTableEntry) {
+            if (!isMemoryOnlyTable(blackjackRoom.tableId) && blackjackObserver.hasTableEntry) {
               await supabaseService.removeTablePlayer(blackjackRoom.tableId, blackjackObserver.playerId).catch(console.error)
             }
           }
 
           if (!blackjackRoom.shouldKeepAlive()) {
-            if (!isLocalOnlyTable(blackjackRoom.tableId)) {
+            if (!isMemoryOnlyTable(blackjackRoom.tableId)) {
               await supabaseService.deleteTable(blackjackRoom.tableId).catch(console.error)
             }
             blackjackRoomManager.deleteRoom(blackjackRoom.tableId)
@@ -136,15 +144,78 @@ export function registerConnectionHandler(io: Server) {
           }
 
           if (cashout > 0) {
-            await supabaseService.addChips(removedPlayer.playerId, blackjackRoom.tableId, cashout, 'cashout').catch(console.error)
+            await supabaseService.addChips(
+              removedPlayer.playerId,
+              isHouseTable(blackjackRoom.tableId) ? null : blackjackRoom.tableId,
+              cashout,
+              'cashout'
+            ).catch(console.error)
           }
-          await supabaseService.removeTablePlayer(blackjackRoom.tableId, removedPlayer.playerId).catch(console.error)
+          if (!isMemoryOnlyTable(blackjackRoom.tableId)) {
+            await supabaseService.removeTablePlayer(blackjackRoom.tableId, removedPlayer.playerId).catch(console.error)
+          }
           if (!blackjackRoom.shouldKeepAlive()) {
-            await supabaseService.deleteTable(blackjackRoom.tableId).catch(console.error)
+            if (!isMemoryOnlyTable(blackjackRoom.tableId)) {
+              await supabaseService.deleteTable(blackjackRoom.tableId).catch(console.error)
+            }
             blackjackRoomManager.deleteRoom(blackjackRoom.tableId)
             io.emit('blackjack_table_deleted', { tableId: blackjackRoom.tableId })
           }
         })
+      }
+
+      const baccaratRoom = baccaratRoomManager.getRoomBySocketId(socket.id)
+      if (baccaratRoom) {
+        const result = baccaratRoom.handleDisconnect(socket.id, async (removedPlayer, cashout) => {
+          if (isLocalOnlyTable(baccaratRoom.tableId)) {
+            if (!baccaratRoom.shouldKeepAlive()) {
+              baccaratRoomManager.deleteRoom(baccaratRoom.tableId)
+              io.emit('baccarat_table_deleted', { tableId: baccaratRoom.tableId })
+            }
+            return
+          }
+
+          if (cashout > 0) {
+            await supabaseService.addChips(
+              removedPlayer.playerId,
+              isHouseTable(baccaratRoom.tableId) ? null : baccaratRoom.tableId,
+              cashout,
+              'cashout'
+            ).catch(console.error)
+          }
+          if (!isMemoryOnlyTable(baccaratRoom.tableId)) {
+            await supabaseService.removeTablePlayer(baccaratRoom.tableId, removedPlayer.playerId).catch(console.error)
+          }
+          if (!baccaratRoom.shouldKeepAlive()) {
+            if (!isMemoryOnlyTable(baccaratRoom.tableId)) {
+              await supabaseService.deleteTable(baccaratRoom.tableId).catch(console.error)
+            }
+            baccaratRoomManager.deleteRoom(baccaratRoom.tableId)
+            io.emit('baccarat_table_deleted', { tableId: baccaratRoom.tableId })
+          }
+        })
+
+        if (result?.observer) {
+          const observer = result.observer
+          if (!isLocalOnlyTable(baccaratRoom.tableId) && observer.stack > 0) {
+            await supabaseService.addChips(
+              observer.playerId,
+              isHouseTable(baccaratRoom.tableId) ? null : baccaratRoom.tableId,
+              observer.stack,
+              'cashout'
+            ).catch(console.error)
+          }
+          if (!isMemoryOnlyTable(baccaratRoom.tableId) && observer.hasTableEntry) {
+            await supabaseService.removeTablePlayer(baccaratRoom.tableId, observer.playerId).catch(console.error)
+          }
+          if (!baccaratRoom.shouldKeepAlive()) {
+            if (!isMemoryOnlyTable(baccaratRoom.tableId)) {
+              await supabaseService.deleteTable(baccaratRoom.tableId).catch(console.error)
+            }
+            baccaratRoomManager.deleteRoom(baccaratRoom.tableId)
+            io.emit('baccarat_table_deleted', { tableId: baccaratRoom.tableId })
+          }
+        }
       }
 
       const room = roomManager.getRoomBySocketId(socket.id)

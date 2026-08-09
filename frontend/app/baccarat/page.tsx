@@ -6,6 +6,7 @@ import { hasVipEmojiAccess } from '@/lib/supporter-access'
 import { LOCAL_ADMIN_COOKIE, LOCAL_ADMIN_TOKEN, isLocalAdminEnabled } from '@/lib/local-admin'
 import { isAdminEmail } from '@/lib/admin'
 import { BaccaratLobbyClient } from './BaccaratLobbyClient'
+import type { BaccaratTableInfo } from '@/types/baccarat'
 import type { Profile } from '@/types/poker'
 
 export default async function BaccaratLobbyPage() {
@@ -20,6 +21,7 @@ export default async function BaccaratLobbyPage() {
   if (isLocalAdmin && !session) {
     return (
       <BaccaratLobbyClient
+        initialTables={[]}
         profile={{
           id: 'local-admin',
           username: 'LocalAdmin',
@@ -38,7 +40,13 @@ export default async function BaccaratLobbyPage() {
     )
   }
 
-  const [{ data: profile }, canUseVipEmojis, { count: unreadMailCount }] = await Promise.all([
+  const [{ data: tables }, { data: profile }, canUseVipEmojis, { count: unreadMailCount }] = await Promise.all([
+    supabase
+      .from('tables')
+      .select('*')
+      .eq('game_type', 'baccarat')
+      .neq('status', 'finished')
+      .order('created_at', { ascending: false }),
     supabase.from('profiles').select('*').eq('id', session!.user.id).single(),
     hasVipEmojiAccess(supabase, session!.user.id, session!.user.email),
     supabase
@@ -61,6 +69,7 @@ export default async function BaccaratLobbyPage() {
 
   return (
     <BaccaratLobbyClient
+      initialTables={(tables ?? []) as BaccaratTableInfo[]}
       profile={profile as Profile}
       token={session!.access_token}
       hasVipEmojis={canUseVipEmojis}

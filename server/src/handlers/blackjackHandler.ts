@@ -6,7 +6,7 @@ import { BlackjackRoom } from '../rooms/BlackjackRoom'
 import { BlackjackAction, BlackjackServerObserver, BlackjackServerPlayer } from '../types/blackjack'
 import { supabaseService } from '../services/supabaseService'
 import { sanitizeChatText } from '../utils/chatEmojis'
-import { isLocalOnlyTable, LOCAL_ADMIN_ID } from '../utils/localAdmin'
+import { isHouseTable, isLocalOnlyTable, isMemoryOnlyTable, LOCAL_ADMIN_ID } from '../utils/localAdmin'
 
 const DEFAULT_MIN_BET = 10
 const DEFAULT_MAX_BET = 5000
@@ -42,7 +42,7 @@ function createObserver(
 async function deleteRoomIfEmpty(io: Server, room: BlackjackRoom) {
   if (room.shouldKeepAlive()) return
 
-  if (!isLocalOnlyTable(room.tableId)) {
+  if (!isMemoryOnlyTable(room.tableId)) {
     await supabaseService.deleteTable(room.tableId).catch(console.error)
   }
   blackjackRoomManager.deleteRoom(room.tableId)
@@ -53,7 +53,7 @@ async function cashOutBlackjackChips(room: BlackjackRoom, playerId: string, cash
   if (isLocalOnlyTable(room.tableId)) return 100000
   if (cashout <= 0) return undefined
 
-  return supabaseService.addChips(playerId, room.tableId, cashout, 'cashout')
+  return supabaseService.addChips(playerId, isHouseTable(room.tableId) ? null : room.tableId, cashout, 'cashout')
 }
 
 function cashoutForPlayer(room: BlackjackRoom, player: BlackjackServerPlayer) {
@@ -145,6 +145,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
           name: params.name?.trim().slice(0, 40) || 'Local Admin Blackjack',
           hostId: socket.userId,
           gameType: 'blackjack' as const,
+          tableKind: 'custom' as const,
           maxPlayers,
           smallBlind: minBet,
           bigBlind: maxBet,
@@ -207,8 +208,12 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
       const existingRoom = blackjackRoomManager.getRoomByPlayerId(socket.userId)
       if (existingRoom) return callback?.({ error: 'You are already at a blackjack table' })
 
-      const room = blackjackRoomManager.getRoom(params.tableId)
+      let room = blackjackRoomManager.getRoom(params.tableId)
       if (!room) return callback?.({ error: 'Blackjack table not found' })
+      if (room.state.tableKind === 'house' && room.isFull()) {
+        room = blackjackRoomManager.ensureOpenHouseTable()
+        io.emit('blackjack_table_created', room.getSnapshot())
+      }
       if (room.hasPlayer(socket.userId)) return callback?.({ error: 'Already at this blackjack table' })
       if (room.hasObserver(socket.userId)) return callback?.({ error: 'Already waiting at this blackjack table' })
 
@@ -222,16 +227,17 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
 
       const balance = socket.userId === LOCAL_ADMIN_ID
         ? 100000 - buyIn
-        : await supabaseService.deductChips(socket.userId, room.tableId, buyIn)
+        : await supabaseService.deductChips(socket.userId, isHouseTable(room.tableId) ? null : room.tableId, buyIn)
       deducted = socket.userId === LOCAL_ADMIN_ID ? 0 : buyIn
 
       room.addObserver(createObserver(socket, profile, buyIn, false))
       void syncBlackjackDealerTips(room)
-      callback?.({ observer: true, stack: buyIn, balance })
+      io.emit('blackjack_table_updated', room.getSnapshot())
+      callback?.({ tableId: room.tableId, observer: true, stack: buyIn, balance })
     } catch (error) {
       console.error('blackjack_join_table error:', error)
       if (deducted > 0) {
-        await supabaseService.addChips(socket.userId, params.tableId, deducted, 'refund').catch(console.error)
+        await supabaseService.addChips(socket.userId, isHouseTable(params.tableId) ? null : params.tableId, deducted, 'refund').catch(console.error)
       }
       callback?.({ error: 'Failed to join blackjack table' })
     }
@@ -277,7 +283,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
           balance = 100000
         } else {
           balance = await cashOutBlackjackChips(room, observer.playerId, cashout)
-          if (observer.hasTableEntry) {
+          if (!isMemoryOnlyTable(room.tableId) && observer.hasTableEntry) {
             await supabaseService.removeTablePlayer(room.tableId, observer.playerId)
           }
         }
@@ -293,7 +299,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
 
       const cashout = cashoutForPlayer(room, player)
       const balance = await cashOutBlackjackChips(room, player.playerId, cashout)
-      if (!isLocalOnlyTable(room.tableId)) {
+      if (!isMemoryOnlyTable(room.tableId)) {
         await supabaseService.removeTablePlayer(room.tableId, player.playerId)
       }
 
@@ -315,7 +321,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
     const res = room.standPlayerUp(socket.id)
     if (res.error || !res.observer) return callback?.(res)
 
-    if (!isLocalOnlyTable(room.tableId)) {
+    if (!isMemoryOnlyTable(room.tableId)) {
       supabaseService.updateTablePlayerStack(room.tableId, res.observer.playerId, res.observer.stack).catch(console.error)
     }
 
@@ -329,7 +335,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
     const res = room.seatObserver(socket.id, Number(params?.seat))
     if (res.error || !res.player || !res.observer) return callback?.(res)
 
-    if (!isLocalOnlyTable(room.tableId)) {
+    if (!isMemoryOnlyTable(room.tableId)) {
       if (res.observer.hasTableEntry) {
         supabaseService.updateTablePlayerSeat(room.tableId, res.player.playerId, res.seat).catch(console.error)
       } else {
@@ -378,7 +384,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
       const dealerId = normalizeDealerId(params?.dealerId)
       const dealerName = dealerNameFromId(dealerId, params?.dealerName)
       const nextStack = player.stack - amount
-      if (!isLocalOnlyTable(room.tableId)) {
+      if (!isMemoryOnlyTable(room.tableId)) {
         await supabaseService.updateTablePlayerStack(room.tableId, player.playerId, nextStack)
       }
 
@@ -428,7 +434,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
         return callback?.({ error: 'Insufficient chips for rebuy' })
       }
 
-      const balance = await supabaseService.deductChips(socket.userId, room.tableId, amount)
+      const balance = await supabaseService.deductChips(socket.userId, isHouseTable(room.tableId) ? null : room.tableId, amount)
       deducted = amount
       const added = await room.addToStack(socket.userId, amount)
       if (added.error) throw new Error(added.error)
@@ -437,7 +443,7 @@ export function registerBlackjackHandlers(io: Server, socket: AuthenticatedSocke
       console.error('blackjack_rebuy error:', error)
       const room = blackjackRoomManager.getRoomBySocketId(socket.id)
       if (deducted > 0 && room) {
-        await supabaseService.addChips(socket.userId, room.tableId, deducted, 'refund').catch(console.error)
+        await supabaseService.addChips(socket.userId, isHouseTable(room.tableId) ? null : room.tableId, deducted, 'refund').catch(console.error)
       }
       callback?.({ error: 'Failed to rebuy blackjack chips' })
     }
