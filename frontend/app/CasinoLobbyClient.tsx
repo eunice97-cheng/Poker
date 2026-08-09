@@ -43,6 +43,14 @@ type CasinoGameCard = {
   stats: CasinoGameStats
 }
 
+type CasinoLiveTableRow = {
+  small_blind?: number | null
+  big_blind?: number | null
+  max_players?: number | null
+  player_count?: number | null
+  status?: string | null
+}
+
 const games: Omit<CasinoGameCard, 'stats'>[] = [
   {
     id: 'poker',
@@ -75,6 +83,28 @@ const games: Omit<CasinoGameCard, 'stats'>[] = [
 
 function formatChips(value: number | undefined) {
   return (value ?? 0).toLocaleString()
+}
+
+function buildLiveGameStats(tables: CasinoLiveTableRow[], emptyLabel = 'No live table yet'): CasinoGameStats {
+  const activeTables = tables.filter((table) => table.status !== 'finished')
+  const tableCount = activeTables.length
+  const playerCount = activeTables.reduce((sum, table) => sum + (table.player_count ?? 0), 0)
+  const openSeats = activeTables.reduce(
+    (sum, table) => sum + Math.max((table.max_players ?? 0) - (table.player_count ?? 0), 0),
+    0
+  )
+  const featured = [...activeTables].sort(
+    (a, b) => (b.player_count ?? 0) - (a.player_count ?? 0) || (b.big_blind ?? 0) - (a.big_blind ?? 0)
+  )[0]
+
+  return {
+    tableCount,
+    playerCount,
+    openSeats,
+    featuredLimit: featured
+      ? `${formatChips(featured.small_blind ?? 0)}-${formatChips(featured.big_blind ?? 0)} table open`
+      : emptyLabel,
+  }
 }
 
 function isCompactLandscapeViewport() {
@@ -203,16 +233,18 @@ export function CasinoLobbyClient({
   const router = useRouter()
   const supabase = createClient()
   const { playSfx } = useAudio()
-  const { socket, connected, error: socketError } = useSocket(token)
+  const { socket, connected, error: socketError, socketUrl } = useSocket(token)
   const [compactLandscape, setCompactLandscape] = useState(false)
+  const [liveBlackjackStats, setLiveBlackjackStats] = useState(blackjackStats)
+  const [liveBaccaratStats, setLiveBaccaratStats] = useState(baccaratStats)
   const unreadMailLabel = unreadMailCount > 99 ? '99+' : unreadMailCount.toString()
   const playerName = profile?.username ?? 'Player'
   const gameCards: CasinoGameCard[] = games.map((game) => ({
     ...game,
-    stats: game.id === 'poker' ? pokerStats : game.id === 'baccarat' ? baccaratStats : blackjackStats,
+    stats: game.id === 'poker' ? pokerStats : game.id === 'baccarat' ? liveBaccaratStats : liveBlackjackStats,
   }))
-  const liveTableCount = pokerStats.tableCount + baccaratStats.tableCount + blackjackStats.tableCount
-  const playerCount = pokerStats.playerCount + baccaratStats.playerCount + blackjackStats.playerCount
+  const liveTableCount = pokerStats.tableCount + liveBaccaratStats.tableCount + liveBlackjackStats.tableCount
+  const playerCount = pokerStats.playerCount + liveBaccaratStats.playerCount + liveBlackjackStats.playerCount
 
   const handleSignOut = async () => {
     playSfx('click')
@@ -235,6 +267,45 @@ export function CasinoLobbyClient({
       window.removeEventListener('orientationchange', updateCompactLandscape)
     }
   }, [])
+
+  useEffect(() => {
+    setLiveBlackjackStats(blackjackStats)
+  }, [blackjackStats])
+
+  useEffect(() => {
+    setLiveBaccaratStats(baccaratStats)
+  }, [baccaratStats])
+
+  useEffect(() => {
+    if (!connected || !socketUrl) return
+
+    const controller = new AbortController()
+
+    const syncCasinoLiveTables = async () => {
+      try {
+        const [blackjackRes, baccaratRes] = await Promise.all([
+          fetch(`${socketUrl}/blackjack/tables`, { cache: 'no-store', signal: controller.signal }),
+          fetch(`${socketUrl}/baccarat/tables`, { cache: 'no-store', signal: controller.signal }),
+        ])
+
+        if (blackjackRes.ok) {
+          const tables = (await blackjackRes.json()) as CasinoLiveTableRow[]
+          setLiveBlackjackStats(buildLiveGameStats(tables))
+        }
+
+        if (baccaratRes.ok) {
+          const tables = (await baccaratRes.json()) as CasinoLiveTableRow[]
+          setLiveBaccaratStats(buildLiveGameStats(tables, '100-10,000 table open'))
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) console.warn('Failed to sync casino live tables:', error)
+      }
+    }
+
+    void syncCasinoLiveTables()
+
+    return () => controller.abort()
+  }, [connected, socketUrl])
 
   if (compactLandscape) {
     return (
