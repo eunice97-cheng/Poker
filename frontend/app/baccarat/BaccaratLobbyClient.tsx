@@ -16,7 +16,6 @@ const BACCARAT_TABLE_ID = 'punto-banco-main'
 const BACCARAT_MIN_BET = 100
 const BACCARAT_MAX_BET = 10000
 const BACCARAT_SEATS = 6
-const BACCARAT_CHIPS = [100, 500, 1000, 5000]
 
 interface BaccaratLobbyClientProps {
   profile: Profile
@@ -37,27 +36,6 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#d7b35f]/58">{label}</div>
       <div className="mt-2 text-2xl font-black text-[#fff8df]">{value}</div>
     </div>
-  )
-}
-
-function ChipFace({ value }: { value: number }) {
-  if (value === 5000) {
-    return (
-      <img
-        src="/baccarat/Images/Chips/5000.png"
-        alt="5,000 chip"
-        className="-mx-1.5 -my-1.5 h-[60px] w-[60px] rounded-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.42)]"
-      />
-    )
-  }
-
-  return (
-    <span
-      className="grid h-12 w-12 place-items-center rounded-full border border-[#ffe8a3]/50 bg-[radial-gradient(circle_at_35%_28%,#fff5cf_0%,#d8ad44_18%,#4b230e_52%,#120805_100%)] text-[10px] font-black text-[#1b0d05] shadow-[0_12px_24px_rgba(0,0,0,0.38),inset_0_0_0_3px_rgba(255,255,255,0.16)]"
-      aria-label={`${value.toLocaleString()} chip`}
-    >
-      {value >= 1000 ? '1K' : value}
-    </span>
   )
 }
 
@@ -187,13 +165,6 @@ export function BaccaratLobbyClient({
               <Stat label="Seats" value={BACCARAT_SEATS.toString()} />
               <Stat label="Min bet" value={formatChips(BACCARAT_MIN_BET)} />
               <Stat label="Max bet" value={formatChips(BACCARAT_MAX_BET)} />
-            </div>
-
-            <div className="mt-6 rounded-lg border border-[#d7b35f]/16 bg-[linear-gradient(180deg,rgba(12,18,12,0.76),rgba(3,7,5,0.62))] p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#d7b35f]/62">Baccarat chips</div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {BACCARAT_CHIPS.map((value) => <ChipFace key={value} value={value} />)}
-              </div>
             </div>
           </section>
 
