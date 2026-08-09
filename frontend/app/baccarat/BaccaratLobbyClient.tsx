@@ -267,7 +267,7 @@ export function BaccaratLobbyClient({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050705] text-white">
+    <main className="baccarat-lobby-page relative min-h-screen overflow-hidden bg-[#050705] text-white">
       <div className="pointer-events-none fixed inset-0">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -469,6 +469,97 @@ export function BaccaratLobbyClient({
           )}
         </Modal>
       </div>
+
+      <style jsx global>{`
+        @media (max-width: 720px) {
+          .baccarat-lobby-page header {
+            position: relative;
+          }
+
+          .baccarat-lobby-page header > div {
+            align-items: stretch;
+          }
+
+          .baccarat-lobby-page header h1 {
+            font-size: clamp(1.28rem, 8vw, 2rem);
+            letter-spacing: .08em;
+            white-space: normal;
+          }
+
+          .baccarat-lobby-page header img[alt="ASL Baccarat Lounge"] {
+            width: 64px;
+            height: 48px;
+          }
+
+          .baccarat-lobby-page header a[href="/profile"] {
+            flex: 1 1 100%;
+          }
+
+          .baccarat-lobby-page header a[href="/"],
+          .baccarat-lobby-page header a[href="/gm"] {
+            flex: 1 1 auto;
+            min-width: 112px;
+            text-align: center;
+          }
+
+          .baccarat-lobby-page > div > section {
+            padding-top: 16px;
+          }
+
+          .baccarat-lobby-page h2 {
+            overflow-wrap: anywhere;
+          }
+
+          .baccarat-lobby-page article > div:last-child {
+            grid-template-columns: 1fr;
+          }
+
+          .baccarat-lobby-page article h3 {
+            font-size: clamp(1.42rem, 8vw, 2rem);
+            line-height: 1;
+          }
+
+          .baccarat-lobby-page article .grid.max-w-xl {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .baccarat-lobby-page article button {
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .baccarat-lobby-page header > div > div:first-child {
+            gap: 10px;
+          }
+
+          .baccarat-lobby-page header > div > div:last-child {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .baccarat-lobby-page header a[href="/profile"] {
+            grid-column: 1 / -1;
+          }
+
+          .baccarat-lobby-page header a[href="/"],
+          .baccarat-lobby-page header a[href="/gm"] {
+            grid-column: span 2;
+            min-width: 0;
+            padding-inline: 8px;
+          }
+
+          .baccarat-lobby-page header a[href="/profile?tab=mail"],
+          .baccarat-lobby-page header button[aria-label="Sign out"] {
+            width: 100%;
+          }
+
+          .baccarat-lobby-page article .grid.max-w-xl {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+      `}</style>
     </main>
   )
 }

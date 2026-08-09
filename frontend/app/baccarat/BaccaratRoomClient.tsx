@@ -2161,6 +2161,729 @@ export function BaccaratRoomClient({ tableId, token, playerId, username, avatar,
             min-height: 64px;
           }
         }
+
+        @media (max-width: 760px) {
+          .baccarat-game-shell {
+            --baccarat-bottom-console-height: auto;
+            height: auto;
+            min-height: 100vh;
+            grid-template-rows: auto auto auto;
+            overflow: visible;
+          }
+
+          .baccarat-game-shell .topbar {
+            position: relative;
+            top: auto;
+            left: auto;
+            right: auto;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+          }
+
+          .baccarat-game-shell .balance-panel {
+            min-width: 126px;
+            margin-left: 0;
+            padding: 9px 12px;
+          }
+
+          .baccarat-title-panel {
+            position: relative;
+            left: auto;
+            top: auto;
+            order: 3;
+            width: 100%;
+            min-height: 52px;
+            padding: 7px 12px;
+            gap: 10px;
+            transform: none;
+          }
+
+          .baccarat-title-panel img {
+            width: 46px;
+            height: 34px;
+          }
+
+          .baccarat-title-panel strong {
+            font-size: clamp(1.08rem, 6vw, 1.58rem);
+            letter-spacing: .06em;
+            white-space: normal;
+          }
+
+          .baccarat-game-shell .utility-buttons {
+            order: 2;
+            width: 100%;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+          }
+
+          .baccarat-game-shell .utility-buttons::-webkit-scrollbar {
+            display: none;
+          }
+
+          .baccarat-game-shell .utility-buttons .table-status-button {
+            min-height: 38px;
+            padding-inline: 12px;
+            font-size: .68rem;
+          }
+
+          .baccarat-game-shell .utility-button,
+          .baccarat-game-shell .table-status-button.is-cashout {
+            width: 38px;
+            min-width: 38px;
+            height: 38px;
+            min-height: 38px;
+          }
+
+          .baccarat-game-shell .table-frame {
+            display: block;
+            padding: 0;
+            overflow: hidden;
+          }
+
+          .baccarat-road {
+            position: relative;
+            left: auto;
+            top: auto;
+            width: calc(100% - 24px);
+            max-width: 440px;
+            max-height: none;
+            margin: 10px auto 8px;
+          }
+
+          .baccarat-road__grid {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+          }
+
+          .baccarat-road__grid::-webkit-scrollbar {
+            display: none;
+          }
+
+          .baccarat-road__cell {
+            flex: 0 0 22px;
+          }
+
+          .baccarat-wood-rail {
+            width: 1000px;
+            max-width: 1000px;
+            max-height: none;
+            margin: 0 auto -300px;
+            transform: scale(.58);
+            transform-origin: top center;
+          }
+
+          .baccarat-wood-rail .dealer-portrait {
+            top: -28%;
+            width: 145px;
+          }
+
+          .baccarat-wood-rail .dealer-speech {
+            left: 50%;
+            top: -7%;
+            width: min(310px, 54%);
+            min-height: 38px;
+            padding: 8px 12px;
+            font-size: .68rem;
+            line-height: 1.16;
+            transform: translateX(-50%);
+          }
+
+          .baccarat-tip-board {
+            display: none !important;
+          }
+
+          .baccarat-table-timer {
+            left: 50%;
+            top: -14%;
+            width: 210px;
+            min-height: 40px;
+            padding: 7px 10px;
+            transform: translateX(-50%);
+          }
+
+          .baccarat-table-timer span {
+            font-size: .54rem;
+          }
+
+          .baccarat-table-timer strong {
+            font-size: 1rem;
+          }
+
+          .baccarat-result-ribbon {
+            top: 18%;
+            width: 48%;
+            min-width: 320px;
+            padding: 7px 14px 8px;
+          }
+
+          .baccarat-result-ribbon span {
+            font-size: .48rem;
+          }
+
+          .baccarat-result-ribbon strong {
+            font-size: .72rem;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control {
+            width: 86px !important;
+            height: 46px !important;
+            min-width: 86px !important;
+            min-height: 46px !important;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control .baccarat-tip-button b {
+            font-size: .72rem;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control .baccarat-tip-button span {
+            font-size: .45rem;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area {
+            min-width: 112px;
+            padding: 6px;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area h2 {
+            font-size: .58rem;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .cards {
+            min-height: 54px;
+            gap: 4px;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .card {
+            width: 34px;
+            height: 51px;
+          }
+
+          .baccarat-zone-label {
+            font-size: .74rem;
+          }
+
+          .baccarat-zone-payout {
+            font-size: .48rem;
+          }
+
+          .baccarat-seat {
+            width: 104px;
+            min-width: 104px;
+            min-height: 48px;
+            padding: 6px 7px;
+            gap: 1px 5px;
+          }
+
+          .baccarat-seat__avatar {
+            width: 28px;
+            height: 28px;
+          }
+
+          .baccarat-seat__avatar > span {
+            width: 25px;
+            height: 25px;
+          }
+
+          .baccarat-seat__name {
+            font-size: .46rem;
+          }
+
+          .baccarat-seat strong {
+            font-size: .62rem;
+          }
+
+          .baccarat-seat em {
+            display: none;
+          }
+
+          .blackjack-chat-panel.baccarat-chat-panel {
+            position: relative !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: calc(100% - 24px) !important;
+            margin: 8px auto 12px;
+          }
+
+          .baccarat-chat-panel .blackjack-chat {
+            height: auto;
+            max-height: 288px;
+          }
+
+          .baccarat-chat-emoji-popover,
+          .baccarat-chat-emoji-popover[data-kind="vip"] {
+            left: 0;
+            right: auto;
+            bottom: 52px;
+            width: min(330px, calc(100vw - 24px));
+          }
+
+          .baccarat-bottom-console {
+            position: relative;
+            left: auto;
+            right: auto;
+            bottom: auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto auto;
+            gap: 9px;
+            min-height: 0;
+            margin: 0 12px 16px;
+            padding: 10px;
+            border-radius: 16px;
+          }
+
+          .baccarat-bottom-console .message,
+          .baccarat-bottom-console .chip-selector,
+          .baccarat-bottom-console .action-row,
+          .baccarat-bottom-console .round-info {
+            grid-column: 1;
+            grid-row: auto;
+            justify-self: stretch;
+          }
+
+          .baccarat-bottom-console .message {
+            min-height: 22px;
+            white-space: normal;
+            text-align: center;
+          }
+
+          .baccarat-bottom-console .chip-selector {
+            justify-content: flex-start;
+            overflow-x: auto;
+            padding: 8px;
+            scrollbar-width: none;
+          }
+
+          .baccarat-bottom-console .chip-selector::-webkit-scrollbar {
+            display: none;
+          }
+
+          .baccarat-bottom-console .chip {
+            width: 52px;
+            height: 52px;
+            min-width: 52px;
+          }
+
+          .baccarat-bottom-console .action-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 7px;
+          }
+
+          .baccarat-bottom-console .action-button {
+            width: 100%;
+            min-width: 0;
+            height: 58px;
+            min-height: 58px;
+          }
+
+          .baccarat-bottom-console .round-info {
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 940px) and (max-height: 430px) and (orientation: landscape) {
+          html,
+          body {
+            height: 100%;
+            overflow: hidden;
+          }
+
+          .baccarat-game-shell {
+            height: 100svh;
+            min-height: 0;
+            display: block;
+            overflow: hidden;
+          }
+
+          .baccarat-game-shell .topbar {
+            position: fixed;
+            top: 7px;
+            left: 10px;
+            right: 10px;
+            z-index: 90;
+            height: 38px;
+            padding: 0;
+            align-items: center;
+          }
+
+          .baccarat-game-shell .balance-panel {
+            min-width: 96px;
+            margin-left: 0;
+            padding: 5px 8px;
+            border-radius: 10px;
+          }
+
+          .baccarat-game-shell .balance-panel span {
+            font-size: .46rem;
+            letter-spacing: .12em;
+          }
+
+          .baccarat-game-shell .balance-panel strong {
+            margin-top: 1px;
+            font-size: .9rem;
+            line-height: 1;
+          }
+
+          .baccarat-title-panel {
+            left: 50%;
+            top: 0;
+            order: initial;
+            width: 236px;
+            min-height: 38px;
+            padding: 4px 10px;
+            gap: 7px;
+            transform: translateX(-50%);
+          }
+
+          .baccarat-title-panel img {
+            width: 32px;
+            height: 24px;
+          }
+
+          .baccarat-title-panel strong {
+            font-size: .92rem;
+            letter-spacing: .08em;
+            white-space: nowrap;
+          }
+
+          .baccarat-game-shell .utility-buttons {
+            position: fixed;
+            right: 10px;
+            top: 9px;
+            width: auto;
+            height: 34px;
+            align-items: center;
+            gap: 5px;
+            overflow: visible;
+          }
+
+          .baccarat-game-shell .utility-buttons .table-status-button {
+            min-height: 34px;
+            height: 34px;
+            padding-inline: 9px;
+            border-radius: 10px;
+            font-size: .54rem;
+          }
+
+          .baccarat-game-shell .utility-button,
+          .baccarat-game-shell .table-status-button.is-cashout {
+            width: 34px;
+            min-width: 34px;
+            height: 34px;
+            min-height: 34px;
+            border-radius: 10px;
+          }
+
+          .baccarat-game-shell .table-frame {
+            position: absolute;
+            inset: 0;
+            display: block;
+            padding: 0;
+            overflow: hidden;
+          }
+
+          .baccarat-road,
+          .baccarat-tip-board,
+          .blackjack-chat-panel.baccarat-chat-panel {
+            display: none !important;
+          }
+
+          .baccarat-wood-rail {
+            position: absolute;
+            left: 50%;
+            top: 52%;
+            width: min(72vw, 660px);
+            max-width: 660px;
+            max-height: none;
+            margin: 0;
+            transform: translate(-50%, -50%);
+            transform-origin: center;
+            filter: drop-shadow(0 12px 18px rgba(0,0,0,.52));
+          }
+
+          .baccarat-wood-rail .dealer-portrait {
+            top: -17%;
+            width: clamp(76px, 9vw, 92px);
+          }
+
+          .baccarat-wood-rail .dealer-speech {
+            left: 50%;
+            top: 5%;
+            z-index: 34;
+            width: min(300px, 48vw);
+            min-height: 30px;
+            padding: 6px 10px;
+            font-size: .58rem;
+            line-height: 1.14;
+            transform: translateX(-50%);
+          }
+
+          .baccarat-table-timer {
+            left: calc(50% - 118px);
+            top: 23%;
+            z-index: 42;
+            display: grid;
+            width: 60px;
+            min-height: 30px;
+            padding: 4px 7px;
+            border-radius: 999px;
+            transform: translateY(-50%);
+          }
+
+          .baccarat-table-timer span {
+            display: none;
+          }
+
+          .baccarat-table-timer strong {
+            font-size: .9rem;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control {
+            left: calc(50% + 84px) !important;
+            top: 23% !important;
+            width: 64px !important;
+            height: 34px !important;
+            min-width: 64px !important;
+            min-height: 34px !important;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control .baccarat-tip-button {
+            border-radius: 10px !important;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control .baccarat-tip-button b {
+            font-size: .58rem;
+          }
+
+          .baccarat-felt-table .baccarat-table-tip-control .baccarat-tip-button span {
+            font-size: .44rem;
+          }
+
+          .baccarat-result-ribbon {
+            top: 19%;
+            width: min(330px, 48%);
+            min-width: 210px;
+            padding: 5px 10px 6px;
+          }
+
+          .baccarat-result-ribbon span {
+            display: none;
+          }
+
+          .baccarat-result-ribbon strong {
+            margin-top: 0;
+            font-size: .58rem;
+            line-height: 1.08;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area {
+            min-width: 76px;
+            padding: 4px;
+            border-radius: 8px;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area h2 {
+            margin-bottom: 4px;
+            font-size: .48rem;
+            letter-spacing: .1em;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .cards {
+            min-height: 38px;
+            gap: 3px;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .card {
+            width: 26px;
+            height: 39px;
+            padding: 3px;
+            border-radius: 5px;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .baccarat-card .rank,
+          .baccarat-game-shell .baccarat-hand-area .baccarat-card .bottom {
+            font-size: .5rem;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .baccarat-card .suit {
+            font-size: .84rem;
+          }
+
+          .baccarat-game-shell .baccarat-hand-area .score-pill {
+            width: 34px;
+            min-width: 34px;
+            min-height: 20px;
+            padding: 3px 5px;
+            font-size: .62rem;
+          }
+
+          .baccarat-bet-zone {
+            border-radius: 12px;
+            padding: 6px 5px;
+          }
+
+          .baccarat-zone-label {
+            font-size: .54rem;
+          }
+
+          .baccarat-zone-payout {
+            margin-top: 3px;
+            font-size: .38rem;
+            letter-spacing: .06em;
+          }
+
+          .baccarat-spot-chip-stack {
+            width: 38px;
+            height: 34px;
+          }
+
+          .baccarat-spot-chip-stack .spot-chip {
+            width: 26px;
+            height: 26px;
+          }
+
+          .baccarat-zone-amount {
+            top: calc(50% + 22px);
+            min-width: 48px;
+            padding: 3px 6px;
+            font-size: .42rem;
+          }
+
+          .baccarat-seat {
+            width: 76px;
+            min-width: 76px;
+            min-height: 32px;
+            padding: 4px 5px;
+            border-radius: 9px;
+            gap: 0 4px;
+          }
+
+          .baccarat-seat__avatar {
+            width: 22px;
+            height: 22px;
+          }
+
+          .baccarat-seat__avatar > span {
+            width: 20px;
+            height: 20px;
+          }
+
+          .baccarat-seat__name {
+            font-size: .38rem;
+            letter-spacing: .04em;
+          }
+
+          .baccarat-seat strong {
+            font-size: .48rem;
+          }
+
+          .baccarat-seat em {
+            display: none;
+          }
+
+          .baccarat-bottom-console {
+            position: absolute;
+            left: 76px;
+            right: 76px;
+            bottom: 8px;
+            z-index: 76;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: auto;
+            min-height: 0;
+            margin: 0;
+            padding: 6px;
+            border-radius: 16px;
+          }
+
+          .baccarat-bottom-console .message {
+            flex: 1 1 auto;
+            width: auto;
+            min-width: 0;
+            max-width: 320px;
+            font-size: .58rem;
+            line-height: 1.1;
+            overflow: hidden;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .baccarat-bottom-console .round-info {
+            display: none;
+          }
+
+          .baccarat-bottom-console .chip-selector {
+            position: fixed;
+            left: 12px;
+            top: 58px;
+            z-index: 86;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: auto;
+            max-height: calc(100svh - 72px);
+            padding: 4px;
+            overflow-y: auto;
+            scrollbar-width: none;
+          }
+
+          .baccarat-bottom-console .chip-selector::-webkit-scrollbar {
+            display: none;
+          }
+
+          .baccarat-bottom-console .chip-selector:not(:has(.chip:not(:disabled))) {
+            display: none;
+          }
+
+          .baccarat-bottom-console .chip {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+          }
+
+          .baccarat-bottom-console .action-row {
+            position: fixed;
+            right: 12px;
+            top: 50%;
+            z-index: 86;
+            display: flex !important;
+            flex-direction: column;
+            gap: 4px;
+            transform: translateY(-50%);
+          }
+
+          .baccarat-bottom-console .action-row:not(:has(.action-button:not(:disabled))),
+          .baccarat-bottom-console .action-row[data-mode="idle"] {
+            display: none !important;
+          }
+
+          .baccarat-bottom-console .action-button {
+            width: 58px;
+            min-width: 58px;
+            height: 42px;
+            min-height: 42px;
+            border-radius: 10px;
+          }
+
+          .baccarat-bottom-console .action-button b {
+            font-size: .56rem;
+          }
+
+          .baccarat-bottom-console .action-button span {
+            font-size: .38rem;
+          }
+        }
       `}</style>
     </>
   )
